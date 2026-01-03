@@ -10,8 +10,7 @@
 <meta name="theme-color" content="#111">
 <meta name="robots" content="noindex,nofollow">
 
-<!-- Icons (werden per JS dynamisch gesetzt) -->
-<link id="dynIcon" rel="icon" href="">
+<link id="dynFavicon" rel="icon" href="">
 <link id="dynAppleIcon" rel="apple-touch-icon" href="">
 
 <style>
@@ -39,7 +38,7 @@ body{
   margin-bottom:14px;
   box-shadow:0 2px 10px rgba(0,0,0,.08);
 }
-h1{margin:0 0 6px 0;font-size:20px}
+h1{margin:0 0 6px 0;font-size:20px;display:flex;gap:10px;align-items:center}
 h2{margin:6px 0 10px 0;font-size:16px}
 .muted{color:var(--muted);font-size:13px}
 
@@ -51,14 +50,15 @@ h2{margin:6px 0 10px 0;font-size:16px}
 .row>*{margin-bottom:12px;}
 .right{margin-left:auto}
 
-input,select,button{
+input,select,button,textarea{
   font-size:16px;
   padding:10px 12px;
   border-radius:12px;
   border:1px solid var(--line);
   background:#fff;
 }
-button{border:none;font-weight:700;cursor:pointer}
+textarea{resize:none}
+button{border:none;font-weight:800;cursor:pointer}
 .btn-start{background:var(--green);color:#fff}
 .btn-pause{background:var(--dark);color:#fff}
 .btn-stop{background:var(--red);color:#fff}
@@ -81,7 +81,7 @@ th{text-align:left;color:#64748b}
 .badge{
   display:inline-flex; align-items:center; gap:6px;
   padding:5px 10px; border-radius:999px;
-  font-size:12px; font-weight:800;
+  font-size:12px; font-weight:900;
   background:var(--chip);
   border:1px solid rgba(0,0,0,.06);
   white-space:nowrap;
@@ -105,41 +105,57 @@ th{text-align:left;color:#64748b}
 }
 .summarybar .right{ margin-left:auto; }
 
-/* Kompakt am Handy */
+.header-icon{
+  width:26px;height:26px;border-radius:7px;
+  background-size:cover;background-position:center;
+  border:1px solid rgba(0,0,0,.06);
+}
+
+/* Mobil: kompakte Felder */
 .w-emp{width:220px;max-width:220px}
 .w-note{width:160px;max-width:160px}
 .w-save{width:170px;max-width:170px}
 
-/* Manager kompakt & "nicht am Rand kleben" */
+/* Manager: nicht am Rand kleben */
 .w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
 .w-mgr-mail{
-  width:340px;
+  width:360px;
   max-width:88vw;
-  min-width:280px;
+  min-width:290px;
   margin-left:-9px;
 }
 
-/* Settings inputs */
-.w-pin{width:120px;max-width:120px}
-.w-color{width:140px;max-width:140px}
-.w-style{width:190px;max-width:190px}
+/* Rückwirkend Notiz kürzer */
+.w-edit-note{width:220px;max-width:220px;height:44px}
 
-/* Stack layout */
+/* Settings */
+.w-pin{width:120px;max-width:120px}
+.w-style{width:210px;max-width:210px}
+.w-color{width:150px;max-width:150px}
+
+/* Stack */
 .stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
-.stack input{margin-bottom:6px}
+.stack input, .stack textarea{margin-bottom:6px}
 .stack button{margin-top:4px}
 
-.btn-app{
-  background:linear-gradient(135deg,#111,#2b2b2b);
-  color:#fff;
-  padding:10px 14px;
-  border-radius:14px;
-  font-weight:800;
-  box-shadow:0 6px 16px rgba(0,0,0,.18);
+/* Icon preview */
+.iconRow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;margin-top:10px}
+.iconCard{
+  width:140px;
+  display:flex;flex-direction:column;gap:8px;align-items:center;
+  padding:10px;border-radius:14px;background:#f8fafc;
+  border:1px solid rgba(0,0,0,.06);
 }
-.btn-app:active{transform:scale(.98)}
+.iconCard.active{outline:3px solid rgba(37,99,235,.20)}
+.iconImg{
+  width:84px;height:84px;border-radius:18px;
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow:0 8px 16px rgba(0,0,0,.10);
+  background:#fff;
+}
+.smallhint{font-size:12px;color:var(--muted);text-align:center}
 
-/* PIN Overlay */
+/* Overlay (PIN) */
 .overlay{
   position:fixed; inset:0;
   background:rgba(0,0,0,.45);
@@ -158,19 +174,17 @@ th{text-align:left;color:#64748b}
   width:min(260px,86vw);
   max-width:86vw;
   letter-spacing:.18em;
-  font-weight:800;
+  font-weight:900;
   text-align:center;
   font-size:18px;
   padding:10px 12px;
 }
-
-@media(max-width:360px){
-  .pin{width:82vw;letter-spacing:.14em}
-}
+@media(max-width:360px){ .pin{width:82vw;letter-spacing:.14em} }
 @media(max-width:340px){
   .w-emp{width:210px;max-width:210px}
   .w-note{width:150px;max-width:150px}
   .w-mgr-name{width:180px;max-width:180px;margin-left:-7px}
+  .w-edit-note{width:200px;max-width:200px}
 }
 </style>
 </head>
@@ -178,13 +192,11 @@ th{text-align:left;color:#64748b}
 <body>
 
 <div class="card">
-  <h1>⏱️ Zeiterfassung</h1>
+  <h1>
+    <span id="headerIcon" class="header-icon"></span>
+    Zeiterfassung
+  </h1>
   <div class="muted">Offline · 🔐 PIN (6-stellig) · Auto-Pause <b>55 min</b> · CSV & Teilen</div>
-
-  <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-    <button class="btn-app" id="btnAddToHome">📲 Als App hinzufügen</button>
-    <span class="muted" id="a2hsHint" style="display:none">iPhone: Teilen ▸ „Zum Home-Bildschirm“</span>
-  </div>
 </div>
 
 <div class="card">
@@ -204,15 +216,18 @@ th{text-align:left;color:#64748b}
 
   <div class="stack">
     <div class="muted">👤 Mitarbeiter</div>
-    <input id="empName" class="w-emp" placeholder="Vorname Nachname">
-    <button class="btn-ghost w-save" id="saveName">💾 Speichern</button>
+    <div class="row" style="margin-bottom:0">
+      <input id="empName" class="w-emp" placeholder="Vorname Nachname">
+      <button class="btn-ghost w-save" id="saveName">💾 Speichern</button>
+      <span class="right muted mono" id="timerMini"></span>
+    </div>
     <div class="muted" id="nameMsg"></div>
   </div>
 
   <div class="row" style="margin-top:10px">
     <div><div class="muted">📅 Datum</div><input type="date" id="timerDate"></div>
     <div><div class="muted">📝 Notiz</div><input id="timerNote" class="w-note" placeholder="kurz"></div>
-    <span class="right muted mono" id="timerMini"></span>
+    <span class="right muted mono" id="timerInfo"></span>
   </div>
 
   <div class="row" style="margin-top:12px">
@@ -220,7 +235,6 @@ th{text-align:left;color:#64748b}
     <button class="btn-pause" id="btnPause" disabled>⏸️ Pause</button>
     <button class="btn-stop" id="btnStop">■ Stop</button>
     <span class="badge" id="timerStatus">⚪ bereit</span>
-    <span class="right muted mono" id="timerInfo"></span>
   </div>
 </div>
 
@@ -259,10 +273,9 @@ th{text-align:left;color:#64748b}
   </div>
 
   <div class="summarybar" id="summaryBar" style="display:none">
-    <span class="badge" id="weekChip" style="display:none">—</span>
     <span class="badge" id="sumChip">—</span>
-    <span class="badge" id="avgChip" style="display:none">—</span>
     <span class="badge weekend right" id="weekendChip" style="display:none">🟦 Wochenende: 00:00</span>
+    <span class="badge" id="avgChip" style="display:none">—</span>
   </div>
 
   <div style="margin-top:12px">
@@ -286,7 +299,7 @@ th{text-align:left;color:#64748b}
     <div><div class="muted">📅 Datum</div><input type="date" id="eDate"></div>
     <div><div class="muted">🟢 Start</div><input type="time" id="eStart"></div>
     <div><div class="muted">🔴 Ende</div><input type="time" id="eEnd"></div>
-    <div><div class="muted">📝 Notiz</div><input id="eNote" class="w-note"></div>
+    <div><div class="muted">📝 Notiz</div><input id="eNote" class="w-edit-note" placeholder="optional"></div>
   </div>
   <div class="row" style="margin-top:10px">
     <button class="btn-ghost" id="saveManual">💾 Speichern</button>
@@ -298,9 +311,7 @@ th{text-align:left;color:#64748b}
 <!-- ABSENCE -->
 <div class="card" id="absence" style="display:none">
   <h2>🏖️ Abwesenheit</h2>
-  <div class="muted">
-    Zeitraum: nur <b>Mo–Fr</b>. ✅ Pro Tag <b>max. 1</b> Abwesenheit. Neue Eintragung <b>überschreibt</b> vorhandene.
-  </div>
+  <div class="muted">Zeitraum: nur <b>Mo–Fr</b>. ✅ Pro Tag <b>max. 1</b> (überschreibt automatisch).</div>
 
   <div class="row" style="margin-top:10px">
     <div><div class="muted">📅 Start</div><input type="date" id="aStart"></div>
@@ -345,7 +356,8 @@ th{text-align:left;color:#64748b}
 
   <div class="card" style="margin-top:12px;background:#fbfbfb">
     <h2>🎨 App-Icon</h2>
-    <div class="muted">Wähle Style + Farbe → „Icon anwenden“ → dann iPhone: Home-Icon löschen & neu hinzufügen.</div>
+    <div class="muted">Wähle A/B/C + Farbe → „Icon anwenden“. (Kein „Als App hinzufügen“-Knopf nötig.)</div>
+
     <div class="row" style="margin-top:10px">
       <div>
         <div class="muted">Style</div>
@@ -360,12 +372,12 @@ th{text-align:left;color:#64748b}
         <input id="iconColor" class="w-color" type="color" value="#2563eb">
       </div>
       <button class="btn-blue" id="btnApplyIcon">✨ Icon anwenden</button>
-      <button class="btn-ghost" id="btnDownloadIcon">⬇️ Icon PNG</button>
       <span class="right muted mono" id="iconMsg"></span>
     </div>
-  </div>
 
-  <div class="muted" style="margin-top:8px">„Jahr löschen“ bezieht sich auf das Jahr vom 📌 Datum in der Übersicht.</div>
+    <div class="iconRow" id="iconPreviewRow"></div>
+    <div class="smallhint">Wenn iOS das alte Icon zeigt: Home-Icon löschen → Safari schließen → neu hinzufügen.</div>
+  </div>
 </div>
 
 <!-- PIN Overlay -->
@@ -389,12 +401,15 @@ th{text-align:left;color:#64748b}
 (() => {
   // ===== Config =====
   const NS="ZEITERFASSUNG";
-  const AUTO_BREAK=55;                 // Minuten Auto-Pause
-  const TOL_WEEK_MIN = 10*60;          // ±10h pro Woche Toleranz
+  const AUTO_BREAK=55;                 // Auto-Pause in Minuten
+  const TOL_WEEK_MIN = 10*60;          // ±10h/Woche
   const PIN_LEN=6;
 
-  const ICON_KEY = NS+"::icon_png_dataurl";     // gespeichertes PNG DataURL
-  const ICON_PREF = NS+"::icon_prefs";          // Style+Color
+  const ICON_KEY = NS+"::icon_png_dataurl";
+  const ICON_PREF = NS+"::icon_prefs";
+
+  const SALT_KEY = NS+"::salt";
+  const SESSION_KEY = NS+"::session_rawkey";
 
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
@@ -433,15 +448,21 @@ th{text-align:left;color:#64748b}
     return s;
   }
 
-  // ===== Icon Generator (3 styles) =====
+  // ===== Tabs =====
+  function tab(name){
+    ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
+      $(id).style.display=(id===name)?"":"none";
+    });
+    document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
+  }
+  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
+
+  // ===== Icon generator =====
   function iconSVG(style, color){
     const c = color || "#2563eb";
-    const bgA = "#0b1220";      // dunkel
-    const bgB = "#ffffff";      // hell
     const stroke = "#0f172a";
     const white = "#ffffff";
 
-    // Minimal modern (A): Dark gradient + clock ring + subtle "tick"
     if(style==="A"){
       return `
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
@@ -459,11 +480,9 @@ th{text-align:left;color:#64748b}
   <circle cx="512" cy="512" r="240" fill="none" stroke="${white}" stroke-opacity=".10" stroke-width="18"/>
   <path d="M512 320v210l150 86" fill="none" stroke="${white}" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="512" cy="512" r="18" fill="${white}"/>
-  <path d="M230 735c120 92 444 92 564 0" fill="none" stroke="${white}" stroke-opacity=".08" stroke-width="22" stroke-linecap="round"/>
 </svg>`;
     }
 
-    // Friendly clean (B): Light card + nice badge + clock + check
     if(style==="B"){
       return `
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
@@ -486,7 +505,6 @@ th{text-align:left;color:#64748b}
 </svg>`;
     }
 
-    // Corporate (C): Strong + geometric + subtle Z without being boring
     return `
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
@@ -511,7 +529,6 @@ th{text-align:left;color:#64748b}
   }
 
   async function svgToPngDataURL(svg, size=1024){
-    // render svg to canvas -> png data url
     const img = new Image();
     img.decoding = "async";
     const url = svgToDataURL(svg);
@@ -530,12 +547,11 @@ th{text-align:left;color:#64748b}
     return canvas.toDataURL("image/png");
   }
 
-  function setIcons(iconPngDataURL, iconSvgDataURL){
-    // favicon (SVG ok) + apple touch icon (PNG best)
-    const fav = $("dynIcon");
-    const apple = $("dynAppleIcon");
-    fav.href = iconSvgDataURL || iconPngDataURL;
-    apple.href = iconPngDataURL;
+  function setIcons(pngURL, svgURL){
+    // Cache-busting (Safari liebt Caches…)
+    const bust = Date.now();
+    $("dynFavicon").href = (svgURL || pngURL) ? ((svgURL||pngURL) + (svgURL?.startsWith("data:") ? "" : ("?v="+bust))) : "";
+    $("dynAppleIcon").href = pngURL ? (pngURL) : "";
   }
 
   function loadIconPrefs(){
@@ -546,9 +562,7 @@ th{text-align:left;color:#64748b}
       return {style:p.style||"B", color:p.color||"#2563eb"};
     }catch{ return {style:"B", color:"#2563eb"}; }
   }
-  function saveIconPrefs(p){
-    localStorage.setItem(ICON_PREF, JSON.stringify(p));
-  }
+  function saveIconPrefs(p){ localStorage.setItem(ICON_PREF, JSON.stringify(p)); }
 
   async function applyIcon(style, color){
     const svg = iconSVG(style, color);
@@ -557,7 +571,34 @@ th{text-align:left;color:#64748b}
     localStorage.setItem(ICON_KEY, pngURL);
     saveIconPrefs({style, color});
     setIcons(pngURL, svgURL);
-    return {pngURL, svgURL};
+    // Header icon als kleines SVG (sieht crisp aus)
+    $("headerIcon").style.backgroundImage = `url("${svgURL}")`;
+  }
+
+  function renderIconPreviews(color){
+    const styles = ["A","B","C"];
+    const row = $("iconPreviewRow");
+    const selected = $("iconStyle").value;
+
+    row.innerHTML = styles.map(s=>{
+      const svg = iconSVG(s, color);
+      const url = svgToDataURL(svg);
+      const label = (s==="A") ? "A · Minimal" : (s==="B") ? "B · Friendly" : "C · Corporate";
+      const active = (s===selected) ? "active" : "";
+      return `
+        <div class="iconCard ${active}" data-style="${s}">
+          <img class="iconImg" src="${url}" alt="Icon ${s}">
+          <div class="smallhint">${label}</div>
+        </div>
+      `;
+    }).join("");
+
+    row.querySelectorAll(".iconCard").forEach(el=>{
+      el.onclick=()=>{
+        $("iconStyle").value = el.getAttribute("data-style");
+        renderIconPreviews($("iconColor").value);
+      };
+    });
   }
 
   async function initIcons(){
@@ -565,27 +606,22 @@ th{text-align:left;color:#64748b}
     $("iconStyle").value = p.style;
     $("iconColor").value = p.color;
 
+    renderIconPreviews(p.color);
+
     const cached = localStorage.getItem(ICON_KEY);
+    const svg = iconSVG(p.style, p.color);
+    const svgURL = svgToDataURL(svg);
+
     if(cached){
-      // set cached PNG, plus svg for crisp favicon
-      const svg = iconSVG(p.style, p.color);
-      setIcons(cached, svgToDataURL(svg));
+      setIcons(cached, svgURL);
+      $("headerIcon").style.backgroundImage = `url("${svgURL}")`;
       return;
     }
-    // first run: generate default
-    try{
-      await applyIcon(p.style, p.color);
-    }catch{
-      // fallback: just svg as favicon
-      const svg = iconSVG("B","#2563eb");
-      setIcons("", svgToDataURL(svg));
-    }
+    // first run: generate
+    await applyIcon(p.style, p.color);
   }
 
-  // ===== Crypto =====
-  const SALT_KEY = NS+"::salt";
-  const SESSION_KEY = NS+"::session_rawkey";
-
+  // ===== Crypto / PIN =====
   async function deriveAesKeyFromPin(pin, saltBytes){
     const enc=new TextEncoder();
     const baseKey=await crypto.subtle.importKey("raw", enc.encode(pin), {name:"PBKDF2"}, false, ["deriveKey"]);
@@ -646,7 +682,7 @@ th{text-align:left;color:#64748b}
     localStorage.setItem(yearKey(y), JSON.stringify(blob));
   }
 
-  // ===== App State =====
+  // ===== App state =====
   let Y=new Date().getFullYear();
   let S={emp:"", mgr:{name:"",mail:""}, E:[], A:[]};
   let run=null;
@@ -666,21 +702,15 @@ th{text-align:left;color:#64748b}
     $("timerStatus").className = "badge" + (cls ? (" "+cls) : "");
   }
 
-  function tab(name){
-    ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
-      $(id).style.display=(id===name)?"":"none";
-    });
-    document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
-  }
-  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
-
   function getRefYear(){
     const v=$("refDate").value;
     return v ? d0(v).getFullYear() : new Date().getFullYear();
   }
 
   async function loadYear(y){
-    Y=y; $("yearHint").textContent=`Jahr: ${Y}`;
+    Y=y;
+    $("yearHint").textContent=`Jahr: ${Y}`;
+
     const aes=await getSessionKey();
     if(!aes){ showOverlay("Bitte PIN eingeben, um Daten zu laden."); return false; }
 
@@ -713,7 +743,7 @@ th{text-align:left;color:#64748b}
     $("nameMsg").textContent=S.emp?"✅ gespeichert":"";
   }
 
-  // ===== PIN =====
+  // ===== PIN actions =====
   $("btnUnlock").onclick=async()=>{
     const pin=($("pinInput").value||"").trim();
     if(pin.length!==PIN_LEN||!/^\d+$/.test(pin)){ $("pinMsg").textContent=`PIN muss ${PIN_LEN} Ziffern haben.`; return; }
@@ -738,26 +768,20 @@ th{text-align:left;color:#64748b}
     showOverlay("🔒 Gesperrt. Bitte PIN eingeben.");
   };
 
-  // ===== Add to Home hint =====
-  const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  $("btnAddToHome").onclick = () => {
-    if(isiOS){
-      $("a2hsHint").style.display = "";
-      alert("📲 iPhone/iPad: Tippe auf Teilen (⬆️) → „Zum Home-Bildschirm“.\nWenn du das Icon geändert hast: alte Kachel löschen & neu hinzufügen.");
-    }else{
-      alert("📲 Android/Chrome: Menü ⋮ → „Zum Startbildschirm hinzufügen“.");
-    }
-  };
-
-  // ===== Name/Manager =====
+  // ===== Name / Manager =====
   $("saveName").onclick=async()=>{ S.emp=($("empName").value||"").trim(); await saveYear(); applyStateToUI(); };
-  $("saveMgr").onclick=async()=>{ S.mgr={name:($("mgrName").value||"").trim(), mail:($("mgrMail").value||"").trim()}; await saveYear(); alert("✅ Manager gespeichert"); };
+  $("saveMgr").onclick=async()=>{
+    S.mgr={name:($("mgrName").value||"").trim(), mail:($("mgrMail").value||"").trim()};
+    await saveYear();
+    alert("✅ Manager gespeichert");
+  };
 
   // ===== Timer =====
   $("btnStart").onclick=async()=>{
     if(run) return alert("Timer läuft schon.");
     if(!S.emp) return alert("Bitte Name speichern.");
     if(!$("timerDate").value) return alert("Bitte Datum wählen.");
+
     const entryYear=d0($("timerDate").value).getFullYear();
     if(entryYear!==Y){ const ok=await loadYear(entryYear); if(!ok) return; }
 
@@ -766,7 +790,8 @@ th{text-align:left;color:#64748b}
     const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),now.getHours(),now.getMinutes(),0,0);
     run={date:$("timerDate").value,start,pauseMin:0,pauseStart:null,note:($("timerNote").value||"").trim()};
 
-    $("btnPause").disabled=false; $("btnPause").textContent="⏸️ Pause";
+    $("btnPause").disabled=false;
+    $("btnPause").textContent="⏸️ Pause";
     setTimerStatus("🟢 läuft","chip-ok");
     $("timerInfo").textContent=`Start ${pad(start.getHours())}:${pad(start.getMinutes())}`;
   };
@@ -787,10 +812,12 @@ th{text-align:left;color:#64748b}
   $("btnStop").onclick=async()=>{
     if(!run) return alert("Kein Timer läuft.");
     const end=new Date(); end.setSeconds(0,0);
+
     if(run.pauseStart){
       run.pauseMin += Math.max(0, Math.round((end-run.pauseStart)/60000));
       run.pauseStart=null;
     }
+
     const gross=Math.round((end-run.start)/60000);
     if(gross<=0){ setTimerStatus("❌ Zeit ungültig","chip-error"); return; }
 
@@ -811,11 +838,14 @@ th{text-align:left;color:#64748b}
   $("newManual").onclick=()=>{
     editingId=null; $("eStart").value=""; $("eEnd").value=""; $("eNote").value=""; $("editMsg").textContent="";
   };
+
   $("saveManual").onclick=async()=>{
-    if(!$("eDate").value||!$("eStart").value||!$("eEnd").value) return;
+    if(!$("eDate").value||!$("eStart").value||!$("eEnd").value) { $("editMsg").textContent="Bitte Datum/Start/Ende setzen"; return; }
+
     const d=$("eDate").value;
     const [sh,sm]=$("eStart").value.split(":").map(Number);
     const [eh,em]=$("eEnd").value.split(":").map(Number);
+
     const s=new Date(d0(d).setHours(sh,sm,0,0));
     const e=new Date(d0(d).setHours(eh,em,0,0));
     const gross=Math.round((e-s)/60000);
@@ -836,18 +866,13 @@ th{text-align:left;color:#64748b}
     await renderAll();
   };
 
-  // ===== Abwesenheit: Ende folgt Start (Standard gleicher Tag) =====
-  let aEndTouched = false;
-  function resetAbsAutoEnd(todayStr){
-    aEndTouched = false;
-    $("aEnd").value = $("aStart").value || todayStr;
-  }
-  $("aEnd").addEventListener("change", ()=>{ aEndTouched = true; });
-  $("aStart").addEventListener("change", ()=>{
+  // ===== Abwesenheit: Ende folgt Start =====
+  let aEndTouched=false;
+  $("aEnd").addEventListener("change",()=>{aEndTouched=true});
+  $("aStart").addEventListener("change",()=>{
     if(!aEndTouched) $("aEnd").value = $("aStart").value;
   });
 
-  // Abwesenheit Zeitraum: pro Tag 1, neue überschreibt
   $("addAbs").onclick=async()=>{
     $("absMsg").textContent="";
     const startV=$("aStart").value;
@@ -863,7 +888,7 @@ th{text-align:left;color:#64748b}
     const perYear = new Map();
 
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-      if(!wd(d)) continue;                    // nur Mo-Fr
+      if(!wd(d)) continue; // nur Mo-Fr
       const ds=toDateStr(d);
       const y=d.getFullYear();
 
@@ -873,9 +898,8 @@ th{text-align:left;color:#64748b}
       }
       const st = perYear.get(y);
 
-      // ✅ Überschreiben: entferne alle Abwesenheiten am Tag
       const beforeLen = st.A.length;
-      st.A = st.A.filter(a => a.d !== ds);
+      st.A = st.A.filter(a => a.d !== ds); // überschreibt: max.1/Tag
       const rem = beforeLen - st.A.length;
       if(rem>0) replaced += rem;
 
@@ -890,7 +914,6 @@ th{text-align:left;color:#64748b}
     $("absMsg").textContent = `✅ ${added} Tage gespeichert` + (replaced ? ` · ♻️ ${replaced} überschrieben` : "");
   };
 
-  // Einzeltag löschen
   $("delAbsDay").onclick=async()=>{
     $("absMsg").textContent="";
     const ds=$("aDelDate").value;
@@ -931,10 +954,10 @@ th{text-align:left;color:#64748b}
     }
   };
 
-  // ===== Overview ranges =====
+  // ===== Overview: ranges & merging years =====
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
-    const monIndex=(d.getDay()+6)%7;
+    const monIndex=(d.getDay()+6)%7; // Monday=0
     const start=new Date(d); start.setDate(d.getDate()-monIndex);
     const end=new Date(start); end.setDate(start.getDate()+6);
     start.setHours(0,0,0,0); end.setHours(0,0,0,0);
@@ -952,15 +975,6 @@ th{text-align:left;color:#64748b}
     const end=new Date(y,11,31); end.setHours(0,0,0,0);
     return [start,end];
   }
-  function isoWeekKey(dateObj){
-    const d=new Date(dateObj); d.setHours(0,0,0,0);
-    d.setDate(d.getDate()+3-((d.getDay()+6)%7));
-    const y=d.getFullYear();
-    const week1=new Date(y,0,4); week1.setHours(0,0,0,0);
-    week1.setDate(week1.getDate()+3-((week1.getDay()+6)%7));
-    const w=1+Math.round((d-week1)/(7*24*60*60*1000));
-    return `${y}-W${pad(w)}`;
-  }
 
   function getPeriodRange(){
     const v=$("refDate").value;
@@ -970,7 +984,7 @@ th{text-align:left;color:#64748b}
     if($("mode").value==="year") [start,end]=yearRange(yr);
     else if($("mode").value==="month") [start,end]=monthRange(ref);
     else [start,end]=weekRangeISO(ref);
-    return {yr,start,end};
+    return {start,end};
   }
 
   async function getMergedForRange(start, end){
@@ -1053,28 +1067,23 @@ th{text-align:left;color:#64748b}
     const weeksEq = workdays ? (workdays/5) : 1;
 
     $("summaryBar").style.display="";
-
     const sumCls = chipClassByWeeklyTolerance(delta, weeksEq);
     $("sumChip").className = "badge " + sumCls;
-    $("sumChip").textContent = `IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)} (±10:00/Woche)`;
+    $("sumChip").textContent = `IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)} (±10:00/Woche ok)`;
 
     if($("mode").value==="week"){
-      $("weekChip").style.display="";
       $("weekendChip").style.display="";
-      const wCls = chipClassByWeeklyTolerance(delta, 1);
-      $("weekChip").className = "badge " + wCls;
-      $("weekChip").textContent = `Woche: IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)}`;
       $("weekendChip").textContent = `🟦 Wochenende: ${hhmm(weekendMin)}`;
     }else{
-      $("weekChip").style.display="none";
       $("weekendChip").style.display="none";
     }
 
     if($("mode").value==="month"){
+      // avg per week in month (normalized by weekdays)
       const weeks=new Map();
       for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
         const ds=toDateStr(d);
-        const wk=isoWeekKey(d);
+        const wk = isoWeekKey(d);
         if(!weeks.has(wk)) weeks.set(wk,{ist:0,weekdays:0,absDays:0});
         const b=weeks.get(wk);
         b.ist += (istBy[ds]||0);
@@ -1097,7 +1106,18 @@ th{text-align:left;color:#64748b}
     }
   }
 
-  // ===== Abwesenheit Blöcke (Anzeige) =====
+  function isoWeekKey(dateObj){
+    // ISO week key for month averaging
+    const d=new Date(dateObj); d.setHours(0,0,0,0);
+    d.setDate(d.getDate()+3-((d.getDay()+6)%7));
+    const y=d.getFullYear();
+    const week1=new Date(y,0,4); week1.setHours(0,0,0,0);
+    week1.setDate(week1.getDate()+3-((week1.getDay()+6)%7));
+    const w=1+Math.round((d-week1)/(7*24*60*60*1000));
+    return `${y}-W${pad(w)}`;
+  }
+
+  // ===== Absence list (group blocks) =====
   function renderAbsList(){
     if(!S.A.length){
       $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten im Jahr ${Y}.</div>`;
@@ -1149,7 +1169,7 @@ th{text-align:left;color:#64748b}
     });
   }
 
-  // ===== Entry List =====
+  // ===== Entry list =====
   function renderEntryList(){
     const entries=S.E.slice().sort((a,b)=>b.d.localeCompare(a.d));
     if(!entries.length){
@@ -1181,6 +1201,7 @@ th{text-align:left;color:#64748b}
         await renderAll();
       };
     });
+
     document.querySelectorAll("[data-edit]").forEach(b=>{
       b.onclick=()=>{
         const id=b.getAttribute("data-edit");
@@ -1268,7 +1289,7 @@ th{text-align:left;color:#64748b}
     const {start,end,merged}=await getMergedForCurrentRange();
     if(!(merged.emp||S.emp)) return alert("Bitte Name speichern.");
     const csv=buildCSVForRange(merged,start,end);
-    const file=new File([new Blob([csv],{type:"text/csv"})], "zeiterfassung.csv", {type:"text/csv"});
+    const file=new File([new Blob([csv],{type:"text/csv"})], "Zeiterfassung.csv", {type:"text/csv"});
     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({title:`Zeiterfassung – ${merged.emp||S.emp}`, files:[file]});
       return;
@@ -1287,35 +1308,26 @@ th{text-align:left;color:#64748b}
     await renderAll();
   };
 
-  // ===== Icon Settings UI =====
+  // ===== Icon UI =====
+  $("iconColor").addEventListener("input", ()=>renderIconPreviews($("iconColor").value));
+  $("iconStyle").addEventListener("change", ()=>renderIconPreviews($("iconColor").value));
+
   $("btnApplyIcon").onclick = async()=>{
     try{
       const style = $("iconStyle").value;
       const color = $("iconColor").value;
       await applyIcon(style, color);
-      $("iconMsg").textContent = "✅ Icon gespeichert";
-      alert("✨ Icon angewendet.\nJetzt iPhone: Home-Icon löschen & Seite neu „Zum Home-Bildschirm“ hinzufügen.");
+      renderIconPreviews(color);
+      $("iconMsg").textContent = "✅ angewendet";
+      setTimeout(()=>$("iconMsg").textContent="", 2000);
+      alert("✨ Icon angewendet.\nWenn iOS das alte Icon zeigt: Home-Icon löschen → Safari schließen → neu hinzufügen.");
     }catch(e){
-      $("iconMsg").textContent = "❌ Icon Fehler";
+      $("iconMsg").textContent = "❌ Fehler";
       alert("Icon konnte nicht erzeugt werden.");
     }
   };
 
-  $("btnDownloadIcon").onclick = async()=>{
-    try{
-      const p = loadIconPrefs();
-      const svg = iconSVG(p.style, p.color);
-      const png = await svgToPngDataURL(svg, 1024);
-      const a=document.createElement("a");
-      a.href=png;
-      a.download="icon_1024.png";
-      document.body.appendChild(a); a.click(); a.remove();
-    }catch{
-      alert("PNG Download nicht möglich.");
-    }
-  };
-
-  // ===== Init defaults =====
+  // ===== Defaults =====
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
@@ -1323,7 +1335,6 @@ th{text-align:left;color:#64748b}
   $("aStart").value=today;
   $("aEnd").value=today;
   $("aDelDate").value=today;
-  resetAbsAutoEnd(today);
 
   $("btnPause").disabled=true;
   setTimerStatus("⚪ bereit","");
@@ -1334,6 +1345,7 @@ th{text-align:left;color:#64748b}
 
     const k=await getSessionKey();
     if(!k){ showOverlay("Bitte PIN setzen oder eingeben, um zu starten."); return; }
+
     await loadYear(getRefYear());
     await renderAll();
     tab("timer");
