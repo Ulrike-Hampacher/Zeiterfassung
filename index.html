@@ -45,22 +45,26 @@ th,td{padding:8px;border-bottom:1px solid #eee;font-size:14px;vertical-align:top
 th{text-align:left;color:#777}
 .mono{font-family:ui-monospace,Menlo,monospace}
 
-/* Kompakte Felder */
-.w-emp{width:280px;max-width:92vw}
-.w-note{width:200px;max-width:92vw}
-.w-mgr-name{width:240px;max-width:92vw}
-.w-mgr-mail{width:260px;max-width:92vw}
-.w-save{width:170px;max-width:92vw}
+/* ✅ KOMPAKT: feste kurze Breiten (auch am Handy) */
+.w-emp{width:240px; max-width:240px}
+.w-note{width:180px; max-width:180px}
+.w-mgr-name{width:220px; max-width:220px}
+.w-mgr-mail{width:240px; max-width:240px}
+.w-save{width:160px; max-width:160px}
+
+/* falls Bildschirm extrem schmal: minimal schrumpfen, aber NICHT 92vw */
+@media(max-width:340px){
+  .w-emp{width:220px;max-width:220px}
+  .w-note{width:160px;max-width:160px}
+  .w-mgr-name{width:200px;max-width:200px}
+  .w-mgr-mail{width:220px;max-width:220px}
+  .w-save{width:150px;max-width:150px}
+}
 
 /* Speichern nicht angeklebt */
 .stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .stack input{margin-bottom:6px}
 .stack button{margin-top:4px}
-
-/* Kleine Phones */
-@media(max-width:390px){
-  .w-emp,.w-note,.w-mgr-name,.w-mgr-mail,.w-save{width:92vw}
-}
 </style>
 </head>
 
@@ -115,6 +119,7 @@ th{text-align:left;color:#777}
 <!-- OVERVIEW -->
 <div class="card" id="overview" style="display:none">
   <h2>📊 Übersicht</h2>
+
   <div class="row">
     <div>
       <div class="muted">📅 Jahr</div>
@@ -139,6 +144,7 @@ th{text-align:left;color:#777}
       <div class="muted">📌 Referenz</div>
       <input type="date" id="refDate">
     </div>
+
     <button class="btn-ghost" id="btnRefresh">↻</button>
     <button class="btn-blue" id="btnCSV">⬇️ CSV</button>
     <button class="btn-ghost" id="btnShare">📤 Senden</button>
@@ -153,9 +159,9 @@ th{text-align:left;color:#777}
     <h2>👔 Manager</h2>
     <div class="stack">
       <div class="muted">Name</div>
-      <input id="mgrName" class="w-mgr-name">
+      <input id="mgrName" class="w-mgr-name" placeholder="Name">
       <div class="muted">E-Mail</div>
-      <input id="mgrMail" class="w-mgr-mail">
+      <input id="mgrMail" class="w-mgr-mail" placeholder="mail@firma.de">
       <button class="btn-ghost w-save" id="saveMgr">💾 Speichern</button>
     </div>
   </div>
@@ -205,89 +211,520 @@ th{text-align:left;color:#777}
 </div>
 
 <script>
-/* ===== LOGIK ===== */
 (() => {
 const NS="ZEITERFASSUNG", AUTO_BREAK=55, TOL=10*60;
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const hhmm=m=>{const s=m<0?"-":"";m=Math.abs(Math.round(m));return s+pad(Math.floor(m/60))+":"+pad(m%60)};
-const d0=s=>{const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c)};
+const d0=s=>{const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c,0,0,0,0)};
 const wd=d=>d.getDay()>=1&&d.getDay()<=5;
-const isoW=d=>{const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()+3-((x.getDay()+6)%7));
-const y=x.getFullYear(),w=Math.round(1+(x-new Date(y,0,4))/6048e5);return `${y}-W${pad(w)}`};
 
-let Y=new Date().getFullYear(),S={emp:"",mgr:{},E:[],A:[]},run=null;
+function isoWeekKey(dateObj){
+  const d=new Date(dateObj); d.setHours(0,0,0,0);
+  d.setDate(d.getDate()+3-((d.getDay()+6)%7));
+  const y=d.getFullYear();
+  const week1=new Date(y,0,4); week1.setHours(0,0,0,0);
+  week1.setDate(week1.getDate()+3-((week1.getDay()+6)%7));
+  const w=1+Math.round((d-week1)/(7*24*60*60*1000));
+  return `${y}-W${pad(w)}`;
+}
+function weekRangeISO(ref){
+  const d=new Date(ref); d.setHours(0,0,0,0);
+  const monIndex=(d.getDay()+6)%7;
+  const start=new Date(d); start.setDate(d.getDate()-monIndex);
+  const end=new Date(start); end.setDate(start.getDate()+6);
+  start.setHours(0,0,0,0); end.setHours(0,0,0,0);
+  return [start,end];
+}
+function monthRange(ref){
+  const d=new Date(ref);
+  const start=new Date(d.getFullYear(),d.getMonth(),1);
+  const end=new Date(d.getFullYear(),d.getMonth()+1,0);
+  start.setHours(0,0,0,0); end.setHours(0,0,0,0);
+  return [start,end];
+}
+function yearRange(y){
+  const start=new Date(y,0,1); start.setHours(0,0,0,0);
+  const end=new Date(y,11,31); end.setHours(0,0,0,0);
+  return [start,end];
+}
+const toDateStr=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const inRange=(ds,start,end)=> ds>=toDateStr(start) && ds<=toDateStr(end);
+
+let Y=new Date().getFullYear();
+let S={emp:"",mgr:{name:"",mail:""},E:[],A:[]};
+let run=null;
+let editingId=null;
+
 const key=y=>NS+"::"+y;
+function load(y){
+  Y=y;
+  S=JSON.parse(localStorage.getItem(key(y))||'{"emp":"","mgr":{"name":"","mail":""},"E":[],"A":[]}');
+  empName.value=S.emp||"";
+  mgrName.value=S.mgr?.name||"";
+  mgrMail.value=S.mgr?.mail||"";
+}
+function save(){ localStorage.setItem(key(Y),JSON.stringify(S)); }
 
-function load(y){Y=y;S=JSON.parse(localStorage.getItem(key(y))||'{"emp":"","mgr":{},"E":[],"A":[]}')}
-function save(){localStorage.setItem(key(Y),JSON.stringify(S))}
-function years(){const a=new Set([Y]);for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(NS+"::"))a.add(+k.split("::")[1])}
-return [...a].sort((a,b)=>b-a)}
-function renderYears(){yearSelect.innerHTML=years().map(y=>`<option>${y}</option>`).join("");yearSelect.value=Y}
-
-function tab(n){["timer","overview","edit","absence","entries"].forEach(id=>$(id).style.display=id===n?"":"none");
-document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===n))}
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
-
-saveName.onclick=()=>{S.emp=empName.value.trim();save();nameMsg.textContent=S.emp?"✅ gespeichert":"⚠️ fehlt";timerMini.textContent=S.emp?"👤 "+S.emp:""}
-saveMgr.onclick=()=>{S.mgr={name:mgrName.value,mail:mgrMail.value};save();alert("Manager gespeichert")}
-
-btnStart.onclick=()=>{
-if(run||!S.emp||!timerDate.value)return alert("Name & Datum nötig");
-const n=new Date();run={d:timerDate.value,s:new Date(d0(timerDate.value).setHours(n.getHours(),n.getMinutes())),p:0,note:timerNote.value};
-btnPause.disabled=false;timerStatus.textContent="🟢 läuft"}
-btnPause.onclick=()=>{
-if(!run)return;const n=new Date();
-if(!run.ps){run.ps=n;btnPause.textContent="▶️ Weiter";timerStatus.textContent="⏸️ Pause"}
-else{run.p+=Math.max(0,(n-run.ps)/6e4);run.ps=null;btnPause.textContent="⏸️ Pause";timerStatus.textContent="🟢 läuft"}}
-btnStop.onclick=()=>{
-if(!run)return;const e=new Date();if(run.ps)run.p+=(e-run.ps)/6e4;
-const g=(e-run.s)/6e4;if(g<=0)return alert("Zeit falsch");
-const pause=(g>=AUTO_BREAK?AUTO_BREAK:0)+run.p;
-S.E.push({id:crypto.randomUUID(),d:run.d,s:run.s.toISOString(),e:e.toISOString(),p:Math.round(pause),n:run.note||""});
-run=null;btnPause.disabled=true;btnPause.textContent="⏸️ Pause";timerStatus.textContent="⚪ bereit";save();render()}
-
-addAbs.onclick=()=>{if(!aDate.value)return;S.A.push({d:aDate.value,t:aType.value});save();render()}
-saveManual.onclick=()=>{
-const d=eDate.value,st=eStart.value,en=eEnd.value;if(!d||!st||!en)return;
-const s=new Date(d0(d).setHours(+st.split(":")[0],+st.split(":")[1]));
-const e=new Date(d0(d).setHours(+en.split(":")[0],+en.split(":")[1]));
-const g=(e-s)/6e4;if(g<=0)return;
-S.E.push({id:crypto.randomUUID(),d,s:s.toISOString(),e:e.toISOString(),p:g>=AUTO_BREAK?AUTO_BREAK:0,n:eNote.value||""});
-save();render()}
-
-function render(){
-renderYears();
-const ref=refDate.value?d0(refDate.value):new Date();
-const W=+weeklyTarget.value;
-let start,end;
-if(mode.value==="year"){start=new Date(Y,0,1);end=new Date(Y,11,31)}
-else if(mode.value==="month"){start=new Date(ref.getFullYear(),ref.getMonth(),1);end=new Date(ref.getFullYear(),ref.getMonth()+1,0)}
-else{start=new Date(ref);end=new Date(ref)}
-let ist=0,soll=0,by={};
-S.E.forEach(e=>{if(e.d>=`${start.getFullYear()}-${pad(start.getMonth()+1)}-${pad(start.getDate())}`&&
-e.d<=`${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}`){
-const n=(new Date(e.e)-new Date(e.s))/6e4-e.p;ist+=n;by[e.d]=(by[e.d]||0)+n}});
-for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
-const ds=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const ab=S.A.some(a=>a.d===ds)?W/5:0;
-soll+=wd(d)?W/5-ab:0}
-const delta=ist-soll;
-sumPill.className="pill "+(Math.abs(delta)>TOL?"bad":"ok");
-sumPill.textContent=`IST ${hhmm(ist)} · SOLL ${hhmm(soll)} · SALDO ${hhmm(delta)}`;
-overviewTable.innerHTML=Object.keys(by).sort().map(d=>`<div class="mono">${d}: ${hhmm(by[d])}</div>`).join("");
-entryList.innerHTML=S.E.map(e=>`<div class="mono">${e.d} ${hhmm((new Date(e.e)-new Date(e.s))/6e4-e.p)}</div>`).join("");
+function knownYears(){
+  const set=new Set();
+  const now=new Date().getFullYear();
+  for(let yy=now-3; yy<=now+3; yy++) set.add(yy);
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k && k.startsWith(NS+"::")){
+      const y=k.split("::")[1];
+      if(/^\d{4}$/.test(y)) set.add(+y);
+    }
+  }
+  return [...set].sort((a,b)=>b-a);
+}
+function renderYearSelect(){
+  yearSelect.innerHTML=knownYears().map(y=>`<option value="${y}">${y}</option>`).join("");
+  yearSelect.value=String(Y);
 }
 
-btnRefresh.onclick=render;weeklyTarget.onchange=render;mode.onchange=render;refDate.onchange=render;
-yearSelect.onchange=()=>{load(+yearSelect.value);render()}
-btnCSV.onclick=()=>alert("CSV: Struktur bereit (Ampel wird ergänzt, wenn du willst).");
-btnShare.onclick=()=>alert("Teilen nutzt CSV-Download (iOS/Android Share).");
+function tab(name){
+  ["timer","overview","edit","absence","entries"].forEach(id=>$(id).style.display = (id===name) ? "" : "none");
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
+
+function setTimerStatus(txt,cls){
+  timerStatus.textContent=txt;
+  timerStatus.className="pill"+(cls?(" "+cls):"");
+}
+
+saveName.onclick=()=>{
+  S.emp=empName.value.trim();
+  save();
+  nameMsg.textContent = S.emp ? "✅ gespeichert" : "⚠️ fehlt";
+  timerMini.textContent = S.emp ? ("👤 "+S.emp) : "";
+};
+
+saveMgr.onclick=()=>{
+  S.mgr={name:mgrName.value.trim(), mail:mgrMail.value.trim()};
+  save();
+  alert("✅ Manager gespeichert");
+};
+
+btnStart.onclick=()=>{
+  if(run) return alert("Timer läuft schon.");
+  if(!S.emp) return alert("Bitte Name speichern.");
+  if(!timerDate.value) return alert("Bitte Datum wählen.");
+
+  const now=new Date(); now.setSeconds(0,0);
+  const d=d0(timerDate.value);
+  const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),now.getHours(),now.getMinutes(),0,0);
+
+  run={date:timerDate.value, start, pauseMin:0, pauseStart:null, note:(timerNote.value||"").trim()};
+  btnPause.disabled=false;
+  btnPause.textContent="⏸️ Pause";
+  setTimerStatus("🟢 läuft","ok");
+  timerInfo.textContent=`Start ${pad(start.getHours())}:${pad(start.getMinutes())}`;
+};
+
+btnPause.onclick=()=>{
+  if(!run) return;
+  const now=new Date(); now.setSeconds(0,0);
+  if(!run.pauseStart){
+    run.pauseStart=now;
+    btnPause.textContent="▶️ Weiter";
+    setTimerStatus("⏸️ Pause","warn");
+  } else {
+    run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
+    run.pauseStart=null;
+    btnPause.textContent="⏸️ Pause";
+    setTimerStatus("🟢 läuft","ok");
+  }
+};
+
+btnStop.onclick=()=>{
+  if(!run) return alert("Kein Timer läuft.");
+  const end=new Date(); end.setSeconds(0,0);
+
+  if(run.pauseStart){
+    run.pauseMin += Math.max(0, Math.round((end-run.pauseStart)/60000));
+    run.pauseStart=null;
+  }
+
+  const gross=Math.round((end-run.start)/60000);
+  if(gross<=0) return alert("Zeit ungültig.");
+  const auto = gross>=AUTO_BREAK ? AUTO_BREAK : 0;
+  const pause = auto + run.pauseMin;
+
+  S.E.push({
+    id: crypto.randomUUID(),
+    d: run.date,
+    s: run.start.toISOString(),
+    e: end.toISOString(),
+    p: pause,
+    n: run.note || ""
+  });
+
+  run=null;
+  btnPause.disabled=true;
+  btnPause.textContent="⏸️ Pause";
+  setTimerStatus("⚪ bereit","");
+  timerInfo.textContent="✅ gespeichert";
+  save();
+  renderAll();
+};
+
+addAbs.onclick=()=>{
+  if(!aDate.value) return alert("Datum fehlt.");
+  S.A.push({id:crypto.randomUUID(), d:aDate.value, t:aType.value});
+  save();
+  renderAll();
+};
+
+newManual.onclick=()=>{
+  editingId=null;
+  eStart.value=""; eEnd.value=""; eNote.value="";
+  editMsg.textContent="";
+};
+
+saveManual.onclick=()=>{
+  if(!eDate.value||!eStart.value||!eEnd.value) return;
+  const d=eDate.value;
+  const [sh,sm]=eStart.value.split(":").map(Number);
+  const [eh,em]=eEnd.value.split(":").map(Number);
+  const s=new Date(d0(d).setHours(sh,sm,0,0));
+  const e=new Date(d0(d).setHours(eh,em,0,0));
+  const gross=Math.round((e-s)/60000);
+  if(gross<=0){ editMsg.textContent="⚠️ Ende muss nach Start"; return; }
+
+  const obj={id: editingId || crypto.randomUUID(), d, s:s.toISOString(), e:e.toISOString(), p:(gross>=AUTO_BREAK?AUTO_BREAK:0), n:(eNote.value||"").trim()};
+
+  if(editingId){
+    const idx=S.E.findIndex(x=>x.id===editingId);
+    if(idx>=0) S.E[idx]=obj; else S.E.push(obj);
+    editMsg.textContent="✅ aktualisiert";
+  } else {
+    S.E.push(obj);
+    editingId=obj.id;
+    editMsg.textContent="✅ gespeichert";
+  }
+  save();
+  renderAll();
+};
+
+function absLabel(t){
+  if(t==="vac") return "Urlaub";
+  if(t==="sick") return "Krank";
+  if(t==="hol") return "Feiertag";
+  return t;
+}
+function weeklyTarget(){ return +weeklyTargetEl.value; } // (not used)
+function buildCSV(){
+  const sep=";";
+  const W=+weeklyTarget.value;
+  const emp=S.emp||"";
+  const rows=[];
+  rows.push(["Mitarbeiter","Jahr","WochenSoll_min","Datum","Start","Ende","Pause_min","Netto_min","Netto_hhmm","Notiz","WeekKey","WeekAmpel","MonthKey","MonthAmpel"].join(sep));
+
+  // Ampel-Maps für ganzes Jahr berechnen
+  const DAY=W/5;
+  const [ys,ye]=yearRange(Y);
+
+  const istByDateYear={};
+  for(const e of S.E){
+    const net=(new Date(e.e)-new Date(e.s))/60000-(e.p||0);
+    istByDateYear[e.d]=(istByDateYear[e.d]||0)+Math.round(net);
+  }
+
+  const weekAgg=new Map(); // wk -> {ist, weekdays, absWeekdays}
+  const monthAgg=new Map(); // mk -> Map(wk -> {ist, weekdays, absWeekdays})
+
+  for(let d=new Date(ys); d<=ye; d.setDate(d.getDate()+1)){
+    const ds=toDateStr(d);
+    const wk=isoWeekKey(d);
+    const mk=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+    const ist=istByDateYear[ds]||0;
+
+    if(!weekAgg.has(wk)) weekAgg.set(wk,{ist:0,weekdays:0,absWeekdays:0});
+    const wb=weekAgg.get(wk);
+    wb.ist+=ist;
+    if(wd(d)){
+      wb.weekdays+=1;
+      if(S.A.some(a=>a.d===ds)) wb.absWeekdays+=1;
+    }
+
+    if(!monthAgg.has(mk)) monthAgg.set(mk,new Map());
+    const m=monthAgg.get(mk);
+    if(!m.has(wk)) m.set(wk,{ist:0,weekdays:0,absWeekdays:0});
+    const mb=m.get(wk);
+    mb.ist+=ist;
+    if(wd(d)){
+      mb.weekdays+=1;
+      if(S.A.some(a=>a.d===ds)) mb.absWeekdays+=1;
+    }
+  }
+
+  const ampFromDelta=(delta)=>{
+    if(Math.abs(delta)>TOL) return "rot";
+    if(Math.abs(delta)>1) return "gelb";
+    return "grün";
+  };
+
+  const weekAmp=new Map();
+  for(const [wk,b] of weekAgg.entries()){
+    if(b.weekdays===0){ weekAmp.set(wk,"grün"); continue; }
+    const soll=Math.max(0, W - (b.absWeekdays*DAY));
+    weekAmp.set(wk, ampFromDelta(b.ist - soll));
+  }
+
+  const monthAmp=new Map();
+  for(const [mk,weeks] of monthAgg.entries()){
+    const active=[...weeks.values()].filter(w=>w.weekdays>0);
+    if(active.length===0){ monthAmp.set(mk,"grün"); continue; }
+
+    const avgIst = active.map(w=>w.ist*(5/w.weekdays)).reduce((s,v)=>s+v,0)/active.length;
+    const avgSoll= active.map(w=>W-(w.absWeekdays*DAY)).reduce((s,v)=>s+v,0)/active.length;
+    monthAmp.set(mk, ampFromDelta(avgIst-avgSoll));
+  }
+
+  // Zeitraum entsprechend Modus
+  const ref = refDate.value ? d0(refDate.value) : new Date();
+  let start,end;
+  if(mode.value==="year") [start,end]=yearRange(Y);
+  else if(mode.value==="month") [start,end]=monthRange(ref);
+  else [start,end]=weekRangeISO(ref);
+
+  const entries = S.E.filter(e=>inRange(e.d,start,end)).sort((a,b)=>a.d.localeCompare(b.d));
+  for(const e of entries){
+    const net=Math.round((new Date(e.e)-new Date(e.s))/60000-(e.p||0));
+    const wk=isoWeekKey(d0(e.d));
+    const mk=e.d.slice(0,7);
+    rows.push([
+      emp,String(Y),String(W),
+      e.d,e.s,e.e,String(e.p||0),String(net),hhmm(net),(e.n||"").replaceAll(";",","),
+      wk, weekAmp.get(wk)||"grün",
+      mk, monthAmp.get(mk)||"grün"
+    ].join(sep));
+  }
+
+  const abs = S.A.filter(a=>inRange(a.d,start,end)).sort((a,b)=>a.d.localeCompare(b.d));
+  for(const a of abs){
+    const wk=isoWeekKey(d0(a.d));
+    const mk=a.d.slice(0,7);
+    rows.push([
+      emp,String(Y),String(W),
+      a.d,"","","0","0","00:00",absLabel(a.t),
+      wk, weekAmp.get(wk)||"grün",
+      mk, monthAmp.get(mk)||"grün"
+    ].join(sep));
+  }
+
+  return rows.join("\n");
+}
+
+function downloadCSV(){
+  if(!S.emp) return alert("Bitte Name speichern.");
+  const csv=buildCSV();
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`Zeiterfassung_${Y}_${S.emp.replaceAll(" ","_")}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function shareCSV(){
+  if(!S.emp) return alert("Bitte Name speichern.");
+  const csv=buildCSV();
+  const file=new File([new Blob([csv],{type:"text/csv"})], `zeiterfassung_${Y}.csv`, {type:"text/csv"});
+  const title=`Zeiterfassung – ${S.emp} (${Y})`;
+  const text=`Zeiterfassung ${Y} – ${S.emp}\nManager: ${S.mgr.name||""} ${S.mgr.mail||""}`.trim();
+
+  if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    await navigator.share({title,text,files:[file]});
+    return;
+  }
+  alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
+}
+
+btnCSV.onclick=downloadCSV;
+btnShare.onclick=shareCSV;
+
+function renderAbsList(){
+  if(!S.A.length){ absList.innerHTML=`<div class="muted">Keine Abwesenheiten.</div>`; return; }
+  const rows=S.A.slice().sort((a,b)=>b.d.localeCompare(a.d)).map(a=>`
+    <tr>
+      <td class="mono">${a.d}</td>
+      <td>${absLabel(a.t)}</td>
+      <td><button class="btn-ghost btn-sm" data-del-abs="${a.id}">🗑️</button></td>
+    </tr>`).join("");
+  absList.innerHTML=`<table><thead><tr><th>Datum</th><th>Typ</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  document.querySelectorAll("[data-del-abs]").forEach(b=>{
+    b.onclick=()=>{
+      const id=b.getAttribute("data-del-abs");
+      S.A=S.A.filter(x=>x.id!==id);
+      save(); renderAll();
+    };
+  });
+}
+
+function renderEntryList(){
+  const entries=S.E.slice().sort((a,b)=>b.d.localeCompare(a.d));
+  if(!entries.length){ entryList.innerHTML=`<div class="muted">Noch keine Einträge.</div>`; return; }
+
+  const rows=entries.map(e=>{
+    const net=Math.round((new Date(e.e)-new Date(e.s))/60000-(e.p||0));
+    const safe=encodeURIComponent(e.id);
+    return `
+      <tr>
+        <td class="mono">${e.d}</td>
+        <td class="mono">Netto ${hhmm(net)} · Pause ${hhmm(e.p||0)} · ${e.n||""}</td>
+        <td>
+          <button class="btn-ghost btn-sm" data-edit="${safe}">✍️</button>
+          <button class="btn-ghost btn-sm" data-del="${safe}">🗑️</button>
+        </td>
+      </tr>`;
+  }).join("");
+
+  entryList.innerHTML=`<table><thead><tr><th>Datum</th><th>Info</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+
+  document.querySelectorAll("[data-del]").forEach(b=>{
+    b.onclick=()=>{
+      const id=decodeURIComponent(b.getAttribute("data-del"));
+      S.E=S.E.filter(x=>x.id!==id);
+      save(); renderAll();
+    };
+  });
+  document.querySelectorAll("[data-edit]").forEach(b=>{
+    b.onclick=()=>{
+      const id=decodeURIComponent(b.getAttribute("data-edit"));
+      const e=S.E.find(x=>x.id===id);
+      if(!e) return;
+      editingId=id;
+      eDate.value=e.d;
+      const s=new Date(e.s), en=new Date(e.e);
+      eStart.value=`${pad(s.getHours())}:${pad(s.getMinutes())}`;
+      eEnd.value=`${pad(en.getHours())}:${pad(en.getMinutes())}`;
+      eNote.value=e.n||"";
+      editMsg.textContent="Bearbeiten aktiv";
+      tab("edit");
+    };
+  });
+}
+
+function renderOverviewTable(){
+  const W=+weeklyTarget.value;
+  const DAY=W/5;
+  const ref = refDate.value ? d0(refDate.value) : new Date();
+  let start,end;
+  if(mode.value==="year") [start,end]=yearRange(Y);
+  else if(mode.value==="month") [start,end]=monthRange(ref);
+  else [start,end]=weekRangeISO(ref);
+
+  const istBy={};
+  for(const e of S.E){
+    if(!inRange(e.d,start,end)) continue;
+    const net=Math.round((new Date(e.e)-new Date(e.s))/60000-(e.p||0));
+    istBy[e.d]=(istBy[e.d]||0)+net;
+  }
+
+  const dayNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
+  let istSum=0, sollSum=0;
+
+  let html=`<table><thead><tr>
+    <th>Datum</th><th>Tag</th><th>IST</th><th>SOLL</th><th>Abw.</th><th>SALDO</th>
+  </tr></thead><tbody>`;
+
+  for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+    const ds=toDateStr(d);
+    const ist=Math.round(istBy[ds]||0);
+    const isW=wd(d);
+    const abs=S.A.filter(a=>a.d===ds).map(a=>absLabel(a.t));
+    const absMinus = (isW && abs.length>0) ? DAY : 0;
+    const soll=Math.round(isW ? (DAY-absMinus) : 0);
+    const saldo=ist-soll;
+
+    istSum += ist;
+    sollSum += soll;
+
+    html+=`<tr>
+      <td class="mono">${ds}</td>
+      <td>${dayNames[d.getDay()]}</td>
+      <td class="mono">${hhmm(ist)}</td>
+      <td class="mono">${hhmm(soll)}</td>
+      <td>${abs.join(", ")}</td>
+      <td class="mono">${hhmm(saldo)}</td>
+    </tr>`;
+  }
+  html+=`</tbody></table>`;
+  overviewTable.innerHTML=html;
+
+  const delta=istSum-sollSum;
+  const cls = (Math.abs(delta)>TOL) ? "bad" : (Math.abs(delta)>1 ? "warn" : "ok");
+  sumPill.className="pill "+cls;
+  sumPill.textContent=`IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · SALDO ${hhmm(delta)}`;
+
+  // Monats-Ø/Woche Ampel
+  if(mode.value==="month"){
+    const weeks=new Map(); // wk -> {ist, weekdays, absWeekdays}
+    for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+      const ds=toDateStr(d);
+      const wk=isoWeekKey(d);
+      if(!weeks.has(wk)) weeks.set(wk,{ist:0,weekdays:0,absWeekdays:0});
+      const b=weeks.get(wk);
+      b.ist += (istBy[ds]||0);
+      if(wd(d)){
+        b.weekdays += 1;
+        if(S.A.some(a=>a.d===ds)) b.absWeekdays += 1;
+      }
+    }
+    const active=[...weeks.values()].filter(w=>w.weekdays>0);
+    const avgIst = active.length ? active.map(w=>w.ist*(5/w.weekdays)).reduce((s,v)=>s+v,0)/active.length : 0;
+    const avgSoll= active.length ? active.map(w=>W-(w.absWeekdays*DAY)).reduce((s,v)=>s+v,0)/active.length : W;
+    const dAvg=avgIst-avgSoll;
+    const clsAvg=(Math.abs(dAvg)>TOL)?"bad":(Math.abs(dAvg)>1?"warn":"ok");
+    avgPill.style.display="";
+    avgPill.className="pill "+clsAvg;
+    avgPill.textContent=`Ø/Woche ${hhmm(avgIst)} (Soll ${hhmm(avgSoll)})`;
+  } else {
+    avgPill.style.display="none";
+  }
+}
+
+function renderAll(){
+  timerMini.textContent = S.emp ? ("👤 "+S.emp) : "";
+  nameMsg.textContent = S.emp ? "✅ gespeichert" : "";
+  renderYearSelect();
+  renderOverviewTable();
+  renderAbsList();
+  renderEntryList();
+  save();
+}
+
+function renderYearSelect(){
+  renderYearSelect(); // placeholder to satisfy order
+}
+
+// Fix: do not recurse; create actual function name
+function renderYearSelectReal(){
+  yearSelect.innerHTML = knownYears().map(y=>`<option value="${y}">${y}</option>`).join("");
+  yearSelect.value=String(Y);
+}
+
+// Overwrite properly
+renderYearSelect = renderYearSelectReal;
+
+yearSelect.onchange=()=>{ load(+yearSelect.value); renderAll(); };
+weeklyTarget.onchange=renderAll;
+mode.onchange=renderAll;
+refDate.onchange=renderAll;
+btnRefresh.onclick=renderAll;
 
 const today=new Date().toISOString().slice(0,10);
 timerDate.value=refDate.value=eDate.value=aDate.value=today;
-load(Y);render();tab("timer");
+
+load(Y);
+btnPause.disabled=true;
+setTimerStatus("⚪ bereit","");
+renderAll();
+tab("timer");
 })();
 </script>
+
 </body>
 </html>
