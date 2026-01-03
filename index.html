@@ -10,17 +10,21 @@
 <meta name="theme-color" content="#111">
 <meta name="robots" content="noindex,nofollow">
 
-<link id="dynFavicon" rel="icon" href="">
-<link id="dynAppleIcon" rel="apple-touch-icon" href="">
+<!-- FIXES Home Icon: Corporate (C) (PNG wird beim ersten Laden erzeugt und bleibt fest) -->
+<link id="appleIcon" rel="apple-touch-icon" href="">
+<link id="faviconIcon" rel="icon" href="">
 
 <style>
 :root{
   --bg:#f4f6f8; --card:#fff; --text:#0f172a; --muted:#64748b;
   --line:#e5e7eb;
+
   --ok:#166534; --okbg:#dcfce7;
   --warn:#9a3412; --warnbg:#fff7ed;
   --err:#991b1b; --errbg:#fee2e2;
-  --blue:#2563eb; --green:#16a34a; --red:#dc2626; --dark:#0f172a;
+
+  --primary:#2563eb;
+  --green:#16a34a; --red:#dc2626; --dark:#0f172a;
   --chip:#eef2ff;
 }
 *{box-sizing:border-box}
@@ -42,7 +46,7 @@ button{border:none;font-weight:800;cursor:pointer}
 .btn-start{background:var(--green);color:#fff}
 .btn-pause{background:var(--dark);color:#fff}
 .btn-stop{background:var(--red);color:#fff}
-.btn-blue{background:var(--blue);color:#fff}
+.btn-blue{background:var(--primary);color:#fff}
 .btn-ghost{background:#eef2f7;color:#0f172a}
 .btn-sm{padding:8px 10px;font-size:14px;border-radius:10px}
 
@@ -82,12 +86,9 @@ th{text-align:left;color:#64748b}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
 .modal{width:min(560px,100%);background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .modal h2{margin-top:0}
-.pin{width:min(320px,86vw);max-width:86vw;letter-spacing:.14em;font-weight:900;text-align:center;font-size:18px;padding:10px 12px}
+.pin{width:min(360px,86vw);max-width:86vw;letter-spacing:.08em;font-weight:900;text-align:center;font-size:18px;padding:10px 12px}
+
 .smallhint{font-size:12px;color:var(--muted)}
-.iconRow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;margin-top:10px}
-.iconCard{width:140px;display:flex;flex-direction:column;gap:8px;align-items:center;padding:10px;border-radius:14px;background:#f8fafc;border:1px solid rgba(0,0,0,.06)}
-.iconCard.active{outline:3px solid rgba(37,99,235,.20)}
-.iconImg{width:84px;height:84px;border-radius:18px;border:1px solid rgba(0,0,0,.08);box-shadow:0 8px 16px rgba(0,0,0,.10);background:#fff}
 
 @media(max-width:340px){
   .w-emp{width:210px;max-width:210px}
@@ -105,7 +106,7 @@ th{text-align:left;color:#64748b}
     <span id="headerIcon" class="header-icon"></span>
     Zeiterfassung
   </h1>
-  <div class="muted">Offline · 🔐 PIN + Recovery-Key · Auto-Pause <b>55 min</b> · CSV & Teilen</div>
+  <div class="muted">Offline · 🔐 PIN + Recovery-Key · Auto-Pause <b>55 min</b> · CSV & Teilen · Home-Icon: <b>Corporate (C)</b></div>
 </div>
 
 <div class="card">
@@ -265,25 +266,25 @@ th{text-align:left;color:#64748b}
   </div>
 
   <div class="card" style="margin-top:12px;background:#fbfbfb">
-    <h2>🎨 App-Icon (A/B/C)</h2>
-    <div class="row">
+    <h2>🎨 App-Design (A/B/C)</h2>
+    <div class="muted">Nur In-App Look (Header/Akzent). Home-Icon bleibt fest: Corporate (C).</div>
+
+    <div class="row" style="margin-top:10px">
       <div>
-        <div class="muted">Style</div>
-        <select id="iconStyle">
-          <option value="A">A · Minimal modern</option>
-          <option value="B" selected>B · Friendly clean</option>
+        <div class="muted">Design</div>
+        <select id="themeStyle">
+          <option value="A">A · Minimal</option>
+          <option value="B" selected>B · Friendly</option>
           <option value="C">C · Corporate</option>
         </select>
       </div>
       <div>
-        <div class="muted">Farbe</div>
-        <input id="iconColor" type="color" value="#2563eb">
+        <div class="muted">Akzent</div>
+        <input id="themeColor" type="color" value="#2563eb">
       </div>
-      <button class="btn-blue" id="btnApplyIcon">✨ Icon anwenden</button>
-      <span class="right muted mono" id="iconMsg"></span>
+      <button class="btn-blue" id="btnApplyTheme">✨ Anwenden</button>
+      <span class="right muted mono" id="themeMsg"></span>
     </div>
-    <div class="iconRow" id="iconPreviewRow"></div>
-    <div class="smallhint">Wenn iOS das alte Icon zeigt: Home-Icon löschen → Safari schließen → neu hinzufügen.</div>
   </div>
 </div>
 
@@ -294,7 +295,7 @@ th{text-align:left;color:#64748b}
     <div class="muted" id="ovlText">Bitte PIN eingeben.</div>
 
     <div style="margin-top:10px;display:flex;justify-content:center">
-      <input id="pinInput" class="pin" inputmode="text" maxlength="64" placeholder="PIN oder Recovery-Key" autocomplete="off">
+      <input id="pinInput" class="pin" inputmode="text" maxlength="80" placeholder="PIN oder Recovery-Key" autocomplete="off">
     </div>
 
     <div class="row" style="margin-top:8px">
@@ -321,7 +322,7 @@ th{text-align:left;color:#64748b}
 
     <div class="card" id="recoveryBox" style="display:none;margin-top:12px;background:#fbfbfb">
       <h2>🔑 Dein Recovery-Key</h2>
-      <div class="muted">Bitte in Passwort-Manager speichern. Du brauchst ihn, wenn du die PIN vergisst.</div>
+      <div class="muted">Bitte in Passwort-Manager speichern.</div>
       <div class="mono" id="recoveryText" style="margin-top:8px;font-size:16px;font-weight:900"></div>
     </div>
   </div>
@@ -338,9 +339,11 @@ th{text-align:left;color:#64748b}
   const VAULT_KEY = NS+"::vault_v1";
   const SESSION_MASTER = NS+"::session_master_raw";
 
-  // Icon storage
-  const ICON_KEY = NS+"::icon_png_dataurl";
-  const ICON_PREF = NS+"::icon_prefs";
+  // Fixed Home Icon (Corporate C) cache
+  const HOME_ICON_PNG_KEY = NS+"::home_icon_c_png";
+
+  // Theme prefs (in-app only)
+  const THEME_PREF = NS+"::theme_pref";
 
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
@@ -382,7 +385,7 @@ th{text-align:left;color:#64748b}
   }
   document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
 
-  // ===== Icons (A/B/C) =====
+  // ===== SVG Icon generator (A/B/C) =====
   function iconSVG(style, color){
     const c = color || "#2563eb";
     const stroke = "#0f172a";
@@ -396,13 +399,9 @@ th{text-align:left;color:#64748b}
       <stop offset="0" stop-color="#111827"/>
       <stop offset="1" stop-color="#0b1220"/>
     </linearGradient>
-    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#000" flood-opacity=".25"/>
-    </filter>
   </defs>
   <rect width="1024" height="1024" rx="220" fill="url(#g)"/>
-  <circle cx="512" cy="512" r="300" fill="none" stroke="${c}" stroke-width="44" filter="url(#s)"/>
-  <circle cx="512" cy="512" r="240" fill="none" stroke="${white}" stroke-opacity=".10" stroke-width="18"/>
+  <circle cx="512" cy="512" r="300" fill="none" stroke="${c}" stroke-width="44"/>
   <path d="M512 320v210l150 86" fill="none" stroke="${white}" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="512" cy="512" r="18" fill="${white}"/>
 </svg>`;
@@ -416,12 +415,9 @@ th{text-align:left;color:#64748b}
       <stop offset="0" stop-color="${c}"/>
       <stop offset="1" stop-color="#1d4ed8"/>
     </linearGradient>
-    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000" flood-opacity=".18"/>
-    </filter>
   </defs>
   <rect width="1024" height="1024" rx="220" fill="#f8fafc"/>
-  <rect x="160" y="180" width="704" height="664" rx="160" fill="white" filter="url(#s)"/>
+  <rect x="160" y="180" width="704" height="664" rx="160" fill="white"/>
   <circle cx="512" cy="490" r="210" fill="none" stroke="url(#g)" stroke-width="44"/>
   <path d="M512 350v160l120 72" fill="none" stroke="${stroke}" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="512" cy="490" r="16" fill="${stroke}"/>
@@ -430,6 +426,7 @@ th{text-align:left;color:#64748b}
 </svg>`;
     }
 
+    // C = Corporate
     return `
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
@@ -437,14 +434,11 @@ th{text-align:left;color:#64748b}
       <stop offset="0" stop-color="#0b1220"/>
       <stop offset="1" stop-color="#111827"/>
     </linearGradient>
-    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#000" flood-opacity=".25"/>
-    </filter>
   </defs>
   <rect width="1024" height="1024" rx="220" fill="url(#g)"/>
   <path d="M230 360h564l-380 304h380v80H230l380-304H230z" fill="${c}" opacity=".95"/>
   <circle cx="512" cy="512" r="260" fill="none" stroke="white" stroke-opacity=".18" stroke-width="24"/>
-  <path d="M512 370v170l120 84" fill="none" stroke="white" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" filter="url(#s)"/>
+  <path d="M512 370v170l120 84" fill="none" stroke="white" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="512" cy="512" r="16" fill="white"/>
 </svg>`;
   }
@@ -466,75 +460,44 @@ th{text-align:left;color:#64748b}
     return canvas.toDataURL("image/png");
   }
 
-  function setIcons(pngURL, svgURL){
-    $("dynFavicon").href = svgURL || pngURL || "";
-    $("dynAppleIcon").href = pngURL || "";
+  async function initFixedHomeIcon(){
+    // Fixes Home icon to C (Corporate) permanently
+    let png = localStorage.getItem(HOME_ICON_PNG_KEY);
+    if(!png){
+      // choose a conservative corporate accent for home icon
+      const homeColor = "#2563eb";
+      const svg = iconSVG("C", homeColor);
+      png = await svgToPngDataURL(svg, 1024);
+      localStorage.setItem(HOME_ICON_PNG_KEY, png);
+    }
+    $("appleIcon").href = png;
+    $("faviconIcon").href = png; // ok as fallback favicon too
   }
 
-  function loadIconPrefs(){
+  // ===== Theme (in-app only) =====
+  function loadThemePref(){
     try{
-      const raw=localStorage.getItem(ICON_PREF);
+      const raw = localStorage.getItem(THEME_PREF);
       if(!raw) return {style:"B", color:"#2563eb"};
-      const p=JSON.parse(raw);
+      const p = JSON.parse(raw);
       return {style:p.style||"B", color:p.color||"#2563eb"};
     }catch{ return {style:"B", color:"#2563eb"}; }
   }
-  function saveIconPrefs(p){ localStorage.setItem(ICON_PREF, JSON.stringify(p)); }
-
-  async function applyIcon(style, color){
-    const svg=iconSVG(style, color);
-    const svgURL=svgToDataURL(svg);
-    const pngURL=await svgToPngDataURL(svg, 1024);
-    localStorage.setItem(ICON_KEY, pngURL);
-    saveIconPrefs({style,color});
-    setIcons(pngURL, svgURL);
+  function saveThemePref(p){
+    localStorage.setItem(THEME_PREF, JSON.stringify(p));
+  }
+  function applyTheme(style, color){
+    document.documentElement.style.setProperty("--primary", color || "#2563eb");
+    const svgURL = svgToDataURL(iconSVG(style, color));
     $("headerIcon").style.backgroundImage = `url("${svgURL}")`;
   }
 
-  function renderIconPreviews(color){
-    const styles=["A","B","C"];
-    const row=$("iconPreviewRow");
-    const selected=$("iconStyle").value;
-    row.innerHTML = styles.map(s=>{
-      const url=svgToDataURL(iconSVG(s,color));
-      const label = (s==="A")?"A · Minimal":(s==="B")?"B · Friendly":"C · Corporate";
-      return `<div class="iconCard ${s===selected?"active":""}" data-style="${s}">
-        <img class="iconImg" src="${url}" alt="Icon ${s}">
-        <div class="smallhint">${label}</div>
-      </div>`;
-    }).join("");
-    row.querySelectorAll(".iconCard").forEach(el=>{
-      el.onclick=()=>{ $("iconStyle").value=el.getAttribute("data-style"); renderIconPreviews($("iconColor").value); };
-    });
-  }
-
-  async function initIcons(){
-    const p=loadIconPrefs();
-    $("iconStyle").value=p.style;
-    $("iconColor").value=p.color;
-    renderIconPreviews(p.color);
-    const cached=localStorage.getItem(ICON_KEY);
-    const svgURL=svgToDataURL(iconSVG(p.style,p.color));
-    if(cached){
-      setIcons(cached, svgURL);
-      $("headerIcon").style.backgroundImage = `url("${svgURL}")`;
-      return;
-    }
-    await applyIcon(p.style,p.color);
-  }
-
-  $("iconColor").addEventListener("input",()=>renderIconPreviews($("iconColor").value));
-  $("iconStyle").addEventListener("change",()=>renderIconPreviews($("iconColor").value));
-  $("btnApplyIcon").onclick=async()=>{
-    try{
-      await applyIcon($("iconStyle").value, $("iconColor").value);
-      renderIconPreviews($("iconColor").value);
-      $("iconMsg").textContent="✅ angewendet";
-      setTimeout(()=>$("iconMsg").textContent="",1500);
-      alert("✨ Icon angewendet.\nWenn iOS das alte Icon zeigt: Home-Icon löschen → Safari schließen → neu hinzufügen.");
-    }catch{
-      $("iconMsg").textContent="❌ Fehler";
-    }
+  $("btnApplyTheme").onclick=()=>{
+    const p={style:$("themeStyle").value, color:$("themeColor").value};
+    saveThemePref(p);
+    applyTheme(p.style, p.color);
+    $("themeMsg").textContent="✅";
+    setTimeout(()=>$("themeMsg").textContent="",1200);
   };
 
   // ===== Vault / Crypto (MasterKey wrapped by PIN + Recovery) =====
@@ -577,10 +540,8 @@ th{text-align:left;color:#64748b}
   function clearSessionMaster(){ sessionStorage.removeItem(SESSION_MASTER); }
 
   async function createVaultWithPin(pin){
-    // MasterKey für alle Daten
     const master = await crypto.subtle.generateKey({name:"AES-GCM", length:256}, true, ["encrypt","decrypt"]);
 
-    // Recovery Key (wird NUR angezeigt, nicht gespeichert als Klartext!)
     const recBytes=rand(16);
     const recovery = chunk(hex(recBytes).toUpperCase(), 4);
 
@@ -596,14 +557,7 @@ th{text-align:left;color:#64748b}
 
     const verifier=await aesEncrypt(master, {ok:"ZEITERFASSUNG"});
 
-    const vault={
-      v:1,
-      pinSalt:b64(pinSalt),
-      recSalt:b64(recSalt),
-      wrapPin,
-      wrapRec,
-      verifier
-    };
+    const vault={ v:1, pinSalt:b64(pinSalt), recSalt:b64(recSalt), wrapPin, wrapRec, verifier };
     localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
     await setSessionMaster(master);
     return recovery;
@@ -616,16 +570,13 @@ th{text-align:left;color:#64748b}
 
     const pinSalt=ub64(vault.pinSalt);
     const recSalt=ub64(vault.recSalt);
-
     const wrap = (mode==="recovery") ? vault.wrapRec : vault.wrapPin;
     const salt = (mode==="recovery") ? recSalt : pinSalt;
 
     const k=await pbkdf2KeyFromSecret(secret, salt);
     const unwrapped = await aesDecrypt(k, wrap);
-    const masterRaw = unwrapped.master;
-    const master = await importRawAes(masterRaw);
+    const master = await importRawAes(unwrapped.master);
 
-    // verifier check
     const ok = await aesDecrypt(master, vault.verifier);
     if(ok?.ok !== "ZEITERFASSUNG") throw new Error("BAD_SECRET");
 
@@ -668,7 +619,6 @@ th{text-align:left;color:#64748b}
     return recovery;
   }
 
-  // ===== Data encryption per year using MasterKey =====
   function yearKey(y){ return NS+"::year::"+y; }
 
   async function encryptJson(obj){
@@ -744,7 +694,7 @@ th{text-align:left;color:#64748b}
     $("nameMsg").textContent=S.emp?"✅ gespeichert":"";
   }
 
-  // ===== PIN overlay actions =====
+  // ===== Overlay actions =====
   $("btnUnlock").onclick=async()=>{
     try{
       if(!hasVault()){
@@ -771,7 +721,7 @@ th{text-align:left;color:#64748b}
         return;
       }
       const pin=($("pinInput").value||"").trim();
-      if(pin.length<6){ $("pinMsg").textContent="PIN min. 6 Zeichen (Ziffern empfohlen)."; return; }
+      if(pin.length<6){ $("pinMsg").textContent="PIN min. 6 Zeichen."; return; }
 
       const recovery = await createVaultWithPin(pin);
 
@@ -977,12 +927,11 @@ th{text-align:left;color:#64748b}
     }
   };
   $("btnResetAll").onclick=async()=>{
-    if(confirm("Wirklich ALLES löschen (inkl. Vault, PIN, Recovery)?")){
-      // years
+    if(confirm("Wirklich ALLES löschen (inkl. PIN/Recovery)?")){
       const del=[];
       for(let i=0;i<localStorage.length;i++){
         const k=localStorage.key(i);
-        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY)) del.push(k);
+        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY || k===HOME_ICON_PNG_KEY || k===THEME_PREF)) del.push(k);
       }
       del.forEach(k=>localStorage.removeItem(k));
       clearSessionMaster();
@@ -1077,7 +1026,6 @@ th{text-align:left;color:#64748b}
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
       const ds=toDateStr(d);
       const ist=Number.isFinite(istBy[ds]) ? istBy[ds] : 0;
-
       if(isWeekend(d) && ist>0) weekendMin += ist;
 
       const absTypes=A.filter(a=>a.d===ds).map(a=>a.t);
@@ -1145,23 +1093,18 @@ th{text-align:left;color:#64748b}
     }
   }
 
-  // ===== Abs list =====
+  // ===== Lists =====
   function renderAbsList(){
     if(!S.A.length){ $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten im Jahr ${Y}.</div>`; return; }
     const arr=S.A.slice().sort((a,b)=>a.d.localeCompare(b.d));
-    let html=`<table><thead><tr><th>Datum</th><th>Typ</th><th></th></tr></thead><tbody>`;
+    let html=`<table><thead><tr><th>Datum</th><th>Typ</th></tr></thead><tbody>`;
     for(const a of arr){
-      html+=`<tr>
-        <td class="mono">${a.d}</td>
-        <td>${absBadge(a.t)}</td>
-        <td></td>
-      </tr>`;
+      html+=`<tr><td class="mono">${a.d}</td><td>${absBadge(a.t)}</td></tr>`;
     }
     html+=`</tbody></table>`;
     $("absList").innerHTML=html;
   }
 
-  // ===== Entry list =====
   function renderEntryList(){
     const entries=S.E.slice().sort((a,b)=>b.d.localeCompare(a.d));
     if(!entries.length){ $("entryList").innerHTML=`<div class="muted">Noch keine Einträge im Jahr ${Y}.</div>`; return; }
@@ -1300,8 +1243,16 @@ th{text-align:left;color:#64748b}
 
   // ===== Boot =====
   (async()=>{
-    await initIcons();
-    // wenn noch nicht entsperrt:
+    // fixed home icon C
+    await initFixedHomeIcon();
+
+    // apply in-app theme
+    const theme=loadThemePref();
+    $("themeStyle").value=theme.style;
+    $("themeColor").value=theme.color;
+    applyTheme(theme.style, theme.color);
+
+    // unlock flow
     if(!await getSessionMaster()){
       showOverlay(hasVault() ? "Bitte PIN oder Recovery-Key eingeben." : "Bitte PIN setzen (Recovery-Key wird angezeigt).");
       return;
