@@ -3,11 +3,16 @@
 <head>
 <meta charset="utf-8">
 <title>Zeiterfassung</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Zeiterfassung">
 <meta name="theme-color" content="#111">
 <meta name="robots" content="noindex,nofollow">
+
+<!-- Icons (werden per JS dynamisch gesetzt) -->
+<link id="dynIcon" rel="icon" href="">
+<link id="dynAppleIcon" rel="apple-touch-icon" href="">
 
 <style>
 :root{
@@ -16,15 +21,24 @@
 
   --ok:#166534; --okbg:#dcfce7;
   --warn:#9a3412; --warnbg:#fff7ed;
+  --err:#991b1b; --errbg:#fee2e2;
 
   --blue:#2563eb; --green:#16a34a; --red:#dc2626; --dark:#0f172a;
-
-  --b-vac:#2563eb; --b-sick:#f97316; --b-hol:#16a34a;
-  --b-bg:#eef2ff;
+  --chip:#eef2ff;
 }
 *{box-sizing:border-box}
-body{margin:0;padding:14px;font-family:-apple-system,system-ui;background:var(--bg);color:var(--text)}
-.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+body{
+  margin:0;padding:14px;
+  font-family:-apple-system,system-ui;
+  background:var(--bg);color:var(--text);
+}
+.card{
+  background:var(--card);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:14px;
+  box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
 h1{margin:0 0 6px 0;font-size:20px}
 h2{margin:6px 0 10px 0;font-size:16px}
 .muted{color:var(--muted);font-size:13px}
@@ -34,14 +48,17 @@ h2{margin:6px 0 10px 0;font-size:16px}
   column-gap:10px; row-gap:12px;
   margin-bottom:-12px;
 }
-.row > *{ margin-bottom:12px; }
-#overview .row{ margin-bottom:-14px; }
-#overview .row > *{ margin-bottom:14px; }
-
+.row>*{margin-bottom:12px;}
 .right{margin-left:auto}
-input,select,button{font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff}
-button{border:none;font-weight:700;cursor:pointer}
 
+input,select,button{
+  font-size:16px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#fff;
+}
+button{border:none;font-weight:700;cursor:pointer}
 .btn-start{background:var(--green);color:#fff}
 .btn-pause{background:var(--dark);color:#fff}
 .btn-stop{background:var(--red);color:#fff}
@@ -50,7 +67,10 @@ button{border:none;font-weight:700;cursor:pointer}
 .btn-sm{padding:8px 10px;font-size:14px;border-radius:10px}
 
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tab{padding:10px 14px;border-radius:12px;background:#eef2f7;cursor:pointer}
+.tab{
+  padding:10px 14px;border-radius:12px;
+  background:#eef2f7;cursor:pointer;
+}
 .tab.active{background:#111;color:#fff}
 
 table{width:100%;border-collapse:collapse}
@@ -58,56 +78,81 @@ th,td{padding:8px;border-bottom:1px solid #eef2f7;font-size:14px;vertical-align:
 th{text-align:left;color:#64748b}
 .mono{font-family:ui-monospace,Menlo,monospace}
 
-/* Kompakt am Handy */
-.w-emp{width:220px;max-width:220px}
-.w-note{width:160px;max-width:160px}
-.w-save{width:160px;max-width:160px}
-
-.stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
-.stack input{margin-bottom:6px}
-.stack button{margin-top:4px}
-
-/* Manager (Mail länger + -9 left) */
-.w-mgr-name{width:200px;max-width:200px;margin-left:-7px}
-.w-mgr-mail{width:360px;max-width:92vw;min-width:300px;margin-left:-9px}
-
-/* Chips / Badges */
 .badge{
   display:inline-flex; align-items:center; gap:6px;
   padding:5px 10px; border-radius:999px;
   font-size:12px; font-weight:800;
-  background:var(--b-bg);
+  background:var(--chip);
   border:1px solid rgba(0,0,0,.06);
   white-space:nowrap;
 }
-.badge.vac{ color:var(--b-vac); }
-.badge.sick{ color:var(--b-sick); }
-.badge.hol{ color:var(--b-hol); }
-
-/* Wochenende neutral */
 .badge.weekend{
   color:#1e40af;
   background:#eff6ff;
   border:1px solid #bfdbfe;
 }
+.badge.vac{ color:#2563eb; }
+.badge.sick{ color:#f97316; }
+.badge.hol{ color:#16a34a; }
 
-/* Summary Chips (Ampel ohne Rot) */
 .chip-ok{ background:var(--okbg); color:var(--ok); }
 .chip-warn{ background:var(--warnbg); color:var(--warn); }
-.chip-error{ background:#fee2e2; color:#991b1b; }
+.chip-error{ background:var(--errbg); color:var(--err); }
 
 .summarybar{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  align-items:center;
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
   margin-top:10px;
 }
 .summarybar .right{ margin-left:auto; }
 
+/* Kompakt am Handy */
+.w-emp{width:220px;max-width:220px}
+.w-note{width:160px;max-width:160px}
+.w-save{width:170px;max-width:170px}
+
+/* Manager kompakt & "nicht am Rand kleben" */
+.w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
+.w-mgr-mail{
+  width:340px;
+  max-width:88vw;
+  min-width:280px;
+  margin-left:-9px;
+}
+
+/* Settings inputs */
+.w-pin{width:120px;max-width:120px}
+.w-color{width:140px;max-width:140px}
+.w-style{width:190px;max-width:190px}
+
+/* Stack layout */
+.stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.stack input{margin-bottom:6px}
+.stack button{margin-top:4px}
+
+.btn-app{
+  background:linear-gradient(135deg,#111,#2b2b2b);
+  color:#fff;
+  padding:10px 14px;
+  border-radius:14px;
+  font-weight:800;
+  box-shadow:0 6px 16px rgba(0,0,0,.18);
+}
+.btn-app:active{transform:scale(.98)}
+
 /* PIN Overlay */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
-.modal{width:min(520px,100%);background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.overlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.45);
+  display:none; align-items:center; justify-content:center;
+  padding:14px;
+}
+.modal{
+  width:min(520px,100%);
+  background:#fff;
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+}
 .modal h2{margin-top:0}
 .pin{
   width:min(260px,86vw);
@@ -118,11 +163,14 @@ th{text-align:left;color:#64748b}
   font-size:18px;
   padding:10px 12px;
 }
-@media(max-width:360px){ .pin{width:82vw;letter-spacing:.14em} }
+
+@media(max-width:360px){
+  .pin{width:82vw;letter-spacing:.14em}
+}
 @media(max-width:340px){
   .w-emp{width:210px;max-width:210px}
   .w-note{width:150px;max-width:150px}
-  .w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
+  .w-mgr-name{width:180px;max-width:180px;margin-left:-7px}
 }
 </style>
 </head>
@@ -132,6 +180,11 @@ th{text-align:left;color:#64748b}
 <div class="card">
   <h1>⏱️ Zeiterfassung</h1>
   <div class="muted">Offline · 🔐 PIN (6-stellig) · Auto-Pause <b>55 min</b> · CSV & Teilen</div>
+
+  <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <button class="btn-app" id="btnAddToHome">📲 Als App hinzufügen</button>
+    <span class="muted" id="a2hsHint" style="display:none">iPhone: Teilen ▸ „Zum Home-Bildschirm“</span>
+  </div>
 </div>
 
 <div class="card">
@@ -283,11 +336,35 @@ th{text-align:left;color:#64748b}
 <div class="card" id="settings" style="display:none">
   <h2>⚙️ Settings</h2>
   <div class="muted">🔐 Daten lokal verschlüsselt. PIN gilt pro Session (solange Safari offen bleibt).</div>
+
   <div class="row" style="margin-top:10px">
     <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
     <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
     <button class="btn-ghost" id="btnResetAll">🧨 Alles löschen</button>
   </div>
+
+  <div class="card" style="margin-top:12px;background:#fbfbfb">
+    <h2>🎨 App-Icon</h2>
+    <div class="muted">Wähle Style + Farbe → „Icon anwenden“ → dann iPhone: Home-Icon löschen & neu hinzufügen.</div>
+    <div class="row" style="margin-top:10px">
+      <div>
+        <div class="muted">Style</div>
+        <select id="iconStyle" class="w-style">
+          <option value="A">A · Minimal modern</option>
+          <option value="B" selected>B · Friendly clean</option>
+          <option value="C">C · Corporate</option>
+        </select>
+      </div>
+      <div>
+        <div class="muted">Farbe</div>
+        <input id="iconColor" class="w-color" type="color" value="#2563eb">
+      </div>
+      <button class="btn-blue" id="btnApplyIcon">✨ Icon anwenden</button>
+      <button class="btn-ghost" id="btnDownloadIcon">⬇️ Icon PNG</button>
+      <span class="right muted mono" id="iconMsg"></span>
+    </div>
+  </div>
+
   <div class="muted" style="margin-top:8px">„Jahr löschen“ bezieht sich auf das Jahr vom 📌 Datum in der Übersicht.</div>
 </div>
 
@@ -310,10 +387,14 @@ th{text-align:left;color:#64748b}
 
 <script>
 (() => {
+  // ===== Config =====
   const NS="ZEITERFASSUNG";
-  const AUTO_BREAK=55;
-  const TOL_WEEK_MIN = 10*60;
+  const AUTO_BREAK=55;                 // Minuten Auto-Pause
+  const TOL_WEEK_MIN = 10*60;          // ±10h pro Woche Toleranz
   const PIN_LEN=6;
+
+  const ICON_KEY = NS+"::icon_png_dataurl";     // gespeichertes PNG DataURL
+  const ICON_PREF = NS+"::icon_prefs";          // Style+Color
 
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
@@ -352,7 +433,156 @@ th{text-align:left;color:#64748b}
     return s;
   }
 
-  // Crypto
+  // ===== Icon Generator (3 styles) =====
+  function iconSVG(style, color){
+    const c = color || "#2563eb";
+    const bgA = "#0b1220";      // dunkel
+    const bgB = "#ffffff";      // hell
+    const stroke = "#0f172a";
+    const white = "#ffffff";
+
+    // Minimal modern (A): Dark gradient + clock ring + subtle "tick"
+    if(style==="A"){
+      return `
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="1" stop-color="#0b1220"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#000" flood-opacity=".25"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#g)"/>
+  <circle cx="512" cy="512" r="300" fill="none" stroke="${c}" stroke-width="44" filter="url(#s)"/>
+  <circle cx="512" cy="512" r="240" fill="none" stroke="${white}" stroke-opacity=".10" stroke-width="18"/>
+  <path d="M512 320v210l150 86" fill="none" stroke="${white}" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="512" cy="512" r="18" fill="${white}"/>
+  <path d="M230 735c120 92 444 92 564 0" fill="none" stroke="${white}" stroke-opacity=".08" stroke-width="22" stroke-linecap="round"/>
+</svg>`;
+    }
+
+    // Friendly clean (B): Light card + nice badge + clock + check
+    if(style==="B"){
+      return `
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${c}"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="#f8fafc"/>
+  <rect x="160" y="180" width="704" height="664" rx="160" fill="white" filter="url(#s)"/>
+  <circle cx="512" cy="490" r="210" fill="none" stroke="url(#g)" stroke-width="44"/>
+  <path d="M512 350v160l120 72" fill="none" stroke="${stroke}" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="512" cy="490" r="16" fill="${stroke}"/>
+  <rect x="300" y="690" width="424" height="92" rx="46" fill="url(#g)"/>
+  <path d="M412 736l46 46 138-150" fill="none" stroke="white" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+    }
+
+    // Corporate (C): Strong + geometric + subtle Z without being boring
+    return `
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#000" flood-opacity=".25"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#g)"/>
+  <path d="M230 360h564l-380 304h380v80H230l380-304H230z" fill="${c}" opacity=".95"/>
+  <circle cx="512" cy="512" r="260" fill="none" stroke="white" stroke-opacity=".18" stroke-width="24"/>
+  <path d="M512 370v170l120 84" fill="none" stroke="white" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" filter="url(#s)"/>
+  <circle cx="512" cy="512" r="16" fill="white"/>
+</svg>`;
+  }
+
+  function svgToDataURL(svg){
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
+  }
+
+  async function svgToPngDataURL(svg, size=1024){
+    // render svg to canvas -> png data url
+    const img = new Image();
+    img.decoding = "async";
+    const url = svgToDataURL(svg);
+
+    await new Promise((res, rej) => {
+      img.onload = () => res();
+      img.onerror = () => rej(new Error("Icon-Render fehlgeschlagen"));
+      img.src = url;
+    });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0,0,size,size);
+    ctx.drawImage(img,0,0,size,size);
+    return canvas.toDataURL("image/png");
+  }
+
+  function setIcons(iconPngDataURL, iconSvgDataURL){
+    // favicon (SVG ok) + apple touch icon (PNG best)
+    const fav = $("dynIcon");
+    const apple = $("dynAppleIcon");
+    fav.href = iconSvgDataURL || iconPngDataURL;
+    apple.href = iconPngDataURL;
+  }
+
+  function loadIconPrefs(){
+    try{
+      const raw = localStorage.getItem(ICON_PREF);
+      if(!raw) return {style:"B", color:"#2563eb"};
+      const p = JSON.parse(raw);
+      return {style:p.style||"B", color:p.color||"#2563eb"};
+    }catch{ return {style:"B", color:"#2563eb"}; }
+  }
+  function saveIconPrefs(p){
+    localStorage.setItem(ICON_PREF, JSON.stringify(p));
+  }
+
+  async function applyIcon(style, color){
+    const svg = iconSVG(style, color);
+    const svgURL = svgToDataURL(svg);
+    const pngURL = await svgToPngDataURL(svg, 1024);
+    localStorage.setItem(ICON_KEY, pngURL);
+    saveIconPrefs({style, color});
+    setIcons(pngURL, svgURL);
+    return {pngURL, svgURL};
+  }
+
+  async function initIcons(){
+    const p = loadIconPrefs();
+    $("iconStyle").value = p.style;
+    $("iconColor").value = p.color;
+
+    const cached = localStorage.getItem(ICON_KEY);
+    if(cached){
+      // set cached PNG, plus svg for crisp favicon
+      const svg = iconSVG(p.style, p.color);
+      setIcons(cached, svgToDataURL(svg));
+      return;
+    }
+    // first run: generate default
+    try{
+      await applyIcon(p.style, p.color);
+    }catch{
+      // fallback: just svg as favicon
+      const svg = iconSVG("B","#2563eb");
+      setIcons("", svgToDataURL(svg));
+    }
+  }
+
+  // ===== Crypto =====
   const SALT_KEY = NS+"::salt";
   const SESSION_KEY = NS+"::session_rawkey";
 
@@ -416,7 +646,7 @@ th{text-align:left;color:#64748b}
     localStorage.setItem(yearKey(y), JSON.stringify(blob));
   }
 
-  // State
+  // ===== App State =====
   let Y=new Date().getFullYear();
   let S={emp:"", mgr:{name:"",mail:""}, E:[], A:[]};
   let run=null;
@@ -483,7 +713,7 @@ th{text-align:left;color:#64748b}
     $("nameMsg").textContent=S.emp?"✅ gespeichert":"";
   }
 
-  // PIN
+  // ===== PIN =====
   $("btnUnlock").onclick=async()=>{
     const pin=($("pinInput").value||"").trim();
     if(pin.length!==PIN_LEN||!/^\d+$/.test(pin)){ $("pinMsg").textContent=`PIN muss ${PIN_LEN} Ziffern haben.`; return; }
@@ -508,11 +738,22 @@ th{text-align:left;color:#64748b}
     showOverlay("🔒 Gesperrt. Bitte PIN eingeben.");
   };
 
-  // Name / Manager
+  // ===== Add to Home hint =====
+  const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  $("btnAddToHome").onclick = () => {
+    if(isiOS){
+      $("a2hsHint").style.display = "";
+      alert("📲 iPhone/iPad: Tippe auf Teilen (⬆️) → „Zum Home-Bildschirm“.\nWenn du das Icon geändert hast: alte Kachel löschen & neu hinzufügen.");
+    }else{
+      alert("📲 Android/Chrome: Menü ⋮ → „Zum Startbildschirm hinzufügen“.");
+    }
+  };
+
+  // ===== Name/Manager =====
   $("saveName").onclick=async()=>{ S.emp=($("empName").value||"").trim(); await saveYear(); applyStateToUI(); };
   $("saveMgr").onclick=async()=>{ S.mgr={name:($("mgrName").value||"").trim(), mail:($("mgrMail").value||"").trim()}; await saveYear(); alert("✅ Manager gespeichert"); };
 
-  // Timer
+  // ===== Timer =====
   $("btnStart").onclick=async()=>{
     if(run) return alert("Timer läuft schon.");
     if(!S.emp) return alert("Bitte Name speichern.");
@@ -566,7 +807,7 @@ th{text-align:left;color:#64748b}
     await renderAll();
   };
 
-  // Rückwirkend
+  // ===== Rückwirkend =====
   $("newManual").onclick=()=>{
     editingId=null; $("eStart").value=""; $("eEnd").value=""; $("eNote").value=""; $("editMsg").textContent="";
   };
@@ -595,7 +836,18 @@ th{text-align:left;color:#64748b}
     await renderAll();
   };
 
-  // Abwesenheit Zeitraum: Überschreiben pro Tag
+  // ===== Abwesenheit: Ende folgt Start (Standard gleicher Tag) =====
+  let aEndTouched = false;
+  function resetAbsAutoEnd(todayStr){
+    aEndTouched = false;
+    $("aEnd").value = $("aStart").value || todayStr;
+  }
+  $("aEnd").addEventListener("change", ()=>{ aEndTouched = true; });
+  $("aStart").addEventListener("change", ()=>{
+    if(!aEndTouched) $("aEnd").value = $("aStart").value;
+  });
+
+  // Abwesenheit Zeitraum: pro Tag 1, neue überschreibt
   $("addAbs").onclick=async()=>{
     $("absMsg").textContent="";
     const startV=$("aStart").value;
@@ -608,10 +860,10 @@ th{text-align:left;color:#64748b}
     if(end < start) return alert("Ende muss nach Start sein.");
 
     let added=0, replaced=0;
-
     const perYear = new Map();
+
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-      if(!wd(d)) continue;
+      if(!wd(d)) continue;                    // nur Mo-Fr
       const ds=toDateStr(d);
       const y=d.getFullYear();
 
@@ -621,7 +873,7 @@ th{text-align:left;color:#64748b}
       }
       const st = perYear.get(y);
 
-      // ✅ Überschreiben: entferne alle Abwesenheiten am Tag (egal Typ)
+      // ✅ Überschreiben: entferne alle Abwesenheiten am Tag
       const beforeLen = st.A.length;
       st.A = st.A.filter(a => a.d !== ds);
       const rem = beforeLen - st.A.length;
@@ -655,7 +907,7 @@ th{text-align:left;color:#64748b}
     $("absMsg").textContent = removed ? `🗑️ ${removed} Eintrag(e) am ${ds} gelöscht` : `ℹ️ nichts gefunden am ${ds}`;
   };
 
-  // Reset
+  // ===== Reset =====
   $("btnResetThisYear").onclick=async()=>{
     const yr=getRefYear();
     if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
@@ -679,7 +931,7 @@ th{text-align:left;color:#64748b}
     }
   };
 
-  // Bereiche / Übersicht
+  // ===== Overview ranges =====
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
     const monIndex=(d.getDay()+6)%7;
@@ -845,7 +1097,7 @@ th{text-align:left;color:#64748b}
     }
   }
 
-  // Abwesenheiten Blöcke + löschen
+  // ===== Abwesenheit Blöcke (Anzeige) =====
   function renderAbsList(){
     if(!S.A.length){
       $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten im Jahr ${Y}.</div>`;
@@ -897,6 +1149,7 @@ th{text-align:left;color:#64748b}
     });
   }
 
+  // ===== Entry List =====
   function renderEntryList(){
     const entries=S.E.slice().sort((a,b)=>b.d.localeCompare(a.d));
     if(!entries.length){
@@ -952,7 +1205,7 @@ th{text-align:left;color:#64748b}
     renderEntryList();
   }
 
-  // CSV / Share
+  // ===== CSV / Share =====
   async function getMergedForCurrentRange(){
     const {start,end}=getPeriodRange();
     const merged=await getMergedForRange(start,end);
@@ -1034,6 +1287,35 @@ th{text-align:left;color:#64748b}
     await renderAll();
   };
 
+  // ===== Icon Settings UI =====
+  $("btnApplyIcon").onclick = async()=>{
+    try{
+      const style = $("iconStyle").value;
+      const color = $("iconColor").value;
+      await applyIcon(style, color);
+      $("iconMsg").textContent = "✅ Icon gespeichert";
+      alert("✨ Icon angewendet.\nJetzt iPhone: Home-Icon löschen & Seite neu „Zum Home-Bildschirm“ hinzufügen.");
+    }catch(e){
+      $("iconMsg").textContent = "❌ Icon Fehler";
+      alert("Icon konnte nicht erzeugt werden.");
+    }
+  };
+
+  $("btnDownloadIcon").onclick = async()=>{
+    try{
+      const p = loadIconPrefs();
+      const svg = iconSVG(p.style, p.color);
+      const png = await svgToPngDataURL(svg, 1024);
+      const a=document.createElement("a");
+      a.href=png;
+      a.download="icon_1024.png";
+      document.body.appendChild(a); a.click(); a.remove();
+    }catch{
+      alert("PNG Download nicht möglich.");
+    }
+  };
+
+  // ===== Init defaults =====
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
@@ -1041,17 +1323,15 @@ th{text-align:left;color:#64748b}
   $("aStart").value=today;
   $("aEnd").value=today;
   $("aDelDate").value=today;
-
-  let aEndTouched=false;
-  $("aEnd").addEventListener("change", ()=>{ aEndTouched=true; });
-  $("aStart").addEventListener("change", ()=>{
-    if(!aEndTouched) $("aEnd").value = $("aStart").value;
-  });
+  resetAbsAutoEnd(today);
 
   $("btnPause").disabled=true;
   setTimerStatus("⚪ bereit","");
 
+  // ===== Boot =====
   (async()=>{
+    await initIcons();
+
     const k=await getSessionKey();
     if(!k){ showOverlay("Bitte PIN setzen oder eingeben, um zu starten."); return; }
     await loadYear(getRefYear());
