@@ -16,9 +16,7 @@
   --warn:#92400e; --warnbg:#fef3c7;
   --bad:#991b1b; --badbg:#fee2e2;
   --blue:#2563eb; --green:#16a34a; --red:#dc2626; --dark:#0f172a;
-
-  --b-vac:#2563eb; --b-sick:#f97316; --b-hol:#16a34a;
-  --b-bg:#eef2ff;
+  --b-vac:#2563eb; --b-sick:#f97316; --b-hol:#16a34a; --b-bg:#eef2ff;
 }
 *{box-sizing:border-box}
 body{margin:0;padding:14px;font-family:-apple-system,system-ui;background:var(--bg);color:var(--text)}
@@ -27,7 +25,6 @@ h1{margin:0 0 6px 0;font-size:20px}
 h2{margin:6px 0 10px 0;font-size:16px}
 .muted{color:var(--muted);font-size:13px}
 
-/* iOS-Safari-sicherer Abstand bei Zeilenumbruch */
 .row{
   display:flex; flex-wrap:wrap; align-items:flex-end;
   column-gap:10px; row-gap:12px;
@@ -46,26 +43,32 @@ button{border:none;font-weight:700;cursor:pointer}
 .btn-blue{background:var(--blue);color:#fff}
 .btn-ghost{background:#eee;color:#111}
 .btn-sm{padding:8px 10px;font-size:14px;border-radius:10px}
+
 .pill{display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;background:#eee}
 .pill.ok{background:var(--okbg);color:var(--ok)}
 .pill.warn{background:var(--warnbg);color:var(--warn)}
 .pill.bad{background:var(--badbg);color:var(--bad)}
+
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
 .tab{padding:10px 14px;border-radius:12px;background:#eee;cursor:pointer}
 .tab.active{background:#111;color:#fff}
+
 table{width:100%;border-collapse:collapse}
 th,td{padding:8px;border-bottom:1px solid #eee;font-size:14px;vertical-align:top}
 th{text-align:left;color:#777}
 .mono{font-family:ui-monospace,Menlo,monospace}
 
-/* Kompakt am Handy */
+/* Handy-Layout: bewusst kompakt */
 .w-emp{width:220px;max-width:220px}
 .w-note{width:160px;max-width:160px}
 .w-save{width:140px;max-width:140px}
 
-/* Manager: Name + Mail fluchten, Mail left -7 */
+/* Manager */
 .w-mgr-name{width:200px;max-width:200px;margin-left:-7px}
-.w-mgr-mail{width:360px;max-width:90vw;min-width:300px;margin-left:-7px}
+.w-mgr-mail{
+  width:360px; max-width:90vw; min-width:300px;
+  margin-left:-7px;
+}
 
 .stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .stack input{margin-bottom:6px}
@@ -87,12 +90,9 @@ th{text-align:left;color:#777}
 .modal{width:min(520px,100%);background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .modal h2{margin-top:0}
 .pin{
-  width:min(260px,86vw);
-  max-width:86vw;
-  letter-spacing:.18em;
-  font-weight:800;
-  text-align:center;
-  font-size:18px;
+  width:min(260px,86vw); max-width:86vw;
+  letter-spacing:.18em; font-weight:800;
+  text-align:center; font-size:18px;
   padding:10px 12px;
 }
 @media(max-width:360px){ .pin{width:82vw;letter-spacing:.14em} }
@@ -182,10 +182,12 @@ th{text-align:left;color:#777}
     <span class="right muted mono" id="yearHint"></span>
   </div>
 
-  <!-- ✅ Wochen-Summary nur im Woche-Modus -->
+  <!-- ✅ Woche: schön in einer Zeile, Wochenende rechts als Chip -->
   <div id="weekBox" style="margin-top:10px;display:none">
-    <span class="pill" id="weekPill">—</span>
-    <span class="pill" id="weekendPill" style="margin-left:6px">—</span>
+    <div class="row" style="margin-bottom:-10px">
+      <span class="pill" id="weekPill">—</span>
+      <span class="right badge weekend" id="weekendPill">🟣 Wochenende: 00:00</span>
+    </div>
   </div>
 
   <div style="margin-top:10px">
@@ -284,8 +286,8 @@ th{text-align:left;color:#777}
 <script>
 (() => {
   const NS="ZEITERFASSUNG";
-  const AUTO_BREAK=55;
-  const TOL_WEEK_MIN = 10*60;  // ±10h pro Woche
+  const AUTO_BREAK=55;               // Auto-Pause 55min
+  const TOL_WEEK_MIN = 10*60;        // ±10h pro Woche (Regel!)
   const PIN_LEN=6;
 
   const $=id=>document.getElementById(id);
@@ -301,8 +303,8 @@ th{text-align:left;color:#777}
     return s + pad(Math.floor(m/60)) + ":" + pad(m%60);
   };
   const d0=(s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
-  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5;
-  const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6;
+  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5; // Mo–Fr
+  const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6; // So/Sa
   const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
   function absLabel(t){
@@ -375,6 +377,7 @@ th{text-align:left;color:#777}
   }
   function yearKey(y){ return NS+"::year::"+y; }
 
+  // read/write year state (for cross-year ranges)
   async function readYearState(y){
     const aes=await getSessionKey();
     if(!aes) throw new Error("LOCKED");
@@ -528,6 +531,7 @@ th{text-align:left;color:#777}
     }
     const gross=Math.round((end-run.start)/60000);
     if(gross<=0) return alert("Zeit ungültig.");
+
     const auto=(gross>=AUTO_BREAK)?AUTO_BREAK:0;
     const pause=auto+run.pauseMin;
 
@@ -553,6 +557,7 @@ th{text-align:left;color:#777}
     const e=new Date(d0(d).setHours(eh,em,0,0));
     const gross=Math.round((e-s)/60000);
     if(gross<=0){ $("editMsg").textContent="⚠️ Ende muss nach Start"; return; }
+
     const yr=d0(d).getFullYear();
     if(yr!==Y){ const ok=await loadYear(yr); if(!ok) return; }
 
@@ -568,7 +573,7 @@ th{text-align:left;color:#777}
     await renderAll();
   };
 
-  // Abwesenheit Zeitraum (Mo–Fr)
+  // Abwesenheit Zeitraum (Mo–Fr), jahresübergreifend gespeichert
   $("addAbs").onclick=async()=>{
     const startV=$("aStart").value;
     const endV=$("aEnd").value;
@@ -581,7 +586,7 @@ th{text-align:left;color:#777}
 
     const perYear = new Map();
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-      if(!wd(d)) continue;
+      if(!wd(d)) continue; // Wochenende NICHT zählen
       const ds=toDateStr(d);
       const y=d.getFullYear();
 
@@ -626,7 +631,7 @@ th{text-align:left;color:#777}
   // Ranges
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
-    const monIndex=(d.getDay()+6)%7;
+    const monIndex=(d.getDay()+6)%7; // Montag=0
     const start=new Date(d); start.setDate(d.getDate()-monIndex);
     const end=new Date(start); end.setDate(start.getDate()+6);
     start.setHours(0,0,0,0); end.setHours(0,0,0,0);
@@ -665,6 +670,7 @@ th{text-align:left;color:#777}
     return {yr,start,end};
   }
 
+  // cross-year merge (für Bereiche, die über Jahresgrenze gehen)
   async function getMergedForRange(start, end){
     const years = new Set([start.getFullYear(), end.getFullYear()]);
     const allE=[], allA=[];
@@ -710,8 +716,6 @@ th{text-align:left;color:#777}
     const dayNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
     let istSum=0, sollSum=0;
     let workdays=0;
-
-    // ✅ Woche: Wochenendarbeit separat zählen
     let weekendMin=0;
 
     let html=`<table><thead><tr>
@@ -734,9 +738,7 @@ th{text-align:left;color:#777}
       if(isW) workdays += 1;
 
       let abw = absTypes.length ? absTypes.map(absBadge).join(" ") : "";
-      if(isWeekend(d) && ist>0){
-        abw = (abw ? (abw+" ") : "") + weekendBadge();
-      }
+      if(isWeekend(d) && ist>0) abw = (abw ? (abw+" ") : "") + weekendBadge();
 
       html+=`<tr>
         <td class="mono">${ds}</td>
@@ -753,22 +755,23 @@ th{text-align:left;color:#777}
     const delta=istSum-sollSum;
     const weeksEq = workdays ? (workdays/5) : 1;
 
+    // Gesamt-Ampel für den gewählten Bereich (skaliert)
     const cls = pillClassForWeeklyTolerance(delta, weeksEq);
     $("sumPill").className="pill "+cls;
     $("sumPill").textContent=`IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · SALDO ${hhmm(delta)} (Toleranz: ±${hhmm(TOL_WEEK_MIN)} / Woche)`;
 
-    // ✅ Wochensummary anzeigen NUR im Woche-Modus
+    // Woche: extra Summary + Wochenende-Chip rechts
     if($("mode").value==="week"){
       $("weekBox").style.display="";
       const clsW = pillClassForWeeklyTolerance(delta, 1);
       $("weekPill").className="pill "+clsW;
       $("weekPill").textContent=`📅 Woche: IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)} (±10:00 ok)`;
-      $("weekendPill").className="pill";
       $("weekendPill").textContent=`🟣 Wochenende: ${hhmm(weekendMin)}`;
     }else{
       $("weekBox").style.display="none";
     }
 
+    // Monat: Ø/Woche Ampel
     if($("mode").value==="month"){
       const weeks=new Map();
       for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
@@ -796,61 +799,52 @@ th{text-align:left;color:#777}
     }
   }
 
-  // Abwesenheiten als Blöcke + Block löschen
+  // Abwesenheiten als Blöcke zusammenfassen + löschen
   function renderAbsList(){
     if(!S.A.length){
       $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten im aktuell geladenen Jahr (${Y}).</div>`;
       return;
     }
-
     const arr = S.A.slice().sort((a,b)=>a.d.localeCompare(b.d));
-    const blocks = [];
-    let cur = null;
+    const blocks=[]; let cur=null;
 
     function nextWorkdayStr(ds){
-      let d = d0(ds);
-      do { d.setDate(d.getDate()+1); } while(!wd(d));
+      let d=d0(ds);
+      do{ d.setDate(d.getDate()+1); }while(!wd(d));
       return toDateStr(d);
     }
 
     for(const x of arr){
-      if(!cur){
-        cur = { t:x.t, start:x.d, end:x.d, ids:[x.id], days:1 };
-        continue;
-      }
-      const expected = nextWorkdayStr(cur.end);
-      if(x.t === cur.t && x.d === expected){
-        cur.end = x.d;
-        cur.ids.push(x.id);
-        cur.days += 1;
-      } else {
+      if(!cur){ cur={t:x.t,start:x.d,end:x.d,ids:[x.id],days:1}; continue; }
+      const expected=nextWorkdayStr(cur.end);
+      if(x.t===cur.t && x.d===expected){
+        cur.end=x.d; cur.ids.push(x.id); cur.days+=1;
+      }else{
         blocks.push(cur);
-        cur = { t:x.t, start:x.d, end:x.d, ids:[x.id], days:1 };
+        cur={t:x.t,start:x.d,end:x.d,ids:[x.id],days:1};
       }
     }
     if(cur) blocks.push(cur);
 
-    const rows = blocks.map((b,i)=>{
-      const range = (b.start===b.end) ? b.start : `${b.start}–${b.end}`;
-      return `
-        <tr>
-          <td class="mono">${range}</td>
-          <td>${absBadge(b.t)} <span class="muted">(${b.days} WT)</span></td>
-          <td><button class="btn-ghost btn-sm" data-del-block="${i}">🗑️</button></td>
-        </tr>`;
+    const rows=blocks.map((b,i)=>{
+      const range=(b.start===b.end)?b.start:`${b.start}–${b.end}`;
+      return `<tr>
+        <td class="mono">${range}</td>
+        <td>${absBadge(b.t)} <span class="muted">(${b.days} WT)</span></td>
+        <td><button class="btn-ghost btn-sm" data-del-block="${i}">🗑️</button></td>
+      </tr>`;
     }).join("");
 
-    $("absList").innerHTML =
-      `<table>
-        <thead><tr><th>Zeitraum</th><th>Typ</th><th></th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>`;
+    $("absList").innerHTML=`<table>
+      <thead><tr><th>Zeitraum</th><th>Typ</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 
     document.querySelectorAll("[data-del-block]").forEach(btn=>{
-      btn.onclick = async ()=>{
-        const idx = Number(btn.getAttribute("data-del-block"));
-        const idsToDelete = new Set(blocks[idx].ids);
-        S.A = S.A.filter(x => !idsToDelete.has(x.id));
+      btn.onclick=async()=>{
+        const idx=Number(btn.getAttribute("data-del-block"));
+        const ids=new Set(blocks[idx].ids);
+        S.A=S.A.filter(x=>!ids.has(x.id));
         await saveYear();
         await renderAll();
       };
@@ -863,24 +857,25 @@ th{text-align:left;color:#777}
       $("entryList").innerHTML=`<div class="muted">Noch keine Einträge im aktuell geladenen Jahr (${Y}).</div>`;
       return;
     }
-
     const rows=entries.map(e=>{
       const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
-      return `
-        <tr>
-          <td class="mono">${e.d}</td>
-          <td class="mono">Netto ${hhmm(net)} · Pause ${hhmm(e.p||0)} · ${e.n||""}</td>
-          <td>
-            <button class="btn-ghost btn-sm" data-edit="${e.id}">✍️</button>
-            <button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button>
-          </td>
-        </tr>`;
+      return `<tr>
+        <td class="mono">${e.d}</td>
+        <td class="mono">Netto ${hhmm(net)} · Pause ${hhmm(e.p||0)} · ${e.n||""}</td>
+        <td>
+          <button class="btn-ghost btn-sm" data-edit="${e.id}">✍️</button>
+          <button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button>
+        </td>
+      </tr>`;
     }).join("");
 
-    $("entryList").innerHTML=`<table><thead><tr><th>Datum</th><th>Info</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    $("entryList").innerHTML=`<table>
+      <thead><tr><th>Datum</th><th>Info</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 
     document.querySelectorAll("[data-del]").forEach(b=>{
-      b.onclick=async ()=>{
+      b.onclick=async()=>{
         const id=b.getAttribute("data-del");
         S.E=S.E.filter(x=>x.id!==id);
         await saveYear();
@@ -911,7 +906,13 @@ th{text-align:left;color:#777}
     renderEntryList();
   }
 
-  // CSV / Share
+  // CSV / Share (bereichsübergreifend) – mit Wochenende-Hinweis in Notiz
+  async function getMergedForCurrentRange(){
+    const {start,end}=getPeriodRange();
+    const merged=await getMergedForRange(start,end);
+    return {start,end,merged};
+  }
+
   function buildCSVForRange(merged, start, end){
     const sep=";";
     const W=getWeeklyTargetMinutes();
@@ -954,8 +955,7 @@ th{text-align:left;color:#777}
   }
 
   async function downloadCSV(){
-    const {start,end}=getPeriodRange();
-    const merged=await getMergedForRange(start,end);
+    const {start,end,merged}=await getMergedForCurrentRange();
     if(!(merged.emp||S.emp)) return alert("Bitte Name speichern.");
     const csv=buildCSVForRange(merged,start,end);
     const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
@@ -966,8 +966,7 @@ th{text-align:left;color:#777}
   }
 
   async function shareCSV(){
-    const {start,end}=getPeriodRange();
-    const merged=await getMergedForRange(start,end);
+    const {start,end,merged}=await getMergedForCurrentRange();
     if(!(merged.emp||S.emp)) return alert("Bitte Name speichern.");
     const csv=buildCSVForRange(merged,start,end);
     const file=new File([new Blob([csv],{type:"text/csv"})], "zeiterfassung.csv", {type:"text/csv"});
