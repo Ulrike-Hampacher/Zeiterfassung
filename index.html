@@ -45,33 +45,35 @@ th,td{padding:8px;border-bottom:1px solid #eee;font-size:14px;vertical-align:top
 th{text-align:left;color:#777}
 .mono{font-family:ui-monospace,Menlo,monospace}
 
-/* ✅ Kompakt, aber nutzbar */
-.w-emp{width:240px;max-width:240px}
-.w-note{width:180px;max-width:180px}
-.w-mgr-name{width:220px;max-width:220px}
+/* ✅ kompakt */
+.w-emp{width:220px;max-width:220px}
+.w-note{width:160px;max-width:160px}
+.w-save{width:140px;max-width:140px}
 
-/* ✅ Manager E-Mail: auf Handy LANG (fast volle Breite) */
+/* ✅ Manager (Name + Mail) fluchten, Mail links -7 */
+.w-mgr-name{width:200px;max-width:200px;margin-left:-7px}
 .w-mgr-mail{
-  width: 360px;      /* Tablet/Desktop */
-  max-width: 90vw;   /* iPhone: fast volle Breite */
-  min-width: 280px;  /* nie zu kurz */
-  margin-left: -7px;
+  width:360px; max-width:90vw; min-width:280px;
+  margin-left:-7px; /* wie besprochen */
 }
 
-.w-save{width:160px;max-width:160px}
-
-/* Speichern nicht angeklebt */
+/* Speichern nicht kleben */
 .stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .stack input{margin-bottom:6px}
 .stack button{margin-top:4px}
 
+/* Ampel: Saldo-Spalte pro Tag */
+tr.ok  td:last-child{color:var(--ok);font-weight:800}
+tr.warn td:last-child{color:var(--warn);font-weight:800}
+tr.bad td:last-child{color:var(--bad);font-weight:800}
+
 /* sehr kleine Phones */
 @media(max-width:340px){
-  .w-emp{width:220px;max-width:220px}
-  .w-note{width:160px;max-width:160px}
-  .w-mgr-name{width:200px;max-width:200px}
-  /* w-mgr-mail NICHT überschreiben! */
-  .w-save{width:150px;max-width:150px}
+  .w-emp{width:210px;max-width:210px}
+  .w-note{width:150px;max-width:150px}
+  .w-save{width:140px;max-width:140px}
+  .w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
+  /* w-mgr-mail bleibt flexibel, nicht überschreiben */
 }
 </style>
 </head>
@@ -80,7 +82,7 @@ th{text-align:left;color:#777}
 
 <div class="card">
   <h1>⏱️ Zeiterfassung</h1>
-  <div class="muted">Offline · Auto-Pause <b>55 min</b> · CSV & Senden · iOS/Android</div>
+  <div class="muted">Offline · Auto-Pause <b>55 min</b> · CSV & Teilen · iOS/Android</div>
 </div>
 
 <div class="card">
@@ -132,17 +134,6 @@ th{text-align:left;color:#777}
 
   <div class="row">
     <div>
-      <div class="muted">📅 Jahr</div>
-      <select id="yearSelect"></select>
-    </div>
-    <div>
-      <div class="muted">🎯 Wochen-Soll</div>
-      <select id="weeklyTarget">
-        <option value="2400">40:00 🇩🇪</option>
-        <option value="2310">38:30 🇦🇹</option>
-      </select>
-    </div>
-    <div>
       <div class="muted">🧭 Modus</div>
       <select id="mode">
         <option value="week">Woche</option>
@@ -150,14 +141,25 @@ th{text-align:left;color:#777}
         <option value="year">Jahr</option>
       </select>
     </div>
+
     <div>
-      <div class="muted">📌 Referenz</div>
+      <div class="muted">📌 Datum</div>
       <input type="date" id="refDate">
+    </div>
+
+    <div>
+      <div class="muted">🎯 Wochen-Soll</div>
+      <select id="weeklyTarget">
+        <option value="2400">40:00 🇩🇪</option>
+        <option value="2310">38:30 🇦🇹</option>
+      </select>
     </div>
 
     <button class="btn-ghost" id="btnRefresh">↻</button>
     <button class="btn-blue" id="btnCSV">⬇️ CSV</button>
-    <button class="btn-ghost" id="btnShare">📤 Senden</button>
+    <button class="btn-ghost" id="btnShare">📤 Teilen</button>
+
+    <span class="right muted mono" id="yearHint"></span>
   </div>
 
   <div style="margin-top:10px">
@@ -224,26 +226,26 @@ th{text-align:left;color:#777}
 <div class="card" id="settings" style="display:none">
   <h2>⚙️ Settings</h2>
   <div class="muted">
-    Daten liegen lokal im Browser (offline). Bei Code-Updates können alte Daten „nicht passen“.
-    Dann zeigt die App <span class="mono">--:--</span> statt Zeiten (NaN-Schutz).
+    Offline: Daten liegen im Browser (pro Jahr getrennt). Wenn du viel am Code änderst, kann Reset helfen.
   </div>
-
   <div class="row" style="margin-top:10px">
-    <button class="btn-stop" id="btnResetYear">🧹 Dieses Jahr löschen</button>
+    <button class="btn-stop" id="btnResetThisYear">🧹 Aktuelles Jahr löschen</button>
     <button class="btn-ghost" id="btnResetAll">🧨 Alle Jahre löschen</button>
+  </div>
+  <div class="muted" style="margin-top:8px">
+    Hinweis: „Aktuelles Jahr“ = Jahr vom 📌 Datum in der Übersicht.
   </div>
 </div>
 
 <script>
 (() => {
   const NS="ZEITERFASSUNG";
-  const AUTO_BREAK=55;          // Auto-Pause in Minuten
+  const AUTO_BREAK=55;          // Auto-Pause Minuten
   const TOL=10*60;              // ±10h Ampel (Minuten)
 
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
 
-  // NaN-sicher: --:--
   const hhmm=(m)=>{
     if(!Number.isFinite(m)) return "--:--";
     const s=m<0?"-":"";
@@ -253,6 +255,7 @@ th{text-align:left;color:#777}
 
   const d0=(s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
   const wd=(d)=> d.getDay()>=1 && d.getDay()<=5;
+  const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
   function isoWeekKey(dateObj){
     const d=new Date(dateObj); d.setHours(0,0,0,0);
@@ -283,9 +286,21 @@ th{text-align:left;color:#777}
     const end=new Date(y,11,31); end.setHours(0,0,0,0);
     return [start,end];
   }
-  const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const inRange=(ds,start,end)=> ds>=toDateStr(start) && ds<=toDateStr(end);
 
+  function absLabel(t){
+    if(t==="vac") return "Urlaub";
+    if(t==="sick") return "Krank";
+    if(t==="hol") return "Feiertag";
+    return t;
+  }
+
+  function getWeeklyTargetMinutes(){
+    const el=$("weeklyTarget");
+    const v=el ? Number(el.value) : NaN;
+    return (Number.isFinite(v) && v>0) ? v : 2400; // Fallback 40h
+  }
+
+  // State
   let Y=new Date().getFullYear();
   let S={emp:"",mgr:{name:"",mail:""},E:[],A:[]};
   let run=null;
@@ -302,25 +317,6 @@ th{text-align:left;color:#777}
   }
   function save(){ localStorage.setItem(key(Y),JSON.stringify(S)); }
 
-  function knownYears(){
-    const set=new Set();
-    const now=new Date().getFullYear();
-    for(let yy=now-3; yy<=now+3; yy++) set.add(yy);
-    for(let i=0;i<localStorage.length;i++){
-      const k=localStorage.key(i);
-      if(k && k.startsWith(NS+"::")){
-        const y=k.split("::")[1];
-        if(/^\d{4}$/.test(y)) set.add(+y);
-      }
-    }
-    return [...set].sort((a,b)=>b-a);
-  }
-
-  function renderYearSelect(){
-    $("yearSelect").innerHTML = knownYears().map(y=>`<option value="${y}">${y}</option>`).join("");
-    $("yearSelect").value = String(Y);
-  }
-
   function tab(name){
     ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
       $(id).style.display = (id===name) ? "" : "none";
@@ -334,14 +330,20 @@ th{text-align:left;color:#777}
     $("timerStatus").className="pill"+(cls?(" "+cls):"");
   }
 
-  function absLabel(t){
-    if(t==="vac") return "Urlaub";
-    if(t==="sick") return "Krank";
-    if(t==="hol") return "Feiertag";
-    return t;
+  // ✅ Jahr & Referenz zusammengelegt:
+  // refDate bestimmt das Jahr => automatisch laden
+  function ensureYearFromRef(){
+    const v=$("refDate").value;
+    if(!v) return;
+    const yr=d0(v).getFullYear();
+    if(yr!==Y){
+      // Auto-switch year store
+      load(yr);
+    }
+    $("yearHint").textContent = `📦 Jahr: ${Y}`;
   }
 
-  // ---------- Buttons ----------
+  // Buttons: Name
   $("saveName").onclick=()=>{
     S.emp=$("empName").value.trim();
     save();
@@ -355,6 +357,7 @@ th{text-align:left;color:#777}
     alert("✅ Manager gespeichert");
   };
 
+  // Timer
   $("btnStart").onclick=()=>{
     if(run) return alert("Timer läuft schon.");
     if(!S.emp) return alert("Bitte Name speichern.");
@@ -401,6 +404,12 @@ th{text-align:left;color:#777}
     const auto = gross>=AUTO_BREAK ? AUTO_BREAK : 0;
     const pause = auto + run.pauseMin;
 
+    // Speichere in "Jahr" des Timer-Datums
+    const entryYear=d0(run.date).getFullYear();
+    if(entryYear!==Y){
+      load(entryYear);
+    }
+
     S.E.push({
       id: (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Date.now())),
       d: run.date,
@@ -419,12 +428,16 @@ th{text-align:left;color:#777}
     renderAll();
   };
 
+  // Absence
   $("addAbs").onclick=()=>{
     if(!$("aDate").value) return alert("Datum fehlt.");
+    const yr=d0($("aDate").value).getFullYear();
+    if(yr!==Y) load(yr);
     S.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()), d:$("aDate").value, t:$("aType").value});
     save(); renderAll();
   };
 
+  // Edit
   $("newManual").onclick=()=>{
     editingId=null;
     $("eStart").value=""; $("eEnd").value=""; $("eNote").value="";
@@ -441,6 +454,9 @@ th{text-align:left;color:#777}
     const e=new Date(d0(d).setHours(eh,em,0,0));
     const gross=Math.round((e-s)/60000);
     if(gross<=0){ $("editMsg").textContent="⚠️ Ende muss nach Start"; return; }
+
+    const yr=d0(d).getFullYear();
+    if(yr!==Y) load(yr);
 
     const obj={
       id: editingId || (crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
@@ -461,56 +477,69 @@ th{text-align:left;color:#777}
     save(); renderAll();
   };
 
-  // Settings
-  $("btnResetYear").onclick=()=>{
-    if(confirm(`Wirklich alle Daten für ${Y} löschen?`)){
-      localStorage.removeItem(key(Y));
-      load(Y);
+  // Settings reset
+  $("btnResetThisYear").onclick=()=>{
+    // aktuelles Jahr = Jahr der refDate (wenn gesetzt), sonst Y
+    const v=$("refDate").value;
+    const yr=v ? d0(v).getFullYear() : Y;
+    if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
+      localStorage.removeItem(key(yr));
+      if(yr===Y) load(Y);
       renderAll();
       alert("✅ Jahr gelöscht");
     }
   };
   $("btnResetAll").onclick=()=>{
     if(confirm("Wirklich ALLE Jahre löschen?")){
-      const ys=knownYears();
-      ys.forEach(y=>localStorage.removeItem(key(y)));
-      Y=new Date().getFullYear();
-      load(Y);
+      // Nur Keys löschen, die zu dieser App gehören
+      const del=[];
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(k && k.startsWith(NS+"::")) del.push(k);
+      }
+      del.forEach(k=>localStorage.removeItem(k));
+      load(new Date().getFullYear());
       renderAll();
       alert("✅ Alles gelöscht");
     }
   };
 
-  // CSV / Share
+  // CSV/Share: exportiert den aktuell angezeigten Zeitraum (refDate+mode)
   function buildCSV(){
     const sep=";";
-    const W=+$("weeklyTarget").value;
+    const W=getWeeklyTargetMinutes();
     const emp=S.emp||"";
     const rows=[];
     rows.push(["Mitarbeiter","Jahr","WochenSoll_min","Datum","Start","Ende","Pause_min","Netto_min","Netto_hhmm","Notiz"].join(sep));
 
-    const ref = $("refDate").value ? d0($("refDate").value) : new Date();
+    const v=$("refDate").value;
+    const ref=v ? d0(v) : new Date();
+    const yr=ref.getFullYear();
+    if(yr!==Y) load(yr); // exportiert das Jahr des Ref-Datums
+
     let start,end;
-    if($("mode").value==="year") [start,end]=yearRange(Y);
+    if($("mode").value==="year") [start,end]=yearRange(yr);
     else if($("mode").value==="month") [start,end]=monthRange(ref);
     else [start,end]=weekRangeISO(ref);
 
-    const entries=S.E.filter(e=>inRange(e.d,start,end)).sort((a,b)=>a.d.localeCompare(b.d));
+    const inRangeStr=(ds)=> ds>=toDateStr(start) && ds<=toDateStr(end);
+
+    const entries=S.E.filter(e=>inRangeStr(e.d)).sort((a,b)=>a.d.localeCompare(b.d));
     for(const e of entries){
-      const startD=new Date(e.s), endD=new Date(e.e);
-      const net = ((endD-startD)/60000) - (e.p||0);
+      const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
       rows.push([
-        emp,String(Y),String(W),
+        emp,String(yr),String(W),
         e.d,e.s,e.e,String(e.p||0),
         Number.isFinite(net)?String(Math.round(net)):"",
         hhmm(net),
         (e.n||"").replaceAll(";",",")
       ].join(sep));
     }
-    const abs=S.A.filter(a=>inRange(a.d,start,end)).sort((a,b)=>a.d.localeCompare(b.d));
+    const abs=S.A.filter(a=>inRangeStr(a.d)).sort((a,b)=>a.d.localeCompare(b.d));
     for(const a of abs){
-      rows.push([emp,String(Y),String(W),a.d,"","","0","0","00:00",absLabel(a.t)].join(sep));
+      rows.push([emp,String(yr),String(W),a.d,"","","0","0","00:00",absLabel(a.t)].join(sep));
     }
+    save();
     return rows.join("\n");
   }
 
@@ -520,16 +549,16 @@ th{text-align:left;color:#777}
     const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
-    a.download=`Zeiterfassung_${Y}_${S.emp.replaceAll(" ","_")}.csv`;
+    a.download=`Zeiterfassung_${$("refDate").value||Y}_${S.emp.replaceAll(" ","_")}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
   }
 
   async function shareCSV(){
     if(!S.emp) return alert("Bitte Name speichern.");
     const csv=buildCSV();
-    const file=new File([new Blob([csv],{type:"text/csv"})], `zeiterfassung_${Y}.csv`, {type:"text/csv"});
-    const title=`Zeiterfassung – ${S.emp} (${Y})`;
-    const text=`Zeiterfassung ${Y} – ${S.emp}\nManager: ${(S.mgr.name||"")} ${(S.mgr.mail||"")}`.trim();
+    const file=new File([new Blob([csv],{type:"text/csv"})], `zeiterfassung.csv`, {type:"text/csv"});
+    const title=`Zeiterfassung – ${S.emp}`;
+    const text=`Zeiterfassung\nMitarbeiter: ${S.emp}\nManager: ${(S.mgr.name||"")} ${(S.mgr.mail||"")}`.trim();
 
     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({title,text,files:[file]});
@@ -541,7 +570,7 @@ th{text-align:left;color:#777}
   $("btnCSV").onclick=downloadCSV;
   $("btnShare").onclick=shareCSV;
 
-  // Render helpers
+  // Rendering
   function renderAbsList(){
     if(!S.A.length){ $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten.</div>`; return; }
     const rows=S.A.slice().sort((a,b)=>b.d.localeCompare(a.d)).map(a=>`
@@ -606,18 +635,24 @@ th{text-align:left;color:#777}
   }
 
   function renderOverviewTable(){
-    const W=+$("weeklyTarget").value;
+    ensureYearFromRef(); // lädt automatisch das Jahr des Ref-Datums
+
+    const W=getWeeklyTargetMinutes();
     const DAY=W/5;
-    const ref = $("refDate").value ? d0($("refDate").value) : new Date();
+
+    const v=$("refDate").value;
+    const ref=v ? d0(v) : new Date();
+    const yr=ref.getFullYear();
+    $("yearHint").textContent = `📦 Jahr: ${yr}`;
 
     let start,end;
-    if($("mode").value==="year") [start,end]=yearRange(Y);
+    if($("mode").value==="year") [start,end]=yearRange(yr);
     else if($("mode").value==="month") [start,end]=monthRange(ref);
     else [start,end]=weekRangeISO(ref);
 
     const istBy={};
     for(const e of S.E){
-      if(!inRange(e.d,start,end)) continue;
+      if(e.d < toDateStr(start) || e.d > toDateStr(end)) continue;
       const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
       if(!Number.isFinite(net)) continue;
       istBy[e.d]=(istBy[e.d]||0)+Math.round(net);
@@ -642,7 +677,9 @@ th{text-align:left;color:#777}
       istSum += ist;
       sollSum += soll;
 
-      html+=`<tr>
+      const clsRow = (Math.abs(saldo) > TOL) ? "bad" : (Math.abs(saldo) > 1 ? "warn" : "ok");
+
+      html+=`<tr class="${clsRow}">
         <td class="mono">${ds}</td>
         <td>${dayNames[d.getDay()]}</td>
         <td class="mono">${hhmm(ist)}</td>
@@ -659,6 +696,7 @@ th{text-align:left;color:#777}
     $("sumPill").className="pill "+cls;
     $("sumPill").textContent=`IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · SALDO ${hhmm(delta)}`;
 
+    // Monats-Ø/Woche
     if($("mode").value==="month"){
       const weeks=new Map();
       for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
@@ -688,7 +726,6 @@ th{text-align:left;color:#777}
   function renderAll(){
     $("timerMini").textContent = S.emp ? ("👤 "+S.emp) : "";
     $("nameMsg").textContent = S.emp ? "✅ gespeichert" : "";
-    renderYearSelect();
     renderOverviewTable();
     renderAbsList();
     renderEntryList();
@@ -696,9 +733,14 @@ th{text-align:left;color:#777}
   }
 
   // Wiring
-  $("yearSelect").onchange=()=>{ load(+$("yearSelect").value); renderAll(); };
-  ["weeklyTarget","mode","refDate"].forEach(id=>$(id).onchange=renderAll);
   $("btnRefresh").onclick=renderAll;
+  $("mode").onchange=renderAll;
+  $("weeklyTarget").onchange=renderAll;
+
+  $("refDate").onchange=()=>{
+    ensureYearFromRef();
+    renderAll();
+  };
 
   // Init
   const today=new Date().toISOString().slice(0,10);
@@ -707,7 +749,7 @@ th{text-align:left;color:#777}
   $("eDate").value     = today;
   $("aDate").value     = today;
 
-  load(Y);
+  load(new Date().getFullYear());
   $("btnPause").disabled=true;
   setTimerStatus("⚪ bereit","");
   renderAll();
