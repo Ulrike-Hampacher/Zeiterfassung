@@ -27,16 +27,16 @@ h1{margin:0 0 6px 0;font-size:20px}
 h2{margin:6px 0 10px 0;font-size:16px}
 .muted{color:var(--muted);font-size:13px}
 
-/* ✅ iOS-Safari-sicherer Abstand bei Zeilenumbruch */
+/* iOS-Safari-sicherer Abstand bei Zeilenumbruch */
 .row{
   display:flex;
   flex-wrap:wrap;
   align-items:flex-end;
   column-gap:10px;
   row-gap:12px;
-  margin-bottom:-12px;     /* Fallback */
+  margin-bottom:-12px;
 }
-.row > *{ margin-bottom:12px; } /* Fallback */
+.row > *{ margin-bottom:12px; }
 
 #overview .row{ margin-bottom:-14px; }
 #overview .row > *{ margin-bottom:14px; }
@@ -62,28 +62,20 @@ th,td{padding:8px;border-bottom:1px solid #eee;font-size:14px;vertical-align:top
 th{text-align:left;color:#777}
 .mono{font-family:ui-monospace,Menlo,monospace}
 
-/* Kompakt + sauber am Handy */
+/* Kompakt am Handy */
 .w-emp{width:220px;max-width:220px}
 .w-note{width:160px;max-width:160px}
 .w-save{width:140px;max-width:140px}
 
 /* Manager: Name + Mail fluchten, Mail left -7 */
 .w-mgr-name{width:200px;max-width:200px;margin-left:-7px}
-.w-mgr-mail{
-  width:360px; max-width:90vw; min-width:300px;
-  margin-left:-7px;
-}
+.w-mgr-mail{width:360px;max-width:90vw;min-width:300px;margin-left:-7px}
 
 .stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .stack input{margin-bottom:6px}
 .stack button{margin-top:4px}
 
-/* Ampel: Saldo-Spalte pro Tag */
-tr.ok  td:last-child{color:var(--ok);font-weight:800}
-tr.warn td:last-child{color:var(--warn);font-weight:800}
-tr.bad td:last-child{color:var(--bad);font-weight:800}
-
-/* Badges für Abwesenheit */
+/* Badges */
 .badge{
   display:inline-block;
   padding:4px 10px;
@@ -92,35 +84,27 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   font-weight:800;
   background:var(--b-bg);
   border:1px solid rgba(0,0,0,.06);
+  white-space:nowrap;
 }
 .badge.vac{ color:var(--b-vac); }
 .badge.sick{ color:var(--b-sick); }
 .badge.hol{ color:var(--b-hol); }
+.badge.weekend{ color:#7c3aed; background:#f5f3ff; } /* 🟣 Wochenende */
 
 /* PIN Overlay */
-.overlay{
-  position:fixed; inset:0; background:rgba(0,0,0,.45);
-  display:none; align-items:center; justify-content:center; padding:14px;
-}
-.modal{
-  width:min(520px, 100%); background:#fff; border-radius:16px;
-  padding:14px; box-shadow:0 12px 40px rgba(0,0,0,.25);
-}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
+.modal{width:min(520px,100%);background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .modal h2{margin-top:0}
-
-/* ✅ PIN Feld kürzer & immer passend am Handy */
 .pin{
-  width: min(260px, 86vw);
-  max-width: 86vw;
-  letter-spacing: .18em;
-  font-weight: 800;
-  text-align: center;
-  font-size: 18px;
-  padding: 10px 12px;
+  width:min(260px,86vw);
+  max-width:86vw;
+  letter-spacing:.18em;
+  font-weight:800;
+  text-align:center;
+  font-size:18px;
+  padding:10px 12px;
 }
-@media(max-width:360px){
-  .pin{ width: 82vw; letter-spacing: .14em; }
-}
+@media(max-width:360px){ .pin{width:82vw;letter-spacing:.14em} }
 @media(max-width:340px){
   .w-emp{width:210px;max-width:210px}
   .w-note{width:150px;max-width:150px}
@@ -159,14 +143,8 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   </div>
 
   <div class="row" style="margin-top:10px">
-    <div>
-      <div class="muted">📅 Datum</div>
-      <input type="date" id="timerDate">
-    </div>
-    <div>
-      <div class="muted">📝 Notiz</div>
-      <input id="timerNote" class="w-note" placeholder="kurz">
-    </div>
+    <div><div class="muted">📅 Datum</div><input type="date" id="timerDate"></div>
+    <div><div class="muted">📝 Notiz</div><input id="timerNote" class="w-note" placeholder="kurz"></div>
     <span class="right muted mono" id="timerMini"></span>
   </div>
 
@@ -248,7 +226,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   </div>
 </div>
 
-<!-- ABSENCE (Zeitraum + Default gleicher Tag) -->
+<!-- ABSENCE -->
 <div class="card" id="absence" style="display:none">
   <h2>🏖️ Abwesenheit</h2>
   <div class="muted">Zeitraum: Es werden automatisch nur <b>Mo–Fr</b> gespeichert (Wochenende wird NICHT gezählt).</div>
@@ -256,7 +234,6 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   <div class="row" style="margin-top:10px">
     <div><div class="muted">📅 Start</div><input type="date" id="aStart"></div>
     <div><div class="muted">📅 Ende</div><input type="date" id="aEnd"></div>
-
     <div>
       <div class="muted">🏷️ Typ</div>
       <select id="aType">
@@ -281,17 +258,13 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
 <!-- SETTINGS -->
 <div class="card" id="settings" style="display:none">
   <h2>⚙️ Settings</h2>
-  <div class="muted">
-    🔐 Daten sind lokal verschlüsselt. PIN wird nur pro Session benötigt (solange Safari offen bleibt).
-  </div>
+  <div class="muted">🔐 Daten sind lokal verschlüsselt. PIN wird nur pro Session benötigt (solange Safari offen bleibt).</div>
   <div class="row" style="margin-top:10px">
     <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
     <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
     <button class="btn-ghost" id="btnResetAll">🧨 Alles löschen</button>
   </div>
-  <div class="muted" style="margin-top:8px">
-    „Jahr löschen“ bezieht sich auf das Jahr vom 📌 Datum in der Übersicht.
-  </div>
+  <div class="muted" style="margin-top:8px">„Jahr löschen“ bezieht sich auf das Jahr vom 📌 Datum in der Übersicht.</div>
 </div>
 
 <!-- PIN Overlay -->
@@ -307,17 +280,15 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
       <button class="btn-ghost" id="btnSetPin">🆕 PIN setzen</button>
       <span class="right muted mono" id="pinMsg"></span>
     </div>
-    <div class="muted" style="margin-top:10px">
-      Hinweis: PIN vergessen = Daten nicht entschlüsselbar (dann nur Reset möglich).
-    </div>
+    <div class="muted" style="margin-top:10px">Hinweis: PIN vergessen = Daten nicht entschlüsselbar (dann nur Reset möglich).</div>
   </div>
 </div>
 
 <script>
 (() => {
   const NS="ZEITERFASSUNG";
-  const AUTO_BREAK=55;
-  const TOL=10*60;
+  const AUTO_BREAK=55;               // Auto-Pause 55min
+  const TOL_WEEK_MIN = 10*60;        // ±10h pro Woche
   const PIN_LEN=6;
 
   const $=id=>document.getElementById(id);
@@ -333,20 +304,24 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     return s + pad(Math.floor(m/60)) + ":" + pad(m%60);
   };
   const d0=(s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
-  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5; // ✅ nur Mo–Fr
+  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5; // Mo–Fr
+  const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6; // So/Sa
   const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
   function absLabel(t){
-    if(t==="vac") return "🏖️ Urlaub";
-    if(t==="sick") return "🤒 Krank";
-    if(t==="hol") return "🎉 Feiertag";
+    if(t==="vac") return "Urlaub";
+    if(t==="sick") return "Krank";
+    if(t==="hol") return "Feiertag";
     return t;
   }
   function absBadge(t){
-    if(t==="vac") return `<span class="badge vac">Urlaub</span>`;
-    if(t==="sick") return `<span class="badge sick">Krank</span>`;
-    if(t==="hol") return `<span class="badge hol">Feiertag</span>`;
+    if(t==="vac")  return `<span class="badge vac">🏖️ Urlaub</span>`;
+    if(t==="sick") return `<span class="badge sick">🤒 Krank</span>`;
+    if(t==="hol")  return `<span class="badge hol">🎉 Feiertag</span>`;
     return `<span class="badge">${t}</span>`;
+  }
+  function weekendBadge(){
+    return `<span class="badge weekend">🟣 Wochenende</span>`;
   }
 
   function getWeeklyTargetMinutes(){
@@ -405,7 +380,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   }
   function yearKey(y){ return NS+"::year::"+y; }
 
-  // ---- Year read/write without switching UI (for cross-year ranges) ----
+  // read/write year state (for cross-year ranges)
   async function readYearState(y){
     const aes=await getSessionKey();
     if(!aes) throw new Error("LOCKED");
@@ -426,7 +401,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     localStorage.setItem(yearKey(y), JSON.stringify(blob));
   }
 
-  // ---- App state (current loaded year) ----
+  // ---- App state ----
   let Y=new Date().getFullYear();
   let S={emp:"", mgr:{name:"",mail:""}, E:[], A:[]};
   let run=null;
@@ -493,7 +468,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     $("nameMsg").textContent=S.emp?"✅ gespeichert":"";
   }
 
-  // ---- PIN ----
+  // PIN
   $("btnUnlock").onclick=async()=>{
     const pin=($("pinInput").value||"").trim();
     if(pin.length!==PIN_LEN||!/^\d+$/.test(pin)){ $("pinMsg").textContent=`PIN muss ${PIN_LEN} Ziffern haben.`; return; }
@@ -518,11 +493,11 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     showOverlay("🔒 Gesperrt. Bitte PIN eingeben.");
   };
 
-  // ---- Name / Manager ----
+  // Name / Manager
   $("saveName").onclick=async()=>{ S.emp=($("empName").value||"").trim(); await saveYear(); applyStateToUI(); };
   $("saveMgr").onclick=async()=>{ S.mgr={name:($("mgrName").value||"").trim(), mail:($("mgrMail").value||"").trim()}; await saveYear(); alert("✅ Manager gespeichert"); };
 
-  // ---- Timer ----
+  // Timer
   $("btnStart").onclick=async()=>{
     if(run) return alert("Timer läuft schon.");
     if(!S.emp) return alert("Bitte Name speichern.");
@@ -571,7 +546,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     await renderAll();
   };
 
-  // ---- Rückwirkend ----
+  // Rückwirkend
   $("newManual").onclick=()=>{
     editingId=null; $("eStart").value=""; $("eEnd").value=""; $("eNote").value=""; $("editMsg").textContent="";
   };
@@ -599,7 +574,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     await renderAll();
   };
 
-  // ---- Abwesenheit Zeitraum (Mo–Fr) ----
+  // Abwesenheit Zeitraum (Mo–Fr)
   $("addAbs").onclick=async()=>{
     const startV=$("aStart").value;
     const endV=$("aEnd").value;
@@ -610,11 +585,9 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     const end=d0(endV);
     if(end < start) return alert("Ende muss nach Start sein.");
 
-    // Batch pro Jahr (nicht dauernd UI umschalten)
-    const perYear = new Map(); // year -> state
-
+    const perYear = new Map();
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-      if(!wd(d)) continue; // ✅ Wochenende NICHT zählen
+      if(!wd(d)) continue; // Wochenende nicht zählen
       const ds=toDateStr(d);
       const y=d.getFullYear();
 
@@ -623,22 +596,16 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
         perYear.set(y, st);
       }
       const st = perYear.get(y);
-
-      // Keine Duplikate
       if(st.A.some(a=>a.d===ds && a.t===t)) continue;
-
       st.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()+Math.random()), d:ds, t});
     }
-
-    for(const [y, st] of perYear.entries()){
-      await writeYearState(y, st);
-    }
+    for(const [y, st] of perYear.entries()) await writeYearState(y, st);
 
     await loadYear(getRefYear());
     await renderAll();
   };
 
-  // ---- Reset ----
+  // Reset
   $("btnResetThisYear").onclick=async()=>{
     const yr=getRefYear();
     if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
@@ -662,7 +629,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     }
   };
 
-  // ---- Ranges ----
+  // Ranges
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
     const monIndex=(d.getDay()+6)%7;
@@ -688,7 +655,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     d.setDate(d.getDate()+3-((d.getDay()+6)%7));
     const y=d.getFullYear();
     const week1=new Date(y,0,4); week1.setHours(0,0,0,0);
-    week1.setDate(week1.getDate()+3-((week1.getDay()+6)%7));
+    week1.setDate(week1.setDate(week1.getDate()+3-((week1.getDay()+6)%7)));
     const w=1+Math.round((d-week1)/(7*24*60*60*1000));
     return `${y}-W${pad(w)}`;
   }
@@ -697,21 +664,18 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     const v=$("refDate").value;
     const ref=v ? d0(v) : new Date();
     const yr=ref.getFullYear();
-
     let start,end;
     if($("mode").value==="year") [start,end]=yearRange(yr);
     else if($("mode").value==="month") [start,end]=monthRange(ref);
     else [start,end]=weekRangeISO(ref);
-
     return {yr,start,end};
   }
 
-  // cross-year: load all years that are inside the range
+  // cross-year merge
   async function getMergedForRange(start, end){
     const years = new Set([start.getFullYear(), end.getFullYear()]);
     const allE=[], allA=[];
     let emp=S.emp||"", mgr=S.mgr||{name:"",mail:""};
-
     for(const y of years){
       const st = await readYearState(y);
       if(!emp && st.emp) emp=st.emp;
@@ -720,6 +684,14 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
       allA.push(...(st.A||[]));
     }
     return {allE, allA, emp, mgr};
+  }
+
+  function pillClassForWeeklyTolerance(deltaMin, weeksEquivalent){
+    const tol = TOL_WEEK_MIN * Math.max(1, weeksEquivalent);
+    const a = Math.abs(deltaMin);
+    if(a > tol) return "bad";
+    if(a > tol*0.5) return "warn";
+    return "ok";
   }
 
   async function renderOverviewTable(){
@@ -744,6 +716,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
 
     const dayNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
     let istSum=0, sollSum=0;
+    let workdays=0;
 
     let html=`<table><thead><tr>
       <th>Datum</th><th>Tag</th><th>IST</th><th>SOLL</th><th>Abw.</th><th>SALDO</th>
@@ -755,21 +728,25 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
       const isW=wd(d);
 
       const absTypes=A.filter(a=>a.d===ds).map(a=>a.t);
-      const absLabels=absTypes.map(absLabel);
-
       const soll = Math.round(isW ? (absTypes.length>0 ? 0 : DAY) : 0);
       const saldo=ist-soll;
 
       istSum += ist;
       sollSum += soll;
+      if(isW) workdays += 1;
 
-      const clsRow=(Math.abs(saldo)>TOL)?"bad":(Math.abs(saldo)>1?"warn":"ok");
-      html+=`<tr class="${clsRow}">
+      // Abw.-Zelle: Abwesenheiten + Wochenende-Badge wenn gearbeitet
+      let abw = absTypes.length ? absTypes.map(absBadge).join(" ") : "";
+      if(isWeekend(d) && ist>0){
+        abw = (abw ? (abw+" ") : "") + weekendBadge();
+      }
+
+      html+=`<tr>
         <td class="mono">${ds}</td>
         <td>${dayNames[d.getDay()]}</td>
         <td class="mono">${hhmm(ist)}</td>
         <td class="mono">${hhmm(soll)}</td>
-        <td>${absLabels.join(", ")}</td>
+        <td>${abw}</td>
         <td class="mono">${hhmm(saldo)}</td>
       </tr>`;
     }
@@ -777,9 +754,11 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     $("overviewTable").innerHTML=html;
 
     const delta=istSum-sollSum;
-    const cls=(Math.abs(delta)>TOL)?"bad":(Math.abs(delta)>1?"warn":"ok");
+    const weeksEq = workdays ? (workdays/5) : 1;
+
+    const cls = pillClassForWeeklyTolerance(delta, weeksEq);
     $("sumPill").className="pill "+cls;
-    $("sumPill").textContent=`IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · SALDO ${hhmm(delta)}`;
+    $("sumPill").textContent=`IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · SALDO ${hhmm(delta)} (Toleranz: ±${hhmm(TOL_WEEK_MIN)} / Woche)`;
 
     if($("mode").value==="month"){
       const weeks=new Map();
@@ -798,16 +777,17 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
       const avgIst = active.length ? active.map(w=>w.ist*(5/w.weekdays)).reduce((s,v)=>s+v,0)/active.length : 0;
       const avgSoll= active.length ? active.map(w=>W - (w.absDays*(W/5))).reduce((s,v)=>s+v,0)/active.length : W;
       const dAvg=avgIst-avgSoll;
-      const clsAvg=(Math.abs(dAvg)>TOL)?"bad":(Math.abs(dAvg)>1?"warn":"ok");
+
+      const clsAvg = pillClassForWeeklyTolerance(dAvg, 1);
       $("avgPill").style.display="";
       $("avgPill").className="pill "+clsAvg;
-      $("avgPill").textContent=`Ø/Woche ${hhmm(avgIst)} (Soll ${hhmm(avgSoll)})`;
+      $("avgPill").textContent=`Ø/Woche ${hhmm(avgIst)} (Soll ${hhmm(avgSoll)}) · Δ ${hhmm(dAvg)} · Toleranz ±${hhmm(TOL_WEEK_MIN)}`;
     }else{
       $("avgPill").style.display="none";
     }
   }
 
-  /* ✅ Schick: Abwesenheiten als Blöcke (Zeiträume) anzeigen + Block löschen */
+  // Abwesenheiten als Blöcke + Block löschen
   function renderAbsList(){
     if(!S.A.length){
       $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten im aktuell geladenen Jahr (${Y}).</div>`;
@@ -815,13 +795,12 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     }
 
     const arr = S.A.slice().sort((a,b)=>a.d.localeCompare(b.d));
-
     const blocks = [];
     let cur = null;
 
     function nextWorkdayStr(ds){
       let d = d0(ds);
-      do { d.setDate(d.getDate()+1); } while(!wd(d)); // nur Mo–Fr
+      do { d.setDate(d.getDate()+1); } while(!wd(d));
       return toDateStr(d);
     }
 
@@ -847,7 +826,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
       return `
         <tr>
           <td class="mono">${range}</td>
-          <td>${absLabel(b.t)} ${absBadge(b.t)} <span class="muted">(${b.days} WT)</span></td>
+          <td>${absBadge(b.t)} <span class="muted">(${b.days} WT)</span></td>
           <td><button class="btn-ghost btn-sm" data-del-block="${i}">🗑️</button></td>
         </tr>`;
     }).join("");
@@ -871,7 +850,10 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
 
   function renderEntryList(){
     const entries=S.E.slice().sort((a,b)=>b.d.localeCompare(a.d));
-    if(!entries.length){ $("entryList").innerHTML=`<div class="muted">Noch keine Einträge im aktuell geladenen Jahr (${Y}).</div>`; return; }
+    if(!entries.length){
+      $("entryList").innerHTML=`<div class="muted">Noch keine Einträge im aktuell geladenen Jahr (${Y}).</div>`;
+      return;
+    }
 
     const rows=entries.map(e=>{
       const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
@@ -887,6 +869,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     }).join("");
 
     $("entryList").innerHTML=`<table><thead><tr><th>Datum</th><th>Info</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+
     document.querySelectorAll("[data-del]").forEach(b=>{
       b.onclick=async ()=>{
         const id=b.getAttribute("data-del");
@@ -919,7 +902,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     renderEntryList();
   }
 
-  // ---- CSV / Share (export cross-year range) ----
+  // CSV / Share (export cross-year range) – mit Wochenende-Hinweis in Notiz
   function buildCSVForRange(merged, start, end){
     const sep=";";
     const W=getWeeklyTargetMinutes();
@@ -933,15 +916,16 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     const entries=merged.allE.filter(e=>e.d>=startS && e.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
     for(const e of entries){
       const net=((new Date(e.e)-new Date(e.s))/60000)-(e.p||0);
+      const d = d0(e.d);
+      const wkHint = isWeekend(d) ? "🟣 Wochenende" : "";
+      const note = [wkHint, (e.n||"")].filter(Boolean).join(" · ");
+
       rows.push([
-        csvSafeCell(emp),
-        startS, endS,
-        String(W),
-        e.d, e.s, e.e,
-        String(e.p||0),
+        csvSafeCell(emp), startS, endS, String(W),
+        e.d, e.s, e.e, String(e.p||0),
         Number.isFinite(net)?String(Math.round(net)):"",
         hhmm(net),
-        csvSafeCell(e.n||""),
+        csvSafeCell(note),
         csvSafeCell(mgr?.name||""),
         csvSafeCell(mgr?.mail||"")
       ].join(sep));
@@ -950,11 +934,9 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     const abs=merged.allA.filter(a=>a.d>=startS && a.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
     for(const a of abs){
       rows.push([
-        csvSafeCell(emp),
-        startS, endS,
-        String(W),
+        csvSafeCell(emp), startS, endS, String(W),
         a.d, "", "", "0", "0", "00:00",
-        csvSafeCell(absLabel(a.t)),
+        csvSafeCell("Abwesenheit: "+absLabel(a.t)),
         csvSafeCell(mgr?.name||""),
         csvSafeCell(mgr?.mail||"")
       ].join(sep));
@@ -980,7 +962,6 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     if(!(merged.emp||S.emp)) return alert("Bitte Name speichern.");
     const csv=buildCSVForRange(merged,start,end);
     const file=new File([new Blob([csv],{type:"text/csv"})], "zeiterfassung.csv", {type:"text/csv"});
-
     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({title:`Zeiterfassung – ${merged.emp||S.emp}`, files:[file]});
       return;
@@ -999,7 +980,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     await renderAll();
   };
 
-  // ---- Init + Abwesenheit: Ende folgt Start (default gleicher Tag) ----
+  // Init + Abwesenheit: Ende folgt Start, bis Ende manuell geändert
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
@@ -1011,7 +992,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   let aEndTouched=false;
   $("aEnd").addEventListener("change", ()=>{ aEndTouched=true; });
   $("aStart").addEventListener("change", ()=>{
-    if(!aEndTouched) $("aEnd").value = $("aStart").value; // ✅ gleicher Tag default
+    if(!aEndTouched) $("aEnd").value = $("aStart").value;
   });
 
   $("btnPause").disabled=true;
