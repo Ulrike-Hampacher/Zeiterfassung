@@ -67,7 +67,7 @@ th{text-align:left;color:#64748b}
 .stack input{margin-bottom:6px}
 .stack button{margin-top:4px}
 
-/* Manager (mail -2 left mehr) */
+/* Manager (Mail länger + -9 left) */
 .w-mgr-name{width:200px;max-width:200px;margin-left:-7px}
 .w-mgr-mail{width:360px;max-width:92vw;min-width:300px;margin-left:-9px}
 
@@ -246,7 +246,7 @@ th{text-align:left;color:#64748b}
 <div class="card" id="absence" style="display:none">
   <h2>🏖️ Abwesenheit</h2>
   <div class="muted">
-    Zeitraum: es werden nur <b>Mo–Fr</b> gespeichert. ✅ Pro Tag ist <b>max. 1 Abwesenheit</b> erlaubt.
+    Zeitraum: nur <b>Mo–Fr</b>. ✅ Pro Tag <b>max. 1</b> Abwesenheit. Neue Eintragung <b>überschreibt</b> vorhandene.
   </div>
 
   <div class="row" style="margin-top:10px">
@@ -263,7 +263,6 @@ th{text-align:left;color:#64748b}
     <button class="btn-ghost" id="addAbs">➕ Speichern</button>
   </div>
 
-  <!-- 🔥 Neu: Einzeltag löschen -->
   <div class="row" style="margin-top:10px">
     <div><div class="muted">🗓️ Einzeltag löschen</div><input type="date" id="aDelDate"></div>
     <button class="btn-ghost" id="delAbsDay">🗑️ Löschen</button>
@@ -283,7 +282,7 @@ th{text-align:left;color:#64748b}
 <!-- SETTINGS -->
 <div class="card" id="settings" style="display:none">
   <h2>⚙️ Settings</h2>
-  <div class="muted">🔐 Daten sind lokal verschlüsselt. PIN gilt pro Session (solange Safari offen bleibt).</div>
+  <div class="muted">🔐 Daten lokal verschlüsselt. PIN gilt pro Session (solange Safari offen bleibt).</div>
   <div class="row" style="margin-top:10px">
     <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
     <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
@@ -333,12 +332,7 @@ th{text-align:left;color:#64748b}
   const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6;
   const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
-  function absLabel(t){
-    if(t==="vac") return "Urlaub";
-    if(t==="sick") return "Krank";
-    if(t==="hol") return "Feiertag";
-    return t;
-  }
+  function absLabel(t){ return t==="vac"?"Urlaub":t==="sick"?"Krank":t==="hol"?"Feiertag":t; }
   function absBadge(t){
     if(t==="vac")  return `<span class="badge vac">🏖️ Urlaub</span>`;
     if(t==="sick") return `<span class="badge sick">🤒 Krank</span>`;
@@ -351,7 +345,6 @@ th{text-align:left;color:#64748b}
     const v=Number($("weeklyTarget").value);
     return (Number.isFinite(v) && v>0) ? v : 2400;
   }
-
   function csvSafeCell(s){
     s=(s??"").toString();
     const t=s.trimStart();
@@ -359,7 +352,7 @@ th{text-align:left;color:#64748b}
     return s;
   }
 
-  // ---- Crypto ----
+  // Crypto
   const SALT_KEY = NS+"::salt";
   const SESSION_KEY = NS+"::session_rawkey";
 
@@ -423,7 +416,7 @@ th{text-align:left;color:#64748b}
     localStorage.setItem(yearKey(y), JSON.stringify(blob));
   }
 
-  // ---- State ----
+  // State
   let Y=new Date().getFullYear();
   let S={emp:"", mgr:{name:"",mail:""}, E:[], A:[]};
   let run=null;
@@ -602,8 +595,7 @@ th{text-align:left;color:#64748b}
     await renderAll();
   };
 
-  // Abwesenheit Zeitraum (Mo–Fr), jahresübergreifend
-  // ✅ NEU: Pro Tag max. 1 Abwesenheit (egal welcher Typ). Kein doppelt!
+  // Abwesenheit Zeitraum: Überschreiben pro Tag
   $("addAbs").onclick=async()=>{
     $("absMsg").textContent="";
     const startV=$("aStart").value;
@@ -615,7 +607,7 @@ th{text-align:left;color:#64748b}
     const end=d0(endV);
     if(end < start) return alert("Ende muss nach Start sein.");
 
-    let added=0, skipped=0;
+    let added=0, replaced=0;
 
     const perYear = new Map();
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
@@ -629,11 +621,11 @@ th{text-align:left;color:#64748b}
       }
       const st = perYear.get(y);
 
-      // 👉 Wenn Tag schon irgendeine Abwesenheit hat: skip (verhindert Urlaub+Feiertag etc.)
-      if(st.A.some(a=>a.d===ds)){
-        skipped++;
-        continue;
-      }
+      // ✅ Überschreiben: entferne alle Abwesenheiten am Tag (egal Typ)
+      const beforeLen = st.A.length;
+      st.A = st.A.filter(a => a.d !== ds);
+      const rem = beforeLen - st.A.length;
+      if(rem>0) replaced += rem;
 
       st.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()+Math.random()), d:ds, t});
       added++;
@@ -643,11 +635,10 @@ th{text-align:left;color:#64748b}
 
     await loadYear(getRefYear());
     await renderAll();
-
-    $("absMsg").textContent = `✅ ${added} Tage gespeichert` + (skipped ? ` · ⚠️ ${skipped} übersprungen (bereits belegt)` : "");
+    $("absMsg").textContent = `✅ ${added} Tage gespeichert` + (replaced ? ` · ♻️ ${replaced} überschrieben` : "");
   };
 
-  // ✅ NEU: Einzeltag löschen (rückwirkend, auch wenn mal doppelt)
+  // Einzeltag löschen
   $("delAbsDay").onclick=async()=>{
     $("absMsg").textContent="";
     const ds=$("aDelDate").value;
@@ -661,7 +652,7 @@ th{text-align:left;color:#64748b}
 
     await loadYear(getRefYear());
     await renderAll();
-    $("absMsg").textContent = removed ? `🗑️ ${removed} Abwesenheit(en) am ${ds} gelöscht` : `ℹ️ nichts gefunden am ${ds}`;
+    $("absMsg").textContent = removed ? `🗑️ ${removed} Eintrag(e) am ${ds} gelöscht` : `ℹ️ nichts gefunden am ${ds}`;
   };
 
   // Reset
@@ -854,7 +845,7 @@ th{text-align:left;color:#64748b}
     }
   }
 
-  // Abwesenheiten als Blöcke + löschen
+  // Abwesenheiten Blöcke + löschen
   function renderAbsList(){
     if(!S.A.length){
       $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten im Jahr ${Y}.</div>`;
@@ -1032,7 +1023,6 @@ th{text-align:left;color:#64748b}
     alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
   }
 
-  // Wire
   $("btnCSV").onclick=downloadCSV;
   $("btnShare").onclick=shareCSV;
   $("btnRefresh").onclick=renderAll;
@@ -1044,7 +1034,6 @@ th{text-align:left;color:#64748b}
     await renderAll();
   };
 
-  // Init
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
