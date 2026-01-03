@@ -11,12 +11,16 @@
 
 <style>
 :root{
-  --bg:#f4f6f8; --card:#fff; --text:#111; --muted:#666;
+  --bg:#f4f6f8; --card:#fff; --text:#0f172a; --muted:#64748b;
+  --line:#e5e7eb;
+
   --ok:#166534; --okbg:#dcfce7;
-  --warn:#92400e; --warnbg:#fef3c7;
-  --bad:#991b1b; --badbg:#fee2e2;
+  --warn:#9a3412; --warnbg:#fff7ed;
+
   --blue:#2563eb; --green:#16a34a; --red:#dc2626; --dark:#0f172a;
-  --b-vac:#2563eb; --b-sick:#f97316; --b-hol:#16a34a; --b-bg:#eef2ff;
+
+  --b-vac:#2563eb; --b-sick:#f97316; --b-hol:#16a34a;
+  --b-bg:#eef2ff;
 }
 *{box-sizing:border-box}
 body{margin:0;padding:14px;font-family:-apple-system,system-ui;background:var(--bg);color:var(--text)}
@@ -35,64 +39,86 @@ h2{margin:6px 0 10px 0;font-size:16px}
 #overview .row > *{ margin-bottom:14px; }
 
 .right{margin-left:auto}
-input,select,button{font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid #ddd;background:#fff}
+input,select,button{font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff}
 button{border:none;font-weight:700;cursor:pointer}
+
 .btn-start{background:var(--green);color:#fff}
 .btn-pause{background:var(--dark);color:#fff}
 .btn-stop{background:var(--red);color:#fff}
 .btn-blue{background:var(--blue);color:#fff}
-.btn-ghost{background:#eee;color:#111}
+.btn-ghost{background:#eef2f7;color:#0f172a}
+
 .btn-sm{padding:8px 10px;font-size:14px;border-radius:10px}
 
-.pill{display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;background:#eee}
-.pill.ok{background:var(--okbg);color:var(--ok)}
-.pill.warn{background:var(--warnbg);color:var(--warn)}
-.pill.bad{background:var(--badbg);color:var(--bad)}
-
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tab{padding:10px 14px;border-radius:12px;background:#eee;cursor:pointer}
+.tab{padding:10px 14px;border-radius:12px;background:#eef2f7;cursor:pointer}
 .tab.active{background:#111;color:#fff}
 
 table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #eee;font-size:14px;vertical-align:top}
-th{text-align:left;color:#777}
+th,td{padding:8px;border-bottom:1px solid #eef2f7;font-size:14px;vertical-align:top}
+th{text-align:left;color:#64748b}
 .mono{font-family:ui-monospace,Menlo,monospace}
 
-/* Handy-Layout: bewusst kompakt */
+/* Kompakt am Handy */
 .w-emp{width:220px;max-width:220px}
 .w-note{width:160px;max-width:160px}
-.w-save{width:140px;max-width:140px}
-
-/* Manager */
-.w-mgr-name{width:200px;max-width:200px;margin-left:-7px}
-.w-mgr-mail{
-  width:360px; max-width:90vw; min-width:300px;
-  margin-left:-7px;
-}
+.w-save{width:160px;max-width:160px}
 
 .stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .stack input{margin-bottom:6px}
 .stack button{margin-top:4px}
 
-/* Badges */
+/* Manager (sauber, Mail etwas länger, leicht nach links) */
+.w-mgr-name{width:200px;max-width:200px;margin-left:-7px}
+.w-mgr-mail{width:360px;max-width:92vw;min-width:300px;margin-left:-7px}
+
+/* Chips / Badges */
 .badge{
-  display:inline-block; padding:4px 10px; border-radius:999px;
-  font-size:12px; font-weight:800; background:var(--b-bg);
-  border:1px solid rgba(0,0,0,.06); white-space:nowrap;
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 10px; border-radius:999px;
+  font-size:12px; font-weight:800;
+  background:var(--b-bg);
+  border:1px solid rgba(0,0,0,.06);
+  white-space:nowrap;
 }
 .badge.vac{ color:var(--b-vac); }
 .badge.sick{ color:var(--b-sick); }
 .badge.hol{ color:var(--b-hol); }
-.badge.weekend{ color:#7c3aed; background:#f5f3ff; }
+
+/* Wochenende: neutral (kein Lila) */
+.badge.weekend{
+  color:#1e40af;
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+}
+
+/* Summary Chips (Ampel ohne Rot) */
+.chip-ok{ background:var(--okbg); color:var(--ok); }
+.chip-warn{ background:var(--warnbg); color:var(--warn); }
+
+/* Nur echte Fehler */
+.chip-error{ background:#fee2e2; color:#991b1b; }
+
+.summarybar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  margin-top:10px;
+}
+.summarybar .right{ margin-left:auto; }
 
 /* PIN Overlay */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
 .modal{width:min(520px,100%);background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .modal h2{margin-top:0}
 .pin{
-  width:min(260px,86vw); max-width:86vw;
-  letter-spacing:.18em; font-weight:800;
-  text-align:center; font-size:18px;
+  width:min(260px,86vw);
+  max-width:86vw;
+  letter-spacing:.18em;
+  font-weight:800;
+  text-align:center;
+  font-size:18px;
   padding:10px 12px;
 }
 @media(max-width:360px){ .pin{width:82vw;letter-spacing:.14em} }
@@ -143,7 +169,7 @@ th{text-align:left;color:#777}
     <button class="btn-start" id="btnStart">▶️ Start</button>
     <button class="btn-pause" id="btnPause" disabled>⏸️ Pause</button>
     <button class="btn-stop" id="btnStop">■ Stop</button>
-    <span class="pill" id="timerStatus">⚪ bereit</span>
+    <span class="badge" id="timerStatus">⚪ bereit</span>
     <span class="right muted mono" id="timerInfo"></span>
   </div>
 </div>
@@ -182,17 +208,12 @@ th{text-align:left;color:#777}
     <span class="right muted mono" id="yearHint"></span>
   </div>
 
-  <!-- ✅ Woche: schön in einer Zeile, Wochenende rechts als Chip -->
-  <div id="weekBox" style="margin-top:10px;display:none">
-    <div class="row" style="margin-bottom:-10px">
-      <span class="pill" id="weekPill">—</span>
-      <span class="right badge weekend" id="weekendPill">🟣 Wochenende: 00:00</span>
-    </div>
-  </div>
-
-  <div style="margin-top:10px">
-    <span class="pill ok" id="sumPill">—</span>
-    <span class="pill" id="avgPill" style="display:none;margin-left:6px">—</span>
+  <!-- ✅ Eine saubere Summary-Leiste -->
+  <div class="summarybar" id="summaryBar" style="display:none">
+    <span class="badge" id="weekChip" style="display:none">—</span>
+    <span class="badge" id="sumChip">—</span>
+    <span class="badge" id="avgChip" style="display:none">—</span>
+    <span class="badge weekend right" id="weekendChip" style="display:none">🟦 Wochenende: 00:00</span>
   </div>
 
   <div style="margin-top:12px">
@@ -287,7 +308,7 @@ th{text-align:left;color:#777}
 (() => {
   const NS="ZEITERFASSUNG";
   const AUTO_BREAK=55;               // Auto-Pause 55min
-  const TOL_WEEK_MIN = 10*60;        // ±10h pro Woche (Regel!)
+  const TOL_WEEK_MIN = 10*60;        // ±10h pro Woche
   const PIN_LEN=6;
 
   const $=id=>document.getElementById(id);
@@ -319,7 +340,7 @@ th{text-align:left;color:#777}
     if(t==="hol")  return `<span class="badge hol">🎉 Feiertag</span>`;
     return `<span class="badge">${t}</span>`;
   }
-  const weekendBadge=()=>`<span class="badge weekend">🟣 Wochenende</span>`;
+  const weekendBadge=()=>`<span class="badge weekend">🟦 Wochenende</span>`;
 
   function getWeeklyTargetMinutes(){
     const v=Number($("weeklyTarget").value);
@@ -377,7 +398,6 @@ th{text-align:left;color:#777}
   }
   function yearKey(y){ return NS+"::year::"+y; }
 
-  // read/write year state (for cross-year ranges)
   async function readYearState(y){
     const aes=await getSessionKey();
     if(!aes) throw new Error("LOCKED");
@@ -398,7 +418,7 @@ th{text-align:left;color:#777}
     localStorage.setItem(yearKey(y), JSON.stringify(blob));
   }
 
-  // ---- App state ----
+  // ---- State ----
   let Y=new Date().getFullYear();
   let S={emp:"", mgr:{name:"",mail:""}, E:[], A:[]};
   let run=null;
@@ -413,9 +433,9 @@ th{text-align:left;color:#777}
   }
   function hideOverlay(){ $("ovl").style.display="none"; }
 
-  function setTimerStatus(txt,cls){
-    $("timerStatus").textContent=txt;
-    $("timerStatus").className="pill"+(cls?(" "+cls):"");
+  function setTimerStatus(txt, cls){
+    $("timerStatus").textContent = txt;
+    $("timerStatus").className = "badge" + (cls ? (" "+cls) : "");
   }
 
   function tab(name){
@@ -432,7 +452,7 @@ th{text-align:left;color:#777}
   }
 
   async function loadYear(y){
-    Y=y; $("yearHint").textContent=`📦 Jahr: ${Y}`;
+    Y=y; $("yearHint").textContent=`Jahr: ${Y}`;
     const aes=await getSessionKey();
     if(!aes){ showOverlay("Bitte PIN eingeben, um Daten zu laden."); return false; }
 
@@ -506,8 +526,9 @@ th{text-align:left;color:#777}
     const d=d0($("timerDate").value);
     const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),now.getHours(),now.getMinutes(),0,0);
     run={date:$("timerDate").value,start,pauseMin:0,pauseStart:null,note:($("timerNote").value||"").trim()};
+
     $("btnPause").disabled=false; $("btnPause").textContent="⏸️ Pause";
-    setTimerStatus("🟢 läuft","ok");
+    setTimerStatus("🟢 läuft","chip-ok");
     $("timerInfo").textContent=`Start ${pad(start.getHours())}:${pad(start.getMinutes())}`;
   };
 
@@ -515,10 +536,12 @@ th{text-align:left;color:#777}
     if(!run) return;
     const now=new Date(); now.setSeconds(0,0);
     if(!run.pauseStart){
-      run.pauseStart=now; $("btnPause").textContent="▶️ Weiter"; setTimerStatus("⏸️ Pause","warn");
+      run.pauseStart=now; $("btnPause").textContent="▶️ Weiter";
+      setTimerStatus("⏸️ Pause","chip-warn");
     }else{
       run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
-      run.pauseStart=null; $("btnPause").textContent="⏸️ Pause"; setTimerStatus("🟢 läuft","ok");
+      run.pauseStart=null; $("btnPause").textContent="⏸️ Pause";
+      setTimerStatus("🟢 läuft","chip-ok");
     }
   };
 
@@ -530,16 +553,17 @@ th{text-align:left;color:#777}
       run.pauseStart=null;
     }
     const gross=Math.round((end-run.start)/60000);
-    if(gross<=0) return alert("Zeit ungültig.");
+    if(gross<=0){ setTimerStatus("❌ Zeit ungültig","chip-error"); return; }
 
     const auto=(gross>=AUTO_BREAK)?AUTO_BREAK:0;
     const pause=auto+run.pauseMin;
 
     S.E.push({id:(crypto.randomUUID?crypto.randomUUID():"id_"+Date.now()), d:run.date, s:run.start.toISOString(), e:end.toISOString(), p:pause, n:run.note||""});
     run=null;
+
     $("btnPause").disabled=true; $("btnPause").textContent="⏸️ Pause";
-    setTimerStatus("⚪ bereit","");
-    $("timerInfo").textContent="✅ gespeichert";
+    setTimerStatus("✅ gespeichert","chip-ok");
+    $("timerInfo").textContent="";
     await saveYear();
     await renderAll();
   };
@@ -556,7 +580,7 @@ th{text-align:left;color:#777}
     const s=new Date(d0(d).setHours(sh,sm,0,0));
     const e=new Date(d0(d).setHours(eh,em,0,0));
     const gross=Math.round((e-s)/60000);
-    if(gross<=0){ $("editMsg").textContent="⚠️ Ende muss nach Start"; return; }
+    if(gross<=0){ $("editMsg").textContent="❌ Ende muss nach Start"; return; }
 
     const yr=d0(d).getFullYear();
     if(yr!==Y){ const ok=await loadYear(yr); if(!ok) return; }
@@ -573,7 +597,7 @@ th{text-align:left;color:#777}
     await renderAll();
   };
 
-  // Abwesenheit Zeitraum (Mo–Fr), jahresübergreifend gespeichert
+  // Abwesenheit Zeitraum (Mo–Fr), jahresübergreifend
   $("addAbs").onclick=async()=>{
     const startV=$("aStart").value;
     const endV=$("aEnd").value;
@@ -586,7 +610,7 @@ th{text-align:left;color:#777}
 
     const perYear = new Map();
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-      if(!wd(d)) continue; // Wochenende NICHT zählen
+      if(!wd(d)) continue;
       const ds=toDateStr(d);
       const y=d.getFullYear();
 
@@ -628,10 +652,10 @@ th{text-align:left;color:#777}
     }
   };
 
-  // Ranges
+  // Bereiche
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
-    const monIndex=(d.getDay()+6)%7; // Montag=0
+    const monIndex=(d.getDay()+6)%7;
     const start=new Date(d); start.setDate(d.getDate()-monIndex);
     const end=new Date(start); end.setDate(start.getDate()+6);
     start.setHours(0,0,0,0); end.setHours(0,0,0,0);
@@ -670,7 +694,6 @@ th{text-align:left;color:#777}
     return {yr,start,end};
   }
 
-  // cross-year merge (für Bereiche, die über Jahresgrenze gehen)
   async function getMergedForRange(start, end){
     const years = new Set([start.getFullYear(), end.getFullYear()]);
     const allE=[], allA=[];
@@ -685,17 +708,15 @@ th{text-align:left;color:#777}
     return {allE, allA, emp, mgr};
   }
 
-  function pillClassForWeeklyTolerance(deltaMin, weeksEquivalent){
+  // Ampel: ok innerhalb ±10h/Woche, sonst warn (orange)
+  function chipClassByWeeklyTolerance(deltaMin, weeksEquivalent){
     const tol = TOL_WEEK_MIN * Math.max(1, weeksEquivalent);
-    const a = Math.abs(deltaMin);
-    if(a > tol) return "bad";
-    if(a > tol*0.5) return "warn";
-    return "ok";
+    return (Math.abs(deltaMin) <= tol) ? "chip-ok" : "chip-warn";
   }
 
   async function renderOverviewTable(){
     const {start,end}=getPeriodRange();
-    $("yearHint").textContent = `📦 Bereich: ${start.getFullYear()}–${end.getFullYear()}`;
+    $("yearHint").textContent = `Bereich: ${start.getFullYear()}–${end.getFullYear()}`;
 
     const W=getWeeklyTargetMinutes();
     const DAY=W/5;
@@ -714,9 +735,7 @@ th{text-align:left;color:#777}
     }
 
     const dayNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
-    let istSum=0, sollSum=0;
-    let workdays=0;
-    let weekendMin=0;
+    let istSum=0, sollSum=0, workdays=0, weekendMin=0;
 
     let html=`<table><thead><tr>
       <th>Datum</th><th>Tag</th><th>IST</th><th>SOLL</th><th>Abw.</th><th>SALDO</th>
@@ -755,23 +774,28 @@ th{text-align:left;color:#777}
     const delta=istSum-sollSum;
     const weeksEq = workdays ? (workdays/5) : 1;
 
-    // Gesamt-Ampel für den gewählten Bereich (skaliert)
-    const cls = pillClassForWeeklyTolerance(delta, weeksEq);
-    $("sumPill").className="pill "+cls;
-    $("sumPill").textContent=`IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · SALDO ${hhmm(delta)} (Toleranz: ±${hhmm(TOL_WEEK_MIN)} / Woche)`;
+    // Summary Bar einblenden
+    $("summaryBar").style.display="";
 
-    // Woche: extra Summary + Wochenende-Chip rechts
+    // Gesamtbereich Chip (skaliert nach Anzahl Wochen im Bereich)
+    const sumCls = chipClassByWeeklyTolerance(delta, weeksEq);
+    $("sumChip").className = "badge " + sumCls;
+    $("sumChip").textContent = `IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)} (±10:00/Woche)`;
+
+    // Woche: extra Chip + Wochenende rechts
     if($("mode").value==="week"){
-      $("weekBox").style.display="";
-      const clsW = pillClassForWeeklyTolerance(delta, 1);
-      $("weekPill").className="pill "+clsW;
-      $("weekPill").textContent=`📅 Woche: IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)} (±10:00 ok)`;
-      $("weekendPill").textContent=`🟣 Wochenende: ${hhmm(weekendMin)}`;
+      $("weekChip").style.display="";
+      $("weekendChip").style.display="";
+      const wCls = chipClassByWeeklyTolerance(delta, 1);
+      $("weekChip").className = "badge " + wCls;
+      $("weekChip").textContent = `Woche: IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)}`;
+      $("weekendChip").textContent = `🟦 Wochenende: ${hhmm(weekendMin)}`;
     }else{
-      $("weekBox").style.display="none";
+      $("weekChip").style.display="none";
+      $("weekendChip").style.display="none";
     }
 
-    // Monat: Ø/Woche Ampel
+    // Monat: Ø/Woche Chip (auf Wochen normalisiert)
     if($("mode").value==="month"){
       const weeks=new Map();
       for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
@@ -790,19 +814,19 @@ th{text-align:left;color:#777}
       const avgSoll= active.length ? active.map(w=>W - (w.absDays*(W/5))).reduce((s,v)=>s+v,0)/active.length : W;
       const dAvg=avgIst-avgSoll;
 
-      const clsAvg = pillClassForWeeklyTolerance(dAvg, 1);
-      $("avgPill").style.display="";
-      $("avgPill").className="pill "+clsAvg;
-      $("avgPill").textContent=`Ø/Woche ${hhmm(avgIst)} (Soll ${hhmm(avgSoll)}) · Δ ${hhmm(dAvg)} · Toleranz ±${hhmm(TOL_WEEK_MIN)}`;
+      const avgCls = chipClassByWeeklyTolerance(dAvg, 1);
+      $("avgChip").style.display="";
+      $("avgChip").className = "badge " + avgCls;
+      $("avgChip").textContent = `Ø/Woche ${hhmm(avgIst)} (Soll ${hhmm(avgSoll)}) · Δ ${hhmm(dAvg)}`;
     }else{
-      $("avgPill").style.display="none";
+      $("avgChip").style.display="none";
     }
   }
 
-  // Abwesenheiten als Blöcke zusammenfassen + löschen
+  // Abwesenheiten als Blöcke + löschen
   function renderAbsList(){
     if(!S.A.length){
-      $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten im aktuell geladenen Jahr (${Y}).</div>`;
+      $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten im Jahr ${Y}.</div>`;
       return;
     }
     const arr = S.A.slice().sort((a,b)=>a.d.localeCompare(b.d));
@@ -854,7 +878,7 @@ th{text-align:left;color:#777}
   function renderEntryList(){
     const entries=S.E.slice().sort((a,b)=>b.d.localeCompare(a.d));
     if(!entries.length){
-      $("entryList").innerHTML=`<div class="muted">Noch keine Einträge im aktuell geladenen Jahr (${Y}).</div>`;
+      $("entryList").innerHTML=`<div class="muted">Noch keine Einträge im Jahr ${Y}.</div>`;
       return;
     }
     const rows=entries.map(e=>{
@@ -906,7 +930,7 @@ th{text-align:left;color:#777}
     renderEntryList();
   }
 
-  // CSV / Share (bereichsübergreifend) – mit Wochenende-Hinweis in Notiz
+  // CSV / Share (bereichsübergreifend) – Wochenende-Hinweis in Notiz
   async function getMergedForCurrentRange(){
     const {start,end}=getPeriodRange();
     const merged=await getMergedForRange(start,end);
@@ -927,7 +951,7 @@ th{text-align:left;color:#777}
     for(const e of entries){
       const net=((new Date(e.e)-new Date(e.s))/60000)-(e.p||0);
       const d = d0(e.d);
-      const wkHint = isWeekend(d) ? "🟣 Wochenende" : "";
+      const wkHint = isWeekend(d) ? "Wochenende" : "";
       const note = [wkHint, (e.n||"")].filter(Boolean).join(" · ");
 
       rows.push([
@@ -977,6 +1001,7 @@ th{text-align:left;color:#777}
     alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
   }
 
+  // Wire buttons
   $("btnCSV").onclick=downloadCSV;
   $("btnShare").onclick=shareCSV;
   $("btnRefresh").onclick=renderAll;
@@ -988,12 +1013,11 @@ th{text-align:left;color:#777}
     await renderAll();
   };
 
-  // Init + Abwesenheit: Ende folgt Start, bis Ende manuell geändert
+  // Abwesenheit: Ende folgt Start, bis Ende manuell geändert
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
   $("eDate").value=today;
-
   $("aStart").value=today;
   $("aEnd").value=today;
 
@@ -1003,9 +1027,11 @@ th{text-align:left;color:#777}
     if(!aEndTouched) $("aEnd").value = $("aStart").value;
   });
 
+  // Timer initial
   $("btnPause").disabled=true;
   setTimerStatus("⚪ bereit","");
 
+  // Start gate
   (async()=>{
     const k=await getSessionKey();
     if(!k){ showOverlay("Bitte PIN setzen oder eingeben, um zu starten."); return; }
@@ -1013,8 +1039,37 @@ th{text-align:left;color:#777}
     await renderAll();
     tab("timer");
   })();
+
+  // Tabs
+  function initTabs(){
+    document.querySelectorAll(".tab").forEach(t=>{
+      t.onclick=()=>tab(t.dataset.tab);
+    });
+  }
+  initTabs();
+
+  // PIN overlay buttons
+  $("btnUnlock").onclick=async()=>{
+    const pin=($("pinInput").value||"").trim();
+    if(pin.length!==PIN_LEN||!/^\d+$/.test(pin)){ $("pinMsg").textContent=`PIN muss ${PIN_LEN} Ziffern haben.`; return; }
+    await ensureSessionKey(pin);
+    hideOverlay();
+    await loadYear(getRefYear());
+    await renderAll();
+    tab("timer");
+  };
+  $("btnSetPin").onclick=async()=>{
+    const pin=($("pinInput").value||"").trim();
+    if(pin.length!==PIN_LEN||!/^\d+$/.test(pin)){ $("pinMsg").textContent=`PIN muss ${PIN_LEN} Ziffern haben.`; return; }
+    await ensureSessionKey(pin);
+    hideOverlay();
+    await loadYear(getRefYear());
+    await saveYear();
+    await renderAll();
+    alert("✅ PIN gesetzt. Bitte merken!");
+  };
+
 })();
 </script>
-
 </body>
 </html>
