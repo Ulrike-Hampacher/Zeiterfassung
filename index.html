@@ -29,15 +29,11 @@ h2{margin:6px 0 10px 0;font-size:16px}
 
 /* iOS-Safari-sicherer Abstand bei Zeilenumbruch */
 .row{
-  display:flex;
-  flex-wrap:wrap;
-  align-items:flex-end;
-  column-gap:10px;
-  row-gap:12px;
+  display:flex; flex-wrap:wrap; align-items:flex-end;
+  column-gap:10px; row-gap:12px;
   margin-bottom:-12px;
 }
 .row > *{ margin-bottom:12px; }
-
 #overview .row{ margin-bottom:-14px; }
 #overview .row > *{ margin-bottom:14px; }
 
@@ -77,19 +73,14 @@ th{text-align:left;color:#777}
 
 /* Badges */
 .badge{
-  display:inline-block;
-  padding:4px 10px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:800;
-  background:var(--b-bg);
-  border:1px solid rgba(0,0,0,.06);
-  white-space:nowrap;
+  display:inline-block; padding:4px 10px; border-radius:999px;
+  font-size:12px; font-weight:800; background:var(--b-bg);
+  border:1px solid rgba(0,0,0,.06); white-space:nowrap;
 }
 .badge.vac{ color:var(--b-vac); }
 .badge.sick{ color:var(--b-sick); }
 .badge.hol{ color:var(--b-hol); }
-.badge.weekend{ color:#7c3aed; background:#f5f3ff; } /* 🟣 Wochenende */
+.badge.weekend{ color:#7c3aed; background:#f5f3ff; }
 
 /* PIN Overlay */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
@@ -191,6 +182,12 @@ th{text-align:left;color:#777}
     <span class="right muted mono" id="yearHint"></span>
   </div>
 
+  <!-- ✅ Wochen-Summary nur im Woche-Modus -->
+  <div id="weekBox" style="margin-top:10px;display:none">
+    <span class="pill" id="weekPill">—</span>
+    <span class="pill" id="weekendPill" style="margin-left:6px">—</span>
+  </div>
+
   <div style="margin-top:10px">
     <span class="pill ok" id="sumPill">—</span>
     <span class="pill" id="avgPill" style="display:none;margin-left:6px">—</span>
@@ -287,8 +284,8 @@ th{text-align:left;color:#777}
 <script>
 (() => {
   const NS="ZEITERFASSUNG";
-  const AUTO_BREAK=55;               // Auto-Pause 55min
-  const TOL_WEEK_MIN = 10*60;        // ±10h pro Woche
+  const AUTO_BREAK=55;
+  const TOL_WEEK_MIN = 10*60;  // ±10h pro Woche
   const PIN_LEN=6;
 
   const $=id=>document.getElementById(id);
@@ -304,8 +301,8 @@ th{text-align:left;color:#777}
     return s + pad(Math.floor(m/60)) + ":" + pad(m%60);
   };
   const d0=(s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
-  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5; // Mo–Fr
-  const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6; // So/Sa
+  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5;
+  const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6;
   const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
   function absLabel(t){
@@ -320,9 +317,7 @@ th{text-align:left;color:#777}
     if(t==="hol")  return `<span class="badge hol">🎉 Feiertag</span>`;
     return `<span class="badge">${t}</span>`;
   }
-  function weekendBadge(){
-    return `<span class="badge weekend">🟣 Wochenende</span>`;
-  }
+  const weekendBadge=()=>`<span class="badge weekend">🟣 Wochenende</span>`;
 
   function getWeeklyTargetMinutes(){
     const v=Number($("weeklyTarget").value);
@@ -380,7 +375,6 @@ th{text-align:left;color:#777}
   }
   function yearKey(y){ return NS+"::year::"+y; }
 
-  // read/write year state (for cross-year ranges)
   async function readYearState(y){
     const aes=await getSessionKey();
     if(!aes) throw new Error("LOCKED");
@@ -587,7 +581,7 @@ th{text-align:left;color:#777}
 
     const perYear = new Map();
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-      if(!wd(d)) continue; // Wochenende nicht zählen
+      if(!wd(d)) continue;
       const ds=toDateStr(d);
       const y=d.getFullYear();
 
@@ -655,7 +649,7 @@ th{text-align:left;color:#777}
     d.setDate(d.getDate()+3-((d.getDay()+6)%7));
     const y=d.getFullYear();
     const week1=new Date(y,0,4); week1.setHours(0,0,0,0);
-    week1.setDate(week1.setDate(week1.getDate()+3-((week1.getDay()+6)%7)));
+    week1.setDate(week1.getDate()+3-((week1.getDay()+6)%7));
     const w=1+Math.round((d-week1)/(7*24*60*60*1000));
     return `${y}-W${pad(w)}`;
   }
@@ -671,7 +665,6 @@ th{text-align:left;color:#777}
     return {yr,start,end};
   }
 
-  // cross-year merge
   async function getMergedForRange(start, end){
     const years = new Set([start.getFullYear(), end.getFullYear()]);
     const allE=[], allA=[];
@@ -718,6 +711,9 @@ th{text-align:left;color:#777}
     let istSum=0, sollSum=0;
     let workdays=0;
 
+    // ✅ Woche: Wochenendarbeit separat zählen
+    let weekendMin=0;
+
     let html=`<table><thead><tr>
       <th>Datum</th><th>Tag</th><th>IST</th><th>SOLL</th><th>Abw.</th><th>SALDO</th>
     </tr></thead><tbody>`;
@@ -727,6 +723,8 @@ th{text-align:left;color:#777}
       const ist=Number.isFinite(istBy[ds]) ? istBy[ds] : 0;
       const isW=wd(d);
 
+      if(isWeekend(d) && ist>0) weekendMin += ist;
+
       const absTypes=A.filter(a=>a.d===ds).map(a=>a.t);
       const soll = Math.round(isW ? (absTypes.length>0 ? 0 : DAY) : 0);
       const saldo=ist-soll;
@@ -735,7 +733,6 @@ th{text-align:left;color:#777}
       sollSum += soll;
       if(isW) workdays += 1;
 
-      // Abw.-Zelle: Abwesenheiten + Wochenende-Badge wenn gearbeitet
       let abw = absTypes.length ? absTypes.map(absBadge).join(" ") : "";
       if(isWeekend(d) && ist>0){
         abw = (abw ? (abw+" ") : "") + weekendBadge();
@@ -759,6 +756,18 @@ th{text-align:left;color:#777}
     const cls = pillClassForWeeklyTolerance(delta, weeksEq);
     $("sumPill").className="pill "+cls;
     $("sumPill").textContent=`IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · SALDO ${hhmm(delta)} (Toleranz: ±${hhmm(TOL_WEEK_MIN)} / Woche)`;
+
+    // ✅ Wochensummary anzeigen NUR im Woche-Modus
+    if($("mode").value==="week"){
+      $("weekBox").style.display="";
+      const clsW = pillClassForWeeklyTolerance(delta, 1);
+      $("weekPill").className="pill "+clsW;
+      $("weekPill").textContent=`📅 Woche: IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)} (±10:00 ok)`;
+      $("weekendPill").className="pill";
+      $("weekendPill").textContent=`🟣 Wochenende: ${hhmm(weekendMin)}`;
+    }else{
+      $("weekBox").style.display="none";
+    }
 
     if($("mode").value==="month"){
       const weeks=new Map();
@@ -902,7 +911,7 @@ th{text-align:left;color:#777}
     renderEntryList();
   }
 
-  // CSV / Share (export cross-year range) – mit Wochenende-Hinweis in Notiz
+  // CSV / Share
   function buildCSVForRange(merged, start, end){
     const sep=";";
     const W=getWeeklyTargetMinutes();
