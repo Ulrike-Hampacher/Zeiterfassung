@@ -2,10 +2,211 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Zeiterfassung</title>
+<meta name="apple-mobile-web-app-title" content="Zeiterfassung">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="robots" content="noindex,nofollow">
+
+<style>
+body{font-family:-apple-system,system-ui;background:#f4f6f8;margin:0}
+header{background:#111;color:#fff;padding:14px 16px}
+h1{margin:0;font-size:20px}
+main{padding:16px}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+label{font-size:13px;color:#444}
+input,select,textarea,button{
+  width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;font-size:15px
+}
+textarea{height:60px}
+.row{display:flex;gap:10px}
+button{border:none;background:#111;color:#fff}
+button.secondary{background:#666}
+button.danger{background:#c62828}
+button.ok{background:#2e7d32}
+.small{font-size:12px;color:#666}
+.center{text-align:center}
+.bad{color:#c62828;font-weight:600}
+.good{color:#2e7d32;font-weight:600}
+hr{border:none;border-top:1px solid #eee;margin:10px 0}
+</style>
 </head>
+
 <body>
-<h1>✅ Zeiterfassung läuft</h1>
-<p>Wenn du das siehst, ist alles wieder gut.</p>
+
+<!-- PIN LOCK -->
+<div id="pinLock" style="position:fixed;inset:0;background:#111;display:flex;align-items:center;justify-content:center;z-index:9999">
+  <div style="background:#fff;padding:20px;border-radius:16px;width:90%;max-width:320px;text-align:center">
+    <h2>🔒 Zeiterfassung</h2>
+    <p>PIN eingeben</p>
+    <input id="pinInput" type="password" inputmode="numeric">
+    <button onclick="checkPin()" style="margin-top:10px">Entsperren</button>
+    <div id="pinErr" style="color:#c62828;margin-top:6px"></div>
+  </div>
+</div>
+
+<header>
+  <h1>⏱️ Zeiterfassung</h1>
+</header>
+
+<main>
+
+<!-- NAME -->
+<div class="card">
+  <label>Mitarbeiter</label>
+  <div class="row">
+    <input id="name">
+    <button class="secondary" onclick="saveName()">Speichern</button>
+  </div>
+</div>
+
+<!-- TIMER -->
+<div class="card center">
+  <div id="timerState" class="small">⚪ Bereit</div>
+  <div class="row">
+    <button class="ok" onclick="start()">▶ Start</button>
+    <button class="secondary" onclick="pause()">⏸ Pause</button>
+    <button class="danger" onclick="stop()">■ Stop</button>
+  </div>
+  <div class="small">Automatische Pause: <b>55 min</b></div>
+</div>
+
+<!-- RÜCKWIRKEND -->
+<div class="card">
+  <label>Rückwirkender Eintrag</label>
+  <div class="row">
+    <input type="date" id="rDate">
+    <input type="time" id="rStart">
+    <input type="time" id="rEnd">
+  </div>
+  <select id="rType">
+    <option>Arbeit</option>
+    <option>Urlaub</option>
+    <option>Krank</option>
+    <option>Feiertag</option>
+  </select>
+  <textarea id="rNote" placeholder="Notiz (kurz)"></textarea>
+  <button onclick="addRetro()">Hinzufügen</button>
+</div>
+
+<!-- ÜBERSICHT -->
+<div class="card">
+  <label>Übersicht (Monat)</label>
+  <select id="weeklyTarget">
+    <option value="40">🇩🇪 40 h / Woche</option>
+    <option value="38.5">🇦🇹 38,5 h / Woche</option>
+  </select>
+  <div id="summary"></div>
+</div>
+
+<!-- EXPORT -->
+<div class="card center">
+  <button onclick="exportCSV()">📤 CSV Export</button>
+  <button class="danger" onclick="resetAll()">🧹 Alles löschen</button>
+</div>
+
+</main>
+
+<script>
+/* ====== CONFIG ====== */
+const PIN="4729";
+const PAUSE_MIN=55;
+const KEY="zeiterfassung_v3";
+
+/* ====== PIN ====== */
+function checkPin(){
+  if(pinInput.value===PIN){
+    pinLock.style.display="none";
+    sessionStorage.pin_ok=1;
+  } else pinErr.textContent="Falscher PIN";
+}
+if(sessionStorage.pin_ok) pinLock.style.display="none";
+
+/* ====== DATA ====== */
+let data=JSON.parse(localStorage.getItem(KEY)||"{}");
+data.entries=data.entries||[];
+data.name=data.name||"";
+name.value=data.name;
+
+/* ====== NAME ====== */
+function saveName(){
+  data.name=name.value;
+  save();
+}
+
+/* ====== TIMER ====== */
+let running=null;
+function start(){
+  if(running) return;
+  running={start:Date.now()};
+  timerState.textContent="🟢 Läuft";
+}
+function pause(){
+  if(!running) return;
+  running.pause=true;
+  timerState.textContent="⏸ Pausiert";
+}
+function stop(){
+  if(!running) return;
+  const end=Date.now();
+  data.entries.push({
+    date:new Date().toISOString().slice(0,10),
+    min:Math.max(0,Math.round((end-running.start)/60000)-PAUSE_MIN),
+    type:"Arbeit"
+  });
+  running=null;
+  timerState.textContent="⏹️ Gestoppt";
+  save(); render();
+}
+
+/* ====== RETRO ====== */
+function addRetro(){
+  const d=rDate.value,s=rStart.value,e=rEnd.value;
+  if(!d||!s||!e) return;
+  const min=(new Date(d+"T"+e)-new Date(d+"T"+s))/60000-PAUSE_MIN;
+  data.entries.push({date:d,min:Math.max(0,min),type:rType.value});
+  save(); render();
+}
+
+/* ====== SUMMARY ====== */
+function render(){
+  const tgt=weeklyTarget.value;
+  let sum=0;
+  data.entries.forEach(e=>{
+    if(e.type==="Arbeit") sum+=e.min;
+  });
+  const weeks=4.33;
+  const soll=weeks*tgt*60;
+  const diff=sum-soll;
+  summary.innerHTML=`
+    <p>Ist: ${(sum/60).toFixed(1)} h</p>
+    <p>Soll: ${(soll/60).toFixed(1)} h</p>
+    <p class="${Math.abs(diff)>600?'bad':'good'}">
+      Abweichung: ${(diff/60).toFixed(1)} h
+    </p>`;
+}
+weeklyTarget.onchange=render;
+
+/* ====== CSV ====== */
+function exportCSV(){
+  let csv="Name,Datum,Minuten,Typ\n";
+  data.entries.forEach(e=>{
+    csv+=`${data.name},${e.date},${e.min},${e.type}\n`;
+  });
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download="Zeiterfassung.csv"; a.click();
+}
+
+/* ====== RESET ====== */
+function resetAll(){
+  if(confirm("Alles löschen?")){
+    localStorage.removeItem(KEY); location.reload();
+  }
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(data));}
+render();
+</script>
+
 </body>
 </html>
