@@ -5,85 +5,98 @@
 <title>Zeiterfassung</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Zeiterfassung">
+<meta name="theme-color" content="#111">
+<meta name="robots" content="noindex,nofollow">
 
 <style>
-/* ===== Grundlayout ===== */
-body{
-  margin:0;
-  font-family:-apple-system,system-ui;
-  background:#f4f6f8;
-  color:#111;
+:root{
+  --bg:#f4f6f8; --card:#fff; --text:#111; --muted:#666;
+  --ok:#166534; --okbg:#dcfce7;
+  --warn:#92400e; --warnbg:#fef3c7;
+  --bad:#991b1b; --badbg:#fee2e2;
+  --blue:#2563eb; --green:#16a34a; --red:#dc2626; --dark:#0f172a;
 }
-.card{
-  background:#fff;
-  margin:12px;
-  padding:14px;
-  border-radius:14px;
-  box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
+*{box-sizing:border-box}
+body{margin:0;padding:14px;font-family:-apple-system,system-ui;background:var(--bg);color:var(--text)}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
 h1{margin:0 0 6px 0;font-size:20px}
 h2{margin:6px 0 10px 0;font-size:16px}
-.muted{color:#666;font-size:13px}
-
+.muted{color:var(--muted);font-size:13px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
-.stack{display:flex;flex-direction:column;gap:6px}
-
-input,select,button{
-  font-size:16px;
-  padding:8px 10px;
-  border-radius:10px;
-  border:1px solid #ccc;
-}
-button{border:none;font-weight:600}
-
-/* ===== Buttons ===== */
-.start{background:#16a34a;color:#fff}
-.pause{background:#0f172a;color:#fff}
-.stop{background:#dc2626;color:#fff}
-.blue{background:#2563eb;color:#fff}
-.ghost{background:#eee}
-
-/* ===== Tabs ===== */
+.right{margin-left:auto}
+input,select,button{font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid #ddd;background:#fff}
+button{border:none;font-weight:700;cursor:pointer}
+.btn-start{background:var(--green);color:#fff}
+.btn-pause{background:var(--dark);color:#fff}
+.btn-stop{background:var(--red);color:#fff}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-ghost{background:#eee;color:#111}
+.btn-sm{padding:8px 10px;font-size:14px;border-radius:10px}
+.pill{display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;background:#eee}
+.pill.ok{background:var(--okbg);color:var(--ok)}
+.pill.warn{background:var(--warnbg);color:var(--warn)}
+.pill.bad{background:var(--badbg);color:var(--bad)}
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tab{padding:8px 12px;border-radius:10px;background:#eee;cursor:pointer}
+.tab{padding:10px 14px;border-radius:12px;background:#eee;cursor:pointer}
 .tab.active{background:#111;color:#fff}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #eee;font-size:14px;vertical-align:top}
+th{text-align:left;color:#777}
+.mono{font-family:ui-monospace,Menlo,monospace}
 
-/* ===== Inputs (mobil optimiert) ===== */
-.w-name{width:200px}
-.w-mail{width:280px}
-.w-note{width:150px}
-@media(max-width:360px){
-  .w-mail{width:240px}
-  .w-name{width:180px}
+/* Kompakt + sauber am Handy */
+.w-emp{width:220px;max-width:220px}
+.w-note{width:160px;max-width:160px}
+.w-save{width:140px;max-width:140px}
+
+/* Manager: Name + Mail fluchten, Mail left -7 */
+.w-mgr-name{width:200px;max-width:200px;margin-left:-7px}
+.w-mgr-mail{
+  width:360px; max-width:90vw; min-width:300px;
+  margin-left:-7px;
 }
 
-/* ===== PIN Overlay ===== */
+.stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.stack input{margin-bottom:6px}
+.stack button{margin-top:4px}
+
+/* Ampel: Saldo-Spalte pro Tag */
+tr.ok  td:last-child{color:var(--ok);font-weight:800}
+tr.warn td:last-child{color:var(--warn);font-weight:800}
+tr.bad td:last-child{color:var(--bad);font-weight:800}
+
+/* PIN Overlay */
 .overlay{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:12px;
+  position:fixed; inset:0; background:rgba(0,0,0,.45);
+  display:none; align-items:center; justify-content:center; padding:14px;
 }
 .modal{
-  background:#fff;
-  padding:16px;
-  border-radius:16px;
-  width:min(92vw,340px);
+  width:min(520px, 100%); background:#fff; border-radius:16px;
+  padding:14px; box-shadow:0 12px 40px rgba(0,0,0,.25);
 }
+.modal h2{margin-top:0}
+
+/* ✅ PIN Feld kürzer & immer passend am Handy */
 .pin{
-  width:100%;
-  text-align:center;
-  font-size:18px;
-  letter-spacing:.15em;
+  width: min(260px, 86vw);
+  max-width: 86vw;
+  letter-spacing: .18em;
+  font-weight: 800;
+  text-align: center;
+  font-size: 18px;
+  padding: 10px 12px;
 }
 
-/* ===== Tabelle ===== */
-table{width:100%;border-collapse:collapse}
-th,td{padding:6px;border-bottom:1px solid #eee;font-size:14px}
-.ok{color:#166534}
-.bad{color:#991b1b;font-weight:700}
+@media(max-width:360px){
+  .pin{ width: 82vw; letter-spacing: .14em; }
+}
+@media(max-width:340px){
+  .w-emp{width:210px;max-width:210px}
+  .w-note{width:150px;max-width:150px}
+  .w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
+  /* w-mgr-mail bleibt flexibel */
+}
 </style>
 </head>
 
@@ -91,303 +104,904 @@ th,td{padding:6px;border-bottom:1px solid #eee;font-size:14px}
 
 <div class="card">
   <h1>⏱️ Zeiterfassung</h1>
-  <div class="muted">Offline · Auto-Pause 55 min · CSV</div>
+  <div class="muted">Offline · 🔐 PIN (6-stellig) · Auto-Pause <b>55 min</b> · CSV & Teilen</div>
 </div>
 
 <div class="card">
   <div class="tabs">
-    <div class="tab active" onclick="showTab('timer', this)">Timer</div>
-    <div class="tab" onclick="showTab('overview', this)">Übersicht</div>
-    <div class="tab" onclick="showTab('absence', this)">Abwesenheit</div>
-    <div class="tab" onclick="showTab('settings', this)">Settings</div>
+    <div class="tab active" data-tab="timer">⏱️ Timer</div>
+    <div class="tab" data-tab="overview">📊 Übersicht</div>
+    <div class="tab" data-tab="edit">✍️ Rückwirkend</div>
+    <div class="tab" data-tab="absence">🏖️ Abwesenheit</div>
+    <div class="tab" data-tab="entries">🧾 Einträge</div>
+    <div class="tab" data-tab="settings">⚙️ Settings</div>
   </div>
 </div>
 
 <!-- TIMER -->
 <div class="card" id="timer">
-  <h2>Timer</h2>
+  <h2>⏱️ Timer</h2>
 
   <div class="stack">
-    <label>Mitarbeiter</label>
-    <input id="emp" class="w-name" placeholder="Vorname Nachname">
-    <button class="ghost" onclick="saveName()">💾 Speichern</button>
-    <div class="muted" id="empMsg"></div>
+    <div class="muted">👤 Mitarbeiter</div>
+    <input id="empName" class="w-emp" placeholder="Vorname Nachname">
+    <button class="btn-ghost w-save" id="saveName">💾 Speichern</button>
+    <div class="muted" id="nameMsg"></div>
   </div>
 
   <div class="row" style="margin-top:10px">
-    <div class="stack">
-      <label>Datum</label>
-      <input type="date" id="tDate">
+    <div>
+      <div class="muted">📅 Datum</div>
+      <input type="date" id="timerDate">
     </div>
-    <div class="stack">
-      <label>Notiz</label>
-      <input placeholder="kurz" class="w-note" id="note">
+    <div>
+      <div class="muted">📝 Notiz</div>
+      <input id="timerNote" class="w-note" placeholder="kurz">
     </div>
+    <span class="right muted mono" id="timerMini"></span>
   </div>
 
-  <div class="row" style="margin-top:10px">
-    <button class="start" onclick="startTimer()">▶️ Start</button>
-    <button class="pause" onclick="pauseInfo()">⏸️ Pause</button>
-    <button class="stop" onclick="stopTimer()">■ Stop</button>
-    <span id="status" class="muted"></span>
+  <div class="row" style="margin-top:12px">
+    <button class="btn-start" id="btnStart">▶️ Start</button>
+    <button class="btn-pause" id="btnPause" disabled>⏸️ Pause</button>
+    <button class="btn-stop" id="btnStop">■ Stop</button>
+    <span class="pill" id="timerStatus">⚪ bereit</span>
+    <span class="right muted mono" id="timerInfo"></span>
   </div>
 </div>
 
-<!-- ÜBERSICHT -->
+<!-- OVERVIEW -->
 <div class="card" id="overview" style="display:none">
-  <h2>Übersicht</h2>
+  <h2>📊 Übersicht</h2>
 
   <div class="row">
-    <div class="stack">
-      <label>Modus</label>
-      <select id="mode" onchange="render()">
+    <div>
+      <div class="muted">🧭 Modus</div>
+      <select id="mode">
         <option value="week">Woche</option>
         <option value="month">Monat</option>
         <option value="year">Jahr</option>
       </select>
     </div>
 
-    <div class="stack">
-      <label>📌 Datum</label>
-      <input type="date" id="ref" onchange="render()">
+    <div>
+      <div class="muted">📌 Datum</div>
+      <input type="date" id="refDate">
     </div>
 
-    <div class="stack">
-      <label>Wochen-Soll</label>
-      <select id="target" onchange="render()">
-        <option value="2400">40h 🇩🇪</option>
-        <option value="2310">38,5h 🇦🇹</option>
+    <div>
+      <div class="muted">🎯 Wochen-Soll</div>
+      <select id="weeklyTarget">
+        <option value="2400">40:00 🇩🇪</option>
+        <option value="2310">38:30 🇦🇹</option>
       </select>
     </div>
 
-    <button class="ghost" onclick="render()">↻</button>
-    <button class="blue" onclick="downloadCSV()">⬇️ CSV</button>
+    <button class="btn-ghost" id="btnRefresh">↻</button>
+    <button class="btn-blue" id="btnCSV">⬇️ CSV</button>
+    <button class="btn-ghost" id="btnShare">📤 Teilen</button>
+
+    <span class="right muted mono" id="yearHint"></span>
   </div>
 
-  <div id="sum" style="margin:10px 0"></div>
-  <div id="table"></div>
+  <div style="margin-top:10px">
+    <span class="pill ok" id="sumPill">—</span>
+    <span class="pill" id="avgPill" style="display:none;margin-left:6px">—</span>
+  </div>
 
-  <h2>Manager</h2>
-  <div class="stack">
-    <input id="mgrName" class="w-name" placeholder="Name">
-    <input id="mgrMail" class="w-mail" placeholder="mail@firma.at">
-    <button class="ghost" onclick="saveMgr()">💾 Speichern</button>
+  <div style="margin-top:12px">
+    <h2>👔 Manager</h2>
+    <div class="stack">
+      <div class="muted">Name</div>
+      <input id="mgrName" class="w-mgr-name" placeholder="Name">
+      <div class="muted">E-Mail</div>
+      <input id="mgrMail" class="w-mgr-mail" placeholder="vorname.nachname@firma.de">
+      <button class="btn-ghost w-save" id="saveMgr">💾 Speichern</button>
+    </div>
+  </div>
+
+  <div id="overviewTable" style="margin-top:12px"></div>
+</div>
+
+<!-- EDIT -->
+<div class="card" id="edit" style="display:none">
+  <h2>✍️ Rückwirkend</h2>
+  <div class="row">
+    <div><div class="muted">📅 Datum</div><input type="date" id="eDate"></div>
+    <div><div class="muted">🟢 Start</div><input type="time" id="eStart"></div>
+    <div><div class="muted">🔴 Ende</div><input type="time" id="eEnd"></div>
+    <div><div class="muted">📝 Notiz</div><input id="eNote" class="w-note"></div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button class="btn-ghost" id="saveManual">💾 Speichern</button>
+    <button class="btn-ghost" id="newManual">🧽 Neu</button>
+    <span class="right muted mono" id="editMsg"></span>
   </div>
 </div>
 
-<!-- ABWESENHEIT -->
+<!-- ABSENCE -->
 <div class="card" id="absence" style="display:none">
-  <h2>Abwesenheit</h2>
+  <h2>🏖️ Abwesenheit</h2>
   <div class="row">
-    <div class="stack">
-      <label>Datum</label>
-      <input type="date" id="aDate">
-    </div>
-
-    <div class="stack">
-      <label>Typ</label>
+    <div><div class="muted">📅 Datum</div><input type="date" id="aDate"></div>
+    <div>
+      <div class="muted">🏷️ Typ</div>
       <select id="aType">
-        <option value="Urlaub">🏖️ Urlaub</option>
-        <option value="Krank">🤒 Krank</option>
-        <option value="Feiertag">🎉 Feiertag</option>
+        <option value="vac">🏖️ Urlaub</option>
+        <option value="sick">🤒 Krank</option>
+        <option value="hol">🎉 Feiertag</option>
       </select>
     </div>
-
-    <button class="ghost" onclick="addAbs()">➕ Speichern</button>
+    <button class="btn-ghost" id="addAbs">➕ Speichern</button>
   </div>
+  <div id="absList" style="margin-top:12px"></div>
+</div>
 
-  <div id="absList" style="margin-top:10px"></div>
+<!-- ENTRIES -->
+<div class="card" id="entries" style="display:none">
+  <h2>🧾 Einträge</h2>
+  <div class="muted">✍️ bearbeiten · 🗑️ löschen</div>
+  <div id="entryList" style="margin-top:10px"></div>
 </div>
 
 <!-- SETTINGS -->
 <div class="card" id="settings" style="display:none">
-  <h2>Settings</h2>
-  <div class="muted">Tipp: Wenn Daten „komisch“ wirken: Alles löschen und neu starten.</div>
+  <h2>⚙️ Settings</h2>
+  <div class="muted">
+    🔐 Daten sind lokal verschlüsselt. PIN wird nur pro Session benötigt (solange Safari offen bleibt).
+  </div>
   <div class="row" style="margin-top:10px">
-    <button class="stop" onclick="resetAll()">🧨 Alles löschen</button>
+    <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
+    <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
+    <button class="btn-ghost" id="btnResetAll">🧨 Alles löschen</button>
+  </div>
+  <div class="muted" style="margin-top:8px">
+    „Jahr löschen“ bezieht sich auf das Jahr vom 📌 Datum in der Übersicht.
+  </div>
+</div>
+
+<!-- PIN Overlay -->
+<div class="overlay" id="ovl">
+  <div class="modal">
+    <h2>🔐 Zeiterfassung entsperren</h2>
+    <div class="muted" id="ovlText">Bitte 6-stellige PIN eingeben.</div>
+    <div style="margin-top:10px;display:flex;justify-content:center">
+      <input id="pinInput" class="pin" inputmode="numeric" maxlength="6" placeholder="••••••" autocomplete="off">
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn-blue" id="btnUnlock">✅ Entsperren</button>
+      <button class="btn-ghost" id="btnSetPin">🆕 PIN setzen</button>
+      <span class="right muted mono" id="pinMsg"></span>
+    </div>
+    <div class="muted" style="margin-top:10px">
+      Hinweis: PIN vergessen = Daten nicht entschlüsselbar (dann nur Reset möglich).
+    </div>
   </div>
 </div>
 
 <script>
-/* ===== stabile Minimal-Logik ===== */
-const LS="ZEITERFASSUNG_MINI";
-const AUTO_BREAK=55;
+(() => {
+  // ==========================
+  // Security / Crypto (PIN 6)
+  // ==========================
+  const NS="ZEITERFASSUNG";
+  const AUTO_BREAK=55;          // Auto-Pause Minuten
+  const TOL=10*60;              // ±10h Ampel in Minuten
+  const PIN_LEN=6;
 
-let state={ emp:"", mgr:{name:"",mail:""}, E:[], A:[] };
-let running=null;
+  const $=id=>document.getElementById(id);
+  const pad=n=>String(n).padStart(2,"0");
+  const b64 = (buf)=>btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const ub64 = (s)=>Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+  const rand = (n)=>crypto.getRandomValues(new Uint8Array(n));
 
-function showTab(id, el){
-  ["timer","overview","absence","settings"].forEach(x=>{
-    document.getElementById(x).style.display = (x===id) ? "" : "none";
-  });
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  el.classList.add("active");
-}
+  const hhmm=(m)=>{
+    if(!Number.isFinite(m)) return "--:--";
+    const s=m<0?"-":"";
+    m=Math.abs(Math.round(m));
+    return s + pad(Math.floor(m/60)) + ":" + pad(m%60);
+  };
+  const d0=(s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
+  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5;
+  const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
-function today(){ return new Date().toISOString().slice(0,10); }
-
-function fmt(m){
-  m=Math.max(0, Math.round(m));
-  const h=Math.floor(m/60), mm=m%60;
-  return String(h).padStart(2,"0")+":"+String(mm).padStart(2,"0");
-}
-
-function absLabel(t){
-  if(t==="Urlaub") return "🏖️ Urlaub";
-  if(t==="Krank") return "🤒 Krank";
-  if(t==="Feiertag") return "🎉 Feiertag";
-  return t;
-}
-
-function load(){
-  try{
-    const raw=localStorage.getItem(LS);
-    if(raw) state=JSON.parse(raw);
-  }catch(e){}
-  emp.value = state.emp || "";
-  mgrName.value = state.mgr?.name || "";
-  mgrMail.value = state.mgr?.mail || "";
-}
-
-function save(){
-  localStorage.setItem(LS, JSON.stringify(state));
-}
-
-function saveName(){
-  state.emp = (emp.value||"").trim();
-  save();
-  empMsg.textContent = state.emp ? "✅ gespeichert" : "⚠️ bitte Name eintragen";
-}
-
-function saveMgr(){
-  state.mgr = { name:(mgrName.value||"").trim(), mail:(mgrMail.value||"").trim() };
-  save();
-  alert("✅ Manager gespeichert");
-}
-
-function startTimer(){
-  if(!state.emp) return alert("Bitte Mitarbeiter speichern.");
-  const d = tDate.value || today();
-  running = { d, start: Date.now(), note: (note.value||"").trim() };
-  status.textContent = "🟢 läuft";
-}
-
-function pauseInfo(){
-  alert("⏸️ Pause wird automatisch (55 min) abgezogen.\n(Manuelle Pause folgt als nächster Schritt, wenn du willst.)");
-}
-
-function stopTimer(){
-  if(!running) return alert("Kein Timer läuft.");
-  const end=Date.now();
-  const gross = Math.max(0, Math.round((end-running.start)/60000));
-  const net = Math.max(0, gross - AUTO_BREAK);
-
-  state.E.push({ d: running.d, m: net, n: running.note });
-  running=null;
-  save();
-  status.textContent = "✅ gespeichert";
-  render();
-}
-
-function addAbs(){
-  const d = aDate.value || today();
-  const t = aType.value;
-  state.A.push({ d, t });
-  save();
-  renderAbs();
-  render(); // Übersicht aktualisieren
-}
-
-function renderAbs(){
-  if(!state.A.length){
-    absList.innerHTML = "<div class='muted'>Keine Abwesenheiten.</div>";
-    return;
+  function absLabel(t){
+    if(t==="vac") return "🏖️ Urlaub";
+    if(t==="sick") return "🤒 Krank";
+    if(t==="hol") return "🎉 Feiertag";
+    return t;
   }
-  const rows = state.A.slice().sort((a,b)=>b.d.localeCompare(a.d)).map((a,i)=>`
-    <tr>
-      <td>${a.d}</td>
-      <td>${absLabel(a.t)}</td>
-      <td><button class="ghost" onclick="delAbs(${i})">🗑️</button></td>
-    </tr>
-  `).join("");
-  absList.innerHTML = `<table><tr><th>Datum</th><th>Typ</th><th></th></tr>${rows}</table>`;
-}
 
-function delAbs(i){
-  state.A.splice(i,1);
-  save();
-  renderAbs();
-  render();
-}
-
-function calcSollMinutesForPeriod(){
-  const weekly = Number(target.value) || 2400;
-  const daySoll = weekly/5;
-  const modeVal = mode.value;
-  // Minimal: SOLL = weekly für Woche, weekly*4.33 für Monat, weekly*52 für Jahr
-  // (für diese stabile Mini-Version ohne Feiertagskalender-Berechnung)
-  if(modeVal==="week") return weekly;
-  if(modeVal==="month") return Math.round(weekly * 4.33);
-  return weekly * 52;
-}
-
-function render(){
-  // Tabelle: zeigt aktuell einfach die vorhandenen Einträge (stabil)
-  let sumIst=0;
-  let html="<table><tr><th>Datum</th><th>Netto</th><th>Notiz</th></tr>";
-  state.E.slice().sort((a,b)=>b.d.localeCompare(a.d)).forEach(e=>{
-    sumIst += (Number(e.m)||0);
-    html += `<tr><td>${e.d}</td><td>${fmt(e.m)}</td><td>${e.n||""}</td></tr>`;
-  });
-  html += "</table>";
-  table.innerHTML = state.E.length ? html : "<div class='muted'>Noch keine Einträge.</div>";
-
-  const soll = calcSollMinutesForPeriod();
-  const diff = sumIst - soll;
-  const ok = (Math.abs(diff) <= 600); // +-10h
-
-  sum.innerHTML = ok
-    ? `<div class="ok">✅ IST ${fmt(sumIst)} · SOLL ${fmt(soll)} · SALDO ${fmt(Math.abs(diff))}</div>`
-    : `<div class="bad">⚠️ IST ${fmt(sumIst)} · SOLL ${fmt(soll)} · Abweichung > 10h</div>`;
-}
-
-function downloadCSV(){
-  const rows = [];
-  rows.push("Mitarbeiter;Datum;Netto_min;Netto_hhmm;Notiz;Manager;ManagerMail");
-  state.E.forEach(e=>{
-    rows.push([
-      (state.emp||"").replaceAll(";"," "),
-      e.d,
-      String(e.m||0),
-      fmt(e.m||0),
-      (e.n||"").replaceAll(";"," "),
-      (state.mgr?.name||"").replaceAll(";"," "),
-      (state.mgr?.mail||"").replaceAll(";"," ")
-    ].join(";"));
-  });
-  const csv = rows.join("\n");
-  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `Zeiterfassung_${today()}.csv`;
-  document.body.appendChild(a); a.click(); a.remove();
-}
-
-function resetAll(){
-  if(confirm("Wirklich alles löschen?")){
-    localStorage.removeItem(LS);
-    state={ emp:"", mgr:{name:"",mail:""}, E:[], A:[] };
-    load();
-    renderAbs();
-    render();
+  function getWeeklyTargetMinutes(){
+    const el=$("weeklyTarget");
+    const v=el ? Number(el.value) : NaN;
+    return (Number.isFinite(v) && v>0) ? v : 2400; // Fallback 40h
   }
-}
 
-/* Init */
-tDate.value = ref.value = aDate.value = today();
-load();
-renderAbs();
-render();
+  // CSV injection protection
+  function csvSafeCell(s){
+    s = (s ?? "").toString();
+    const t = s.trimStart();
+    if(t.startsWith("=") || t.startsWith("+") || t.startsWith("-") || t.startsWith("@")){
+      return "'" + s;
+    }
+    return s;
+  }
+
+  // --- Key derivation ---
+  const SALT_KEY = NS+"::salt";
+  const SESSION_KEY = NS+"::session_rawkey"; // base64 of raw AES key
+
+  async function deriveAesKeyFromPin(pin, saltBytes){
+    const enc = new TextEncoder();
+    const baseKey = await crypto.subtle.importKey("raw", enc.encode(pin), {name:"PBKDF2"}, false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      {name:"PBKDF2", salt: saltBytes, iterations: 150000, hash:"SHA-256"},
+      baseKey,
+      {name:"AES-GCM", length: 256},
+      true,
+      ["encrypt","decrypt"]
+    );
+  }
+  async function exportRawKey(key){
+    const raw = await crypto.subtle.exportKey("raw", key);
+    return b64(raw);
+  }
+  async function importRawKey(rawB64){
+    const raw = ub64(rawB64);
+    return crypto.subtle.importKey("raw", raw, {name:"AES-GCM"}, true, ["encrypt","decrypt"]);
+  }
+  function getOrCreateSalt(){
+    let s = localStorage.getItem(SALT_KEY);
+    if(!s){ s = b64(rand(16)); localStorage.setItem(SALT_KEY, s); }
+    return ub64(s);
+  }
+  async function ensureSessionKey(pin){
+    const salt = getOrCreateSalt();
+    const aes = await deriveAesKeyFromPin(pin, salt);
+    const rawB64 = await exportRawKey(aes);
+    sessionStorage.setItem(SESSION_KEY, rawB64);
+    return aes;
+  }
+  async function getSessionKey(){
+    const rawB64 = sessionStorage.getItem(SESSION_KEY);
+    if(!rawB64) return null;
+    try{ return await importRawKey(rawB64); }catch(_e){ return null; }
+  }
+  async function encryptJson(aesKey, obj){
+    const iv = rand(12);
+    const enc = new TextEncoder();
+    const pt = enc.encode(JSON.stringify(obj));
+    const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, aesKey, pt);
+    return {v:1, iv:b64(iv), ct:b64(ct)};
+  }
+  async function decryptJson(aesKey, blob){
+    const iv = ub64(blob.iv);
+    const ct = ub64(blob.ct);
+    const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv}, aesKey, ct);
+    const dec = new TextDecoder();
+    return JSON.parse(dec.decode(pt));
+  }
+  function yearKey(y){ return NS+"::year::"+y; }
+
+  // ==========================
+  // App state
+  // ==========================
+  let Y = new Date().getFullYear();
+  let S = { emp:"", mgr:{name:"",mail:""}, E:[], A:[] };
+  let run=null;
+  let editingId=null;
+
+  function showOverlay(msg){
+    $("ovl").style.display="flex";
+    $("pinMsg").textContent="";
+    $("pinInput").value="";
+    $("ovlText").textContent = msg || `Bitte ${PIN_LEN}-stellige PIN eingeben.`;
+    setTimeout(()=>$("pinInput").focus(), 50);
+  }
+  function hideOverlay(){ $("ovl").style.display="none"; }
+
+  function setTimerStatus(txt,cls){
+    $("timerStatus").textContent=txt;
+    $("timerStatus").className="pill"+(cls?(" "+cls):"");
+  }
+
+  function tab(name){
+    ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
+      $(id).style.display = (id===name) ? "" : "none";
+    });
+    document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
+  }
+  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
+
+  // ✅ Jahr & Referenz zusammengelegt: refDate bestimmt das Jahr
+  function getRefYear(){
+    const v=$("refDate").value;
+    return v ? d0(v).getFullYear() : new Date().getFullYear();
+  }
+
+  async function loadYear(y){
+    Y = y;
+    $("yearHint").textContent = `📦 Jahr: ${Y}`;
+
+    const aes = await getSessionKey();
+    if(!aes){ showOverlay("Bitte PIN eingeben, um Daten zu laden."); return false; }
+
+    const raw = localStorage.getItem(yearKey(Y));
+    if(!raw){
+      S = { emp:"", mgr:{name:"",mail:""}, E:[], A:[] };
+      applyStateToUI();
+      return true;
+    }
+    try{
+      const blob = JSON.parse(raw);
+      S = await decryptJson(aes, blob);
+      S.emp = S.emp || "";
+      S.mgr = S.mgr || {name:"",mail:""};
+      S.E = Array.isArray(S.E)?S.E:[];
+      S.A = Array.isArray(S.A)?S.A:[];
+      applyStateToUI();
+      return true;
+    }catch(_e){
+      showOverlay("PIN falsch oder Daten nicht lesbar. Bitte erneut versuchen (oder Reset).");
+      return false;
+    }
+  }
+
+  async function saveYear(){
+    const aes = await getSessionKey();
+    if(!aes){ showOverlay("Bitte PIN eingeben, um zu speichern."); return false; }
+    const blob = await encryptJson(aes, S);
+    localStorage.setItem(yearKey(Y), JSON.stringify(blob));
+    return true;
+  }
+
+  function applyStateToUI(){
+    $("empName").value = S.emp || "";
+    $("mgrName").value = S.mgr?.name || "";
+    $("mgrMail").value = S.mgr?.mail || "";
+    $("timerMini").textContent = S.emp ? ("👤 "+S.emp) : "";
+    $("nameMsg").textContent = S.emp ? "✅ gespeichert" : "";
+  }
+
+  // ==========================
+  // PIN overlay actions
+  // ==========================
+  $("btnUnlock").onclick = async ()=>{
+    const pin = ($("pinInput").value||"").trim();
+    if(pin.length!==PIN_LEN || !/^\d+$/.test(pin)){
+      $("pinMsg").textContent = `PIN muss ${PIN_LEN} Ziffern haben.`;
+      return;
+    }
+    await ensureSessionKey(pin);
+    hideOverlay();
+    await loadYear(getRefYear());
+    await renderAll();
+    tab("timer");
+  };
+
+  $("btnSetPin").onclick = async ()=>{
+    const pin = ($("pinInput").value||"").trim();
+    if(pin.length!==PIN_LEN || !/^\d+$/.test(pin)){
+      $("pinMsg").textContent = `PIN muss ${PIN_LEN} Ziffern haben.`;
+      return;
+    }
+    await ensureSessionKey(pin);
+    hideOverlay();
+    await loadYear(getRefYear());
+    await saveYear();
+    await renderAll();
+    alert("✅ PIN gesetzt. Bitte merken!");
+  };
+
+  $("btnLock").onclick = ()=>{
+    sessionStorage.removeItem(SESSION_KEY);
+    showOverlay("🔒 Gesperrt. Bitte PIN eingeben.");
+  };
+
+  // ==========================
+  // Buttons: Name & Manager
+  // ==========================
+  $("saveName").onclick = async ()=>{
+    S.emp = ($("empName").value||"").trim();
+    await saveYear();
+    applyStateToUI();
+  };
+
+  $("saveMgr").onclick = async ()=>{
+    S.mgr = { name:($("mgrName").value||"").trim(), mail:($("mgrMail").value||"").trim() };
+    await saveYear();
+    alert("✅ Manager gespeichert");
+  };
+
+  // ==========================
+  // Timer: Start / Pause / Stop
+  // ==========================
+  $("btnStart").onclick = async ()=>{
+    if(run) return alert("Timer läuft schon.");
+    if(!S.emp) return alert("Bitte Name speichern.");
+    if(!$("timerDate").value) return alert("Bitte Datum wählen.");
+
+    const entryYear = d0($("timerDate").value).getFullYear();
+    if(entryYear !== Y){
+      const ok = await loadYear(entryYear);
+      if(!ok) return;
+    }
+
+    const now=new Date(); now.setSeconds(0,0);
+    const d=d0($("timerDate").value);
+    const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),now.getHours(),now.getMinutes(),0,0);
+
+    run={date:$("timerDate").value, start, pauseMin:0, pauseStart:null, note:($("timerNote").value||"").trim()};
+    $("btnPause").disabled=false;
+    $("btnPause").textContent="⏸️ Pause";
+    setTimerStatus("🟢 läuft","ok");
+    $("timerInfo").textContent=`Start ${pad(start.getHours())}:${pad(start.getMinutes())}`;
+  };
+
+  $("btnPause").onclick = ()=>{
+    if(!run) return;
+    const now=new Date(); now.setSeconds(0,0);
+    if(!run.pauseStart){
+      run.pauseStart=now;
+      $("btnPause").textContent="▶️ Weiter";
+      setTimerStatus("⏸️ Pause","warn");
+    } else {
+      run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
+      run.pauseStart=null;
+      $("btnPause").textContent="⏸️ Pause";
+      setTimerStatus("🟢 läuft","ok");
+    }
+  };
+
+  $("btnStop").onclick = async ()=>{
+    if(!run) return alert("Kein Timer läuft.");
+    const end=new Date(); end.setSeconds(0,0);
+
+    if(run.pauseStart){
+      run.pauseMin += Math.max(0, Math.round((end-run.pauseStart)/60000));
+      run.pauseStart=null;
+    }
+
+    const gross=Math.round((end-run.start)/60000);
+    if(gross<=0) return alert("Zeit ungültig.");
+
+    const auto = gross>=AUTO_BREAK ? AUTO_BREAK : 0;
+    const pause = auto + run.pauseMin;
+
+    S.E.push({
+      id: (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Date.now())),
+      d: run.date,
+      s: run.start.toISOString(),
+      e: end.toISOString(),
+      p: pause,
+      n: run.note || ""
+    });
+
+    run=null;
+    $("btnPause").disabled=true;
+    $("btnPause").textContent="⏸️ Pause";
+    setTimerStatus("⚪ bereit","");
+    $("timerInfo").textContent="✅ gespeichert";
+    await saveYear();
+    await renderAll();
+  };
+
+  // ==========================
+  // Abwesenheit
+  // ==========================
+  $("addAbs").onclick = async ()=>{
+    if(!$("aDate").value) return alert("Datum fehlt.");
+    const yr = d0($("aDate").value).getFullYear();
+    if(yr!==Y){
+      const ok = await loadYear(yr);
+      if(!ok) return;
+    }
+    S.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()), d:$("aDate").value, t:$("aType").value});
+    await saveYear();
+    await renderAll();
+  };
+
+  // ==========================
+  // Rückwirkend
+  // ==========================
+  $("newManual").onclick = ()=>{
+    editingId=null;
+    $("eStart").value=""; $("eEnd").value=""; $("eNote").value="";
+    $("editMsg").textContent="";
+  };
+
+  $("saveManual").onclick = async ()=>{
+    if(!$("eDate").value||!$("eStart").value||!$("eEnd").value) return;
+
+    const d=$("eDate").value;
+    const [sh,sm]=$("eStart").value.split(":").map(Number);
+    const [eh,em]=$("eEnd").value.split(":").map(Number);
+    const s=new Date(d0(d).setHours(sh,sm,0,0));
+    const e=new Date(d0(d).setHours(eh,em,0,0));
+    const gross=Math.round((e-s)/60000);
+    if(gross<=0){ $("editMsg").textContent="⚠️ Ende muss nach Start"; return; }
+
+    const yr=d0(d).getFullYear();
+    if(yr!==Y){
+      const ok = await loadYear(yr);
+      if(!ok) return;
+    }
+
+    const obj={
+      id: editingId || (crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
+      d, s:s.toISOString(), e:e.toISOString(),
+      p:(gross>=AUTO_BREAK?AUTO_BREAK:0),
+      n:($("eNote").value||"").trim()
+    };
+
+    if(editingId){
+      const idx=S.E.findIndex(x=>x.id===editingId);
+      if(idx>=0) S.E[idx]=obj; else S.E.push(obj);
+      $("editMsg").textContent="✅ aktualisiert";
+    } else {
+      S.E.push(obj);
+      editingId=obj.id;
+      $("editMsg").textContent="✅ gespeichert";
+    }
+    await saveYear();
+    await renderAll();
+  };
+
+  // ==========================
+  // Reset
+  // ==========================
+  $("btnResetThisYear").onclick = async ()=>{
+    const yr=getRefYear();
+    if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
+      localStorage.removeItem(yearKey(yr));
+      if(yr===Y){
+        S={emp:"",mgr:{name:"",mail:""},E:[],A:[]};
+        applyStateToUI();
+      }
+      await renderAll();
+      alert("✅ Jahr gelöscht");
+    }
+  };
+
+  $("btnResetAll").onclick = async ()=>{
+    if(confirm("Wirklich ALLE Jahre löschen?")){
+      const del=[];
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(k && k.startsWith(NS+"::year::")) del.push(k);
+      }
+      del.forEach(k=>localStorage.removeItem(k));
+      S={emp:"",mgr:{name:"",mail:""},E:[],A:[]};
+      applyStateToUI();
+      await renderAll();
+      alert("✅ Alles gelöscht");
+    }
+  };
+
+  // ==========================
+  // Overview helpers
+  // ==========================
+  function weekRangeISO(ref){
+    const d=new Date(ref); d.setHours(0,0,0,0);
+    const monIndex=(d.getDay()+6)%7;
+    const start=new Date(d); start.setDate(d.getDate()-monIndex);
+    const end=new Date(start); end.setDate(start.getDate()+6);
+    start.setHours(0,0,0,0); end.setHours(0,0,0,0);
+    return [start,end];
+  }
+  function monthRange(ref){
+    const d=new Date(ref);
+    const start=new Date(d.getFullYear(),d.getMonth(),1);
+    const end=new Date(d.getFullYear(),d.getMonth()+1,0);
+    start.setHours(0,0,0,0); end.setHours(0,0,0,0);
+    return [start,end];
+  }
+  function yearRange(y){
+    const start=new Date(y,0,1); start.setHours(0,0,0,0);
+    const end=new Date(y,11,31); end.setHours(0,0,0,0);
+    return [start,end];
+  }
+  function isoWeekKey(dateObj){
+    const d=new Date(dateObj); d.setHours(0,0,0,0);
+    d.setDate(d.getDate()+3-((d.getDay()+6)%7));
+    const y=d.getFullYear();
+    const week1=new Date(y,0,4); week1.setHours(0,0,0,0);
+    week1.setDate(week1.getDate()+3-((week1.getDay()+6)%7));
+    const w=1+Math.round((d-week1)/(7*24*60*60*1000));
+    return `${y}-W${pad(w)}`;
+  }
+
+  async function ensureYearLoadedFromRef(){
+    const yr = getRefYear();
+    $("yearHint").textContent = `📦 Jahr: ${yr}`;
+    if(yr!==Y){
+      await loadYear(yr);
+    }
+  }
+
+  async function renderOverviewTable(){
+    await ensureYearLoadedFromRef();
+
+    const v=$("refDate").value;
+    const ref = v ? d0(v) : new Date();
+    const yr = ref.getFullYear();
+
+    const W=getWeeklyTargetMinutes();
+    const DAY=W/5;
+
+    let start,end;
+    if($("mode").value==="year") [start,end]=yearRange(yr);
+    else if($("mode").value==="month") [start,end]=monthRange(ref);
+    else [start,end]=weekRangeISO(ref);
+
+    const startS=toDateStr(start), endS=toDateStr(end);
+
+    const istBy={};
+    for(const e of S.E){
+      if(e.d < startS || e.d > endS) continue;
+      const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
+      if(!Number.isFinite(net)) continue;
+      istBy[e.d]=(istBy[e.d]||0)+Math.round(net);
+    }
+
+    const dayNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
+    let istSum=0, sollSum=0;
+
+    let html=`<table><thead><tr>
+      <th>Datum</th><th>Tag</th><th>IST</th><th>SOLL</th><th>Abw.</th><th>SALDO</th>
+    </tr></thead><tbody>`;
+
+    for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+      const ds=toDateStr(d);
+      const ist=Number.isFinite(istBy[ds]) ? istBy[ds] : 0;
+      const isW=wd(d);
+
+      const absTypes = S.A.filter(a=>a.d===ds).map(a=>a.t);
+      const absLabels = absTypes.map(absLabel);
+
+      // Wenn Werktag + Abwesenheit => SOLL = 0 für diesen Tag
+      const soll = Math.round(isW ? (absTypes.length>0 ? 0 : DAY) : 0);
+      const saldo=ist-soll;
+
+      istSum += ist;
+      sollSum += soll;
+
+      const clsRow = (Math.abs(saldo) > TOL) ? "bad" : (Math.abs(saldo) > 1 ? "warn" : "ok");
+
+      html+=`<tr class="${clsRow}">
+        <td class="mono">${ds}</td>
+        <td>${dayNames[d.getDay()]}</td>
+        <td class="mono">${hhmm(ist)}</td>
+        <td class="mono">${hhmm(soll)}</td>
+        <td>${absLabels.join(", ")}</td>
+        <td class="mono">${hhmm(saldo)}</td>
+      </tr>`;
+    }
+    html+=`</tbody></table>`;
+    $("overviewTable").innerHTML=html;
+
+    const delta=istSum-sollSum;
+    const cls=(Math.abs(delta)>TOL)?"bad":(Math.abs(delta)>1?"warn":"ok");
+    $("sumPill").className="pill "+cls;
+    $("sumPill").textContent=`IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · SALDO ${hhmm(delta)}`;
+
+    // Monats-Ø/Woche (hochgerechnet auf 5 Tage je Woche, abzüglich Abwesenheitstage)
+    if($("mode").value==="month"){
+      const weeks=new Map();
+      for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+        const ds=toDateStr(d);
+        const wk=isoWeekKey(d);
+        if(!weeks.has(wk)) weeks.set(wk,{ist:0,weekdays:0,absDays:0});
+        const b=weeks.get(wk);
+        b.ist += (istBy[ds]||0);
+        if(wd(d)){
+          b.weekdays += 1;
+          if(S.A.some(a=>a.d===ds)) b.absDays += 1;
+        }
+      }
+      const active=[...weeks.values()].filter(w=>w.weekdays>0);
+      const avgIst = active.length ? active.map(w=>w.ist*(5/w.weekdays)).reduce((s,v)=>s+v,0)/active.length : 0;
+      const avgSoll= active.length ? active.map(w=>W - (w.absDays*(W/5))).reduce((s,v)=>s+v,0)/active.length : W;
+      const dAvg=avgIst-avgSoll;
+      const clsAvg=(Math.abs(dAvg)>TOL)?"bad":(Math.abs(dAvg)>1?"warn":"ok");
+      $("avgPill").style.display="";
+      $("avgPill").className="pill "+clsAvg;
+      $("avgPill").textContent=`Ø/Woche ${hhmm(avgIst)} (Soll ${hhmm(avgSoll)})`;
+    } else {
+      $("avgPill").style.display="none";
+    }
+  }
+
+  function renderAbsList(){
+    if(!S.A.length){ $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten.</div>`; return; }
+    const rows=S.A.slice().sort((a,b)=>b.d.localeCompare(a.d)).map(a=>`
+      <tr>
+        <td class="mono">${a.d}</td>
+        <td>${absLabel(a.t)}</td>
+        <td><button class="btn-ghost btn-sm" data-del-abs="${a.id}">🗑️</button></td>
+      </tr>`).join("");
+    $("absList").innerHTML=`<table><thead><tr><th>Datum</th><th>Typ</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    document.querySelectorAll("[data-del-abs]").forEach(b=>{
+      b.onclick=async ()=>{
+        const id=b.getAttribute("data-del-abs");
+        S.A=S.A.filter(x=>x.id!==id);
+        await saveYear();
+        await renderAll();
+      };
+    });
+  }
+
+  function renderEntryList(){
+    const entries=S.E.slice().sort((a,b)=>b.d.localeCompare(a.d));
+    if(!entries.length){ $("entryList").innerHTML=`<div class="muted">Noch keine Einträge.</div>`; return; }
+
+    const rows=entries.map(e=>{
+      const net = ((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
+      const netTxt = hhmm(net);
+      return `
+        <tr>
+          <td class="mono">${e.d}</td>
+          <td class="mono">Netto ${netTxt} · Pause ${hhmm(e.p||0)} · ${e.n||""}</td>
+          <td>
+            <button class="btn-ghost btn-sm" data-edit="${e.id}">✍️</button>
+            <button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button>
+          </td>
+        </tr>`;
+    }).join("");
+
+    $("entryList").innerHTML=`<table><thead><tr><th>Datum</th><th>Info</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+
+    document.querySelectorAll("[data-del]").forEach(b=>{
+      b.onclick=async ()=>{
+        const id=b.getAttribute("data-del");
+        S.E=S.E.filter(x=>x.id!==id);
+        await saveYear();
+        await renderAll();
+      };
+    });
+    document.querySelectorAll("[data-edit]").forEach(b=>{
+      b.onclick=()=>{
+        const id=b.getAttribute("data-edit");
+        const e=S.E.find(x=>x.id===id);
+        if(!e) return;
+        editingId=id;
+        $("eDate").value=e.d;
+        const s=new Date(e.s), en=new Date(e.e);
+        $("eStart").value=`${pad(s.getHours())}:${pad(s.getMinutes())}`;
+        $("eEnd").value=`${pad(en.getHours())}:${pad(en.getMinutes())}`;
+        $("eNote").value=e.n||"";
+        $("editMsg").textContent="Bearbeiten aktiv";
+        tab("edit");
+      };
+    });
+  }
+
+  async function renderAll(){
+    applyStateToUI();
+    await renderOverviewTable();
+    renderAbsList();
+    renderEntryList();
+  }
+
+  // ==========================
+  // CSV / Share
+  // ==========================
+  function getPeriodRange(){
+    const v=$("refDate").value;
+    const ref=v ? d0(v) : new Date();
+    const yr=ref.getFullYear();
+
+    let start,end;
+    if($("mode").value==="year") [start,end]=yearRange(yr);
+    else if($("mode").value==="month") [start,end]=monthRange(ref);
+    else [start,end]=weekRangeISO(ref);
+
+    return {yr, start, end};
+  }
+
+  function buildCSV(){
+    const sep=";";
+    const W=getWeeklyTargetMinutes();
+    const emp=S.emp||"";
+    const {yr, start, end} = getPeriodRange();
+    const startS=toDateStr(start), endS=toDateStr(end);
+
+    const rows=[];
+    rows.push(["Mitarbeiter","Jahr","WochenSoll_min","Datum","Start","Ende","Pause_min","Netto_min","Netto_hhmm","Notiz","ManagerName","ManagerMail"].join(sep));
+
+    const entries=S.E.filter(e=>e.d>=startS && e.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
+    for(const e of entries){
+      const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
+      rows.push([
+        csvSafeCell(emp),
+        String(yr),
+        String(W),
+        e.d,
+        e.s,
+        e.e,
+        String(e.p||0),
+        Number.isFinite(net)?String(Math.round(net)):"",
+        hhmm(net),
+        csvSafeCell(e.n||""),
+        csvSafeCell(S.mgr?.name||""),
+        csvSafeCell(S.mgr?.mail||"")
+      ].join(sep));
+    }
+
+    const abs=S.A.filter(a=>a.d>=startS && a.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
+    for(const a of abs){
+      rows.push([
+        csvSafeCell(emp), String(yr), String(W),
+        a.d, "", "", "0", "0", "00:00",
+        csvSafeCell(absLabel(a.t)),
+        csvSafeCell(S.mgr?.name||""),
+        csvSafeCell(S.mgr?.mail||"")
+      ].join(sep));
+    }
+    return rows.join("\n");
+  }
+
+  function downloadCSV(){
+    if(!S.emp) return alert("Bitte Name speichern.");
+    const csv=buildCSV();
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`Zeiterfassung_${$("refDate").value||Y}_${S.emp.replaceAll(" ","_")}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  async function shareCSV(){
+    if(!S.emp) return alert("Bitte Name speichern.");
+    const csv=buildCSV();
+    const file=new File([new Blob([csv],{type:"text/csv"})], `zeiterfassung.csv`, {type:"text/csv"});
+    const title=`Zeiterfassung – ${S.emp}`;
+    const text=`Zeiterfassung\nMitarbeiter: ${S.emp}\nManager: ${(S.mgr.name||"")} ${(S.mgr.mail||"")}`.trim();
+
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({title,text,files:[file]});
+      return;
+    }
+    alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
+  }
+
+  // ==========================
+  // Wiring overview controls
+  // ==========================
+  $("btnCSV").onclick=downloadCSV;
+  $("btnShare").onclick=shareCSV;
+  $("btnRefresh").onclick=renderAll;
+  $("mode").onchange=renderAll;
+  $("weeklyTarget").onchange=renderAll;
+
+  $("refDate").onchange=async ()=>{
+    await loadYear(getRefYear());
+    await renderAll();
+  };
+
+  // Init
+  const today=new Date().toISOString().slice(0,10);
+  $("timerDate").value=today;
+  $("refDate").value=today;
+  $("eDate").value=today;
+  $("aDate").value=today;
+
+  $("btnPause").disabled=true;
+  setTimerStatus("⚪ bereit","");
+
+  // Start locked unless session key already present
+  (async ()=>{
+    const k = await getSessionKey();
+    if(!k){
+      showOverlay("Bitte PIN setzen oder eingeben, um zu starten.");
+      return;
+    }
+    await loadYear(getRefYear());
+    await renderAll();
+    tab("timer");
+  })();
+})();
 </script>
 
 </body>
