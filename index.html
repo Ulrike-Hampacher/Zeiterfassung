@@ -24,16 +24,19 @@ h1{margin:0 0 6px 0;font-size:20px}
 h2{margin:6px 0 10px 0;font-size:16px}
 .muted{color:var(--muted);font-size:13px}
 
-/* ✅ FIX: sauberer Abstand bei Zeilenumbruch am Handy */
+/* ✅ iOS-Safari-sicherer Abstand bei Zeilenumbruch (statt nur row-gap) */
 .row{
   display:flex;
-  column-gap:10px;
-  row-gap:12px;              /* <- mehr Luft zwischen 1. und 2. Zeile */
   flex-wrap:wrap;
   align-items:flex-end;
+  column-gap:10px;
+  row-gap:12px;
+  margin-bottom:-12px;     /* Fallback */
 }
-/* Optional extra Luft direkt im Übersicht-Header */
-#overview .row{ margin-bottom: 6px; }
+.row > *{ margin-bottom:12px; } /* Fallback */
+
+#overview .row{ margin-bottom:-14px; }
+#overview .row > *{ margin-bottom:14px; }
 
 .right{margin-left:auto}
 input,select,button{font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid #ddd;background:#fff}
@@ -228,11 +231,15 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   </div>
 </div>
 
-<!-- ABSENCE -->
+<!-- ABSENCE (✅ Zeitraum) -->
 <div class="card" id="absence" style="display:none">
   <h2>🏖️ Abwesenheit</h2>
-  <div class="row">
-    <div><div class="muted">📅 Datum</div><input type="date" id="aDate"></div>
+  <div class="muted">Zeitraum: Es werden automatisch nur <b>Mo–Fr</b> gespeichert (Wochenende wird NICHT gezählt).</div>
+
+  <div class="row" style="margin-top:10px">
+    <div><div class="muted">📅 Start</div><input type="date" id="aStart"></div>
+    <div><div class="muted">📅 Ende</div><input type="date" id="aEnd"></div>
+
     <div>
       <div class="muted">🏷️ Typ</div>
       <select id="aType">
@@ -243,6 +250,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     </div>
     <button class="btn-ghost" id="addAbs">➕ Speichern</button>
   </div>
+
   <div id="absList" style="margin-top:12px"></div>
 </div>
 
@@ -308,7 +316,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     return s + pad(Math.floor(m/60)) + ":" + pad(m%60);
   };
   const d0=(s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
-  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5;
+  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5; // ✅ nur Mo–Fr
   const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
   function absLabel(t){
@@ -330,6 +338,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     return s;
   }
 
+  // ---- Crypto ----
   const SALT_KEY = NS+"::salt";
   const SESSION_KEY = NS+"::session_rawkey";
 
@@ -373,6 +382,32 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   }
   function yearKey(y){ return NS+"::year::"+y; }
 
+  // ---- Year read/write without switching UI (✅ for cross-year ranges) ----
+  async function readYearState(y){
+    const aes=await getSessionKey();
+    if(!aes) throw new Error("LOCKED");
+    const raw=localStorage.getItem(yearKey(y));
+    if(!raw) return {emp:"", mgr:{name:"",mail:""}, E:[], A:[]};
+    try{
+      const tmp=await decryptJson(aes, JSON.parse(raw));
+      return {
+        emp: tmp.emp || "",
+        mgr: tmp.mgr || {name:"",mail:""},
+        E: Array.isArray(tmp.E)?tmp.E:[],
+        A: Array.isArray(tmp.A)?tmp.A:[]
+      };
+    }catch{
+      throw new Error("DECRYPT_FAIL");
+    }
+  }
+  async function writeYearState(y, state){
+    const aes=await getSessionKey();
+    if(!aes) throw new Error("LOCKED");
+    const blob=await encryptJson(aes, state);
+    localStorage.setItem(yearKey(y), JSON.stringify(blob));
+  }
+
+  // ---- App state (current loaded year) ----
   let Y=new Date().getFullYear();
   let S={emp:"", mgr:{name:"",mail:""}, E:[], A:[]};
   let run=null;
@@ -439,6 +474,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     $("nameMsg").textContent=S.emp?"✅ gespeichert":"";
   }
 
+  // ---- PIN ----
   $("btnUnlock").onclick=async()=>{
     const pin=($("pinInput").value||"").trim();
     if(pin.length!==PIN_LEN||!/^\d+$/.test(pin)){ $("pinMsg").textContent=`PIN muss ${PIN_LEN} Ziffern haben.`; return; }
@@ -463,9 +499,11 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     showOverlay("🔒 Gesperrt. Bitte PIN eingeben.");
   };
 
+  // ---- Name / Manager ----
   $("saveName").onclick=async()=>{ S.emp=($("empName").value||"").trim(); await saveYear(); applyStateToUI(); };
   $("saveMgr").onclick=async()=>{ S.mgr={name:($("mgrName").value||"").trim(), mail:($("mgrMail").value||"").trim()}; await saveYear(); alert("✅ Manager gespeichert"); };
 
+  // ---- Timer ----
   $("btnStart").onclick=async()=>{
     if(run) return alert("Timer läuft schon.");
     if(!S.emp) return alert("Bitte Name speichern.");
@@ -514,15 +552,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     await renderAll();
   };
 
-  $("addAbs").onclick=async()=>{
-    if(!$("aDate").value) return alert("Datum fehlt.");
-    const yr=d0($("aDate").value).getFullYear();
-    if(yr!==Y){ const ok=await loadYear(yr); if(!ok) return; }
-    S.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()), d:$("aDate").value, t:$("aType").value});
-    await saveYear();
-    await renderAll();
-  };
-
+  // ---- Rückwirkend ----
   $("newManual").onclick=()=>{
     editingId=null; $("eStart").value=""; $("eEnd").value=""; $("eNote").value=""; $("editMsg").textContent="";
   };
@@ -550,6 +580,48 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     await renderAll();
   };
 
+  // ---- Abwesenheit (✅ Zeitraum, Mo–Fr) ----
+  $("addAbs").onclick=async()=>{
+    const startV=$("aStart").value;
+    const endV=$("aEnd").value;
+    if(!startV || !endV) return alert("Start und Ende wählen.");
+    const t=$("aType").value;
+
+    const start=d0(startV);
+    const end=d0(endV);
+    if(end < start) return alert("Ende muss nach Start sein.");
+
+    // Batch pro Jahr (nicht dauernd UI umschalten)
+    const perYear = new Map(); // year -> state
+
+    for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+      if(!wd(d)) continue; // ✅ Wochenende NICHT zählen
+      const ds=toDateStr(d);
+      const y=d.getFullYear();
+
+      if(!perYear.has(y)){
+        const st = await readYearState(y);
+        perYear.set(y, st);
+      }
+      const st = perYear.get(y);
+
+      // Keine Duplikate
+      if(st.A.some(a=>a.d===ds && a.t===t)) continue;
+
+      st.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()+Math.random()), d:ds, t});
+    }
+
+    // Speichern & ggf. aktuelles Jahr neu laden
+    for(const [y, st] of perYear.entries()){
+      await writeYearState(y, st);
+    }
+
+    // UI-Refresh: aktuelles Jahr bleibt über refDate bestimmt
+    await loadYear(getRefYear());
+    await renderAll();
+  };
+
+  // ---- Reset ----
   $("btnResetThisYear").onclick=async()=>{
     const yr=getRefYear();
     if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
@@ -573,6 +645,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     }
   };
 
+  // ---- Ranges ----
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
     const monIndex=(d.getDay()+6)%7;
@@ -603,30 +676,50 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     return `${y}-W${pad(w)}`;
   }
 
-  async function ensureYearLoadedFromRef(){
-    const yr=getRefYear();
-    $("yearHint").textContent=`📦 Jahr: ${yr}`;
-    if(yr!==Y) await loadYear(yr);
-  }
-
-  async function renderOverviewTable(){
-    await ensureYearLoadedFromRef();
+  function getPeriodRange(){
     const v=$("refDate").value;
     const ref=v ? d0(v) : new Date();
     const yr=ref.getFullYear();
-
-    const W=getWeeklyTargetMinutes();
-    const DAY=W/5;
 
     let start,end;
     if($("mode").value==="year") [start,end]=yearRange(yr);
     else if($("mode").value==="month") [start,end]=monthRange(ref);
     else [start,end]=weekRangeISO(ref);
 
+    return {yr,start,end};
+  }
+
+  // ✅ cross-year: load all years that are inside the range (without breaking current UI)
+  async function getMergedForRange(start, end){
+    const years = new Set([start.getFullYear(), end.getFullYear()]);
+    const allE=[], allA=[];
+    let emp=S.emp||"", mgr=S.mgr||{name:"",mail:""};
+
+    for(const y of years){
+      const st = await readYearState(y);
+      // prefer current year fields if present, otherwise fallback
+      if(!emp && st.emp) emp=st.emp;
+      if((!mgr?.mail && st.mgr?.mail) || (!mgr?.name && st.mgr?.name)) mgr=st.mgr;
+      allE.push(...(st.E||[]));
+      allA.push(...(st.A||[]));
+    }
+    return {allE, allA, emp, mgr};
+  }
+
+  async function renderOverviewTable(){
+    const {yr,start,end}=getPeriodRange();
+    $("yearHint").textContent = `📦 Bereich: ${start.getFullYear()}–${end.getFullYear()}`;
+
+    const W=getWeeklyTargetMinutes();
+    const DAY=W/5;
+
     const startS=toDateStr(start), endS=toDateStr(end);
+    const merged = await getMergedForRange(start, end);
+    const E = merged.allE;
+    const A = merged.allA;
 
     const istBy={};
-    for(const e of S.E){
+    for(const e of E){
       if(e.d < startS || e.d > endS) continue;
       const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
       if(!Number.isFinite(net)) continue;
@@ -645,9 +738,10 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
       const ist=Number.isFinite(istBy[ds]) ? istBy[ds] : 0;
       const isW=wd(d);
 
-      const absTypes=S.A.filter(a=>a.d===ds).map(a=>a.t);
+      const absTypes=A.filter(a=>a.d===ds).map(a=>a.t);
       const absLabels=absTypes.map(absLabel);
 
+      // Werktag + Abwesenheit => SOLL 0
       const soll = Math.round(isW ? (absTypes.length>0 ? 0 : DAY) : 0);
       const saldo=ist-soll;
 
@@ -672,6 +766,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     $("sumPill").className="pill "+cls;
     $("sumPill").textContent=`IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · SALDO ${hhmm(delta)}`;
 
+    // Monats Ø/Woche (mit ISO-Wochen, wird sauber jahresübergreifend)
     if($("mode").value==="month"){
       const weeks=new Map();
       for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
@@ -682,7 +777,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
         b.ist += (istBy[ds]||0);
         if(wd(d)){
           b.weekdays += 1;
-          if(S.A.some(a=>a.d===ds)) b.absDays += 1;
+          if(A.some(a=>a.d===ds)) b.absDays += 1;
         }
       }
       const active=[...weeks.values()].filter(w=>w.weekdays>0);
@@ -699,7 +794,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   }
 
   function renderAbsList(){
-    if(!S.A.length){ $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten.</div>`; return; }
+    if(!S.A.length){ $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten im aktuell geladenen Jahr (${Y}).</div>`; return; }
     const rows=S.A.slice().sort((a,b)=>b.d.localeCompare(a.d)).map(a=>`
       <tr>
         <td class="mono">${a.d}</td>
@@ -719,7 +814,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
 
   function renderEntryList(){
     const entries=S.E.slice().sort((a,b)=>b.d.localeCompare(a.d));
-    if(!entries.length){ $("entryList").innerHTML=`<div class="muted">Noch keine Einträge.</div>`; return; }
+    if(!entries.length){ $("entryList").innerHTML=`<div class="muted">Noch keine Einträge im aktuell geladenen Jahr (${Y}).</div>`; return; }
 
     const rows=entries.map(e=>{
       const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
@@ -762,76 +857,77 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
 
   async function renderAll(){
     applyStateToUI();
-    await renderOverviewTable();
+    await renderOverviewTable();  // ✅ jahresübergreifend
     renderAbsList();
     renderEntryList();
   }
 
-  function getPeriodRange(){
-    const v=$("refDate").value;
-    const ref=v ? d0(v) : new Date();
-    const yr=ref.getFullYear();
-
-    let start,end;
-    if($("mode").value==="year") [start,end]=yearRange(yr);
-    else if($("mode").value==="month") [start,end]=monthRange(ref);
-    else [start,end]=weekRangeISO(ref);
-
-    return {yr,start,end};
-  }
-
-  function buildCSV(){
+  // ---- CSV / Share (Range ist schon cross-year in Übersicht; CSV bleibt aus aktuell geladenen Jahren? -> wir exportieren cross-year Range!) ----
+  function buildCSVForRange(merged, start, end){
     const sep=";";
     const W=getWeeklyTargetMinutes();
-    const emp=S.emp||"";
-    const {yr,start,end}=getPeriodRange();
+    const emp=(merged.emp||S.emp||"");
+    const mgr=(merged.mgr||S.mgr||{name:"",mail:""});
     const startS=toDateStr(start), endS=toDateStr(end);
 
     const rows=[];
-    rows.push(["Mitarbeiter","Jahr","WochenSoll_min","Datum","Start","Ende","Pause_min","Netto_min","Netto_hhmm","Notiz","ManagerName","ManagerMail"].join(sep));
+    rows.push(["Mitarbeiter","Von","Bis","WochenSoll_min","Datum","Start","Ende","Pause_min","Netto_min","Netto_hhmm","Notiz","ManagerName","ManagerMail"].join(sep));
 
-    const entries=S.E.filter(e=>e.d>=startS && e.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
+    const entries=merged.allE.filter(e=>e.d>=startS && e.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
     for(const e of entries){
       const net=((new Date(e.e)-new Date(e.s))/60000)-(e.p||0);
       rows.push([
-        csvSafeCell(emp), String(yr), String(W),
+        csvSafeCell(emp),
+        startS, endS,
+        String(W),
         e.d, e.s, e.e,
         String(e.p||0),
         Number.isFinite(net)?String(Math.round(net)):"",
         hhmm(net),
         csvSafeCell(e.n||""),
-        csvSafeCell(S.mgr?.name||""),
-        csvSafeCell(S.mgr?.mail||"")
+        csvSafeCell(mgr?.name||""),
+        csvSafeCell(mgr?.mail||"")
       ].join(sep));
     }
-    const abs=S.A.filter(a=>a.d>=startS && a.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
+
+    const abs=merged.allA.filter(a=>a.d>=startS && a.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
     for(const a of abs){
       rows.push([
-        csvSafeCell(emp), String(yr), String(W),
+        csvSafeCell(emp),
+        startS, endS,
+        String(W),
         a.d, "", "", "0", "0", "00:00",
         csvSafeCell(absLabel(a.t)),
-        csvSafeCell(S.mgr?.name||""),
-        csvSafeCell(S.mgr?.mail||"")
+        csvSafeCell(mgr?.name||""),
+        csvSafeCell(mgr?.mail||"")
       ].join(sep));
     }
     return rows.join("\n");
   }
 
-  function downloadCSV(){
-    if(!S.emp) return alert("Bitte Name speichern.");
-    const csv=buildCSV();
+  async function downloadCSV(){
+    const {start,end}=getPeriodRange();
+    const merged=await getMergedForRange(start,end);
+    if(!(merged.emp||S.emp)) return alert("Bitte Name speichern.");
+
+    const csv=buildCSVForRange(merged,start,end);
     const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
-    a.download=`Zeiterfassung_${$("refDate").value||Y}_${S.emp.replaceAll(" ","_")}.csv`;
+    a.download=`Zeiterfassung_${toDateStr(start)}_${toDateStr(end)}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
   }
+
   async function shareCSV(){
-    if(!S.emp) return alert("Bitte Name speichern.");
-    const csv=buildCSV();
+    const {start,end}=getPeriodRange();
+    const merged=await getMergedForRange(start,end);
+    if(!(merged.emp||S.emp)) return alert("Bitte Name speichern.");
+
+    const csv=buildCSVForRange(merged,start,end);
     const file=new File([new Blob([csv],{type:"text/csv"})], "zeiterfassung.csv", {type:"text/csv"});
+
     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({title:`Zeiterfassung – ${S.emp}`, files:[file]});
+      await navigator.share({title:`Zeiterfassung – ${merged.emp||S.emp}`, files:[file]});
       return;
     }
     alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
@@ -848,11 +944,15 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     await renderAll();
   };
 
+  // Init
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
   $("eDate").value=today;
-  $("aDate").value=today;
+
+  // Abwesenheit Zeitraum Defaults
+  $("aStart").value=today;
+  $("aEnd").value=today;
 
   $("btnPause").disabled=true;
   setTimerStatus("⚪ bereit","");
