@@ -45,29 +45,31 @@ th,td{padding:8px;border-bottom:1px solid #eee;font-size:14px;vertical-align:top
 th{text-align:left;color:#777}
 .mono{font-family:ui-monospace,Menlo,monospace}
 
-/* ✅ KOMPAKT (MA/Manager kurz) */
+/* ✅ Kompakt, aber nutzbar */
 .w-emp{width:240px;max-width:240px}
 .w-note{width:180px;max-width:180px}
 .w-mgr-name{width:220px;max-width:220px}
 
-/* ✅ Manager E-Mail: länger + flexibel (passt auf Handy & Desktop) */
+/* ✅ Manager E-Mail: auf Handy LANG (fast volle Breite) */
 .w-mgr-mail{
-  width: 320px;        /* Standard breit */
-  max-width: 75vw;     /* am Handy nicht zu breit */
-  min-width: 240px;    /* nie zu klein */
+  width: 360px;      /* Tablet/Desktop */
+  max-width: 90vw;   /* iPhone: fast volle Breite */
+  min-width: 280px;  /* nie zu kurz */
 }
 
-/* Speichern nicht angeklebt */
 .w-save{width:160px;max-width:160px}
+
+/* Speichern nicht angeklebt */
 .stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .stack input{margin-bottom:6px}
 .stack button{margin-top:4px}
 
-/* Extra-kleine Phones: minimal kleiner, aber bleibt kompakt */
+/* sehr kleine Phones */
 @media(max-width:340px){
   .w-emp{width:220px;max-width:220px}
   .w-note{width:160px;max-width:160px}
   .w-mgr-name{width:200px;max-width:200px}
+  /* w-mgr-mail NICHT überschreiben! */
   .w-save{width:150px;max-width:150px}
 }
 </style>
@@ -94,6 +96,7 @@ th{text-align:left;color:#777}
 <!-- TIMER -->
 <div class="card" id="timer">
   <h2>⏱️ Timer</h2>
+
   <div class="stack">
     <div class="muted">👤 Mitarbeiter</div>
     <input id="empName" class="w-emp" placeholder="Vorname Nachname">
@@ -220,17 +223,13 @@ th{text-align:left;color:#777}
 <div class="card" id="settings" style="display:none">
   <h2>⚙️ Settings</h2>
   <div class="muted">
-    Daten liegen lokal im Browser (offline). Wenn du Code-Versionen wechselst, können alte Daten „nicht passen“.
+    Daten liegen lokal im Browser (offline). Bei Code-Updates können alte Daten „nicht passen“.
     Dann zeigt die App <span class="mono">--:--</span> statt Zeiten (NaN-Schutz).
   </div>
 
   <div class="row" style="margin-top:10px">
     <button class="btn-stop" id="btnResetYear">🧹 Dieses Jahr löschen</button>
     <button class="btn-ghost" id="btnResetAll">🧨 Alle Jahre löschen</button>
-  </div>
-
-  <div class="muted" style="margin-top:10px">
-    Tipp: Erst „Dieses Jahr löschen“ probieren. „Alle Jahre“ ist der Reset-Hammer.
   </div>
 </div>
 
@@ -243,7 +242,7 @@ th{text-align:left;color:#777}
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
 
-  // ✅ NaN-sicher: zeigt --:-- statt NaN:NaN
+  // NaN-sicher: --:--
   const hhmm=(m)=>{
     if(!Number.isFinite(m)) return "--:--";
     const s=m<0?"-":"";
@@ -481,7 +480,7 @@ th{text-align:left;color:#777}
     }
   };
 
-  // CSV/Share (einfach & robust)
+  // CSV / Share
   function buildCSV(){
     const sep=";";
     const W=+$("weeklyTarget").value;
@@ -541,7 +540,7 @@ th{text-align:left;color:#777}
   $("btnCSV").onclick=downloadCSV;
   $("btnShare").onclick=shareCSV;
 
-  // ---------- Render ----------
+  // Render helpers
   function renderAbsList(){
     if(!S.A.length){ $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten.</div>`; return; }
     const rows=S.A.slice().sort((a,b)=>b.d.localeCompare(a.d)).map(a=>`
@@ -619,7 +618,7 @@ th{text-align:left;color:#777}
     for(const e of S.E){
       if(!inRange(e.d,start,end)) continue;
       const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
-      if(!Number.isFinite(net)) continue; // alte kaputte Daten ignorieren
+      if(!Number.isFinite(net)) continue;
       istBy[e.d]=(istBy[e.d]||0)+Math.round(net);
     }
 
@@ -695,12 +694,12 @@ th{text-align:left;color:#777}
     save();
   }
 
-  // ---------- wiring ----------
+  // Wiring
   $("yearSelect").onchange=()=>{ load(+$("yearSelect").value); renderAll(); };
   ["weeklyTarget","mode","refDate"].forEach(id=>$(id).onchange=renderAll);
   $("btnRefresh").onclick=renderAll;
 
-  // ---------- init ----------
+  // Init
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value = today;
   $("refDate").value   = today;
