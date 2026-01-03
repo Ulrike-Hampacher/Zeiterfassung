@@ -47,7 +47,6 @@ button{border:none;font-weight:700;cursor:pointer}
 .btn-stop{background:var(--red);color:#fff}
 .btn-blue{background:var(--blue);color:#fff}
 .btn-ghost{background:#eef2f7;color:#0f172a}
-
 .btn-sm{padding:8px 10px;font-size:14px;border-radius:10px}
 
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
@@ -68,9 +67,9 @@ th{text-align:left;color:#64748b}
 .stack input{margin-bottom:6px}
 .stack button{margin-top:4px}
 
-/* Manager (sauber, Mail etwas länger, leicht nach links) */
+/* Manager (mail -2 left mehr) */
 .w-mgr-name{width:200px;max-width:200px;margin-left:-7px}
-.w-mgr-mail{width:360px;max-width:92vw;min-width:300px;margin-left:-7px}
+.w-mgr-mail{width:360px;max-width:92vw;min-width:300px;margin-left:-9px}
 
 /* Chips / Badges */
 .badge{
@@ -85,7 +84,7 @@ th{text-align:left;color:#64748b}
 .badge.sick{ color:var(--b-sick); }
 .badge.hol{ color:var(--b-hol); }
 
-/* Wochenende: neutral (kein Lila) */
+/* Wochenende neutral */
 .badge.weekend{
   color:#1e40af;
   background:#eff6ff;
@@ -95,8 +94,6 @@ th{text-align:left;color:#64748b}
 /* Summary Chips (Ampel ohne Rot) */
 .chip-ok{ background:var(--okbg); color:var(--ok); }
 .chip-warn{ background:var(--warnbg); color:var(--warn); }
-
-/* Nur echte Fehler */
 .chip-error{ background:#fee2e2; color:#991b1b; }
 
 .summarybar{
@@ -208,7 +205,6 @@ th{text-align:left;color:#64748b}
     <span class="right muted mono" id="yearHint"></span>
   </div>
 
-  <!-- ✅ Eine saubere Summary-Leiste -->
   <div class="summarybar" id="summaryBar" style="display:none">
     <span class="badge" id="weekChip" style="display:none">—</span>
     <span class="badge" id="sumChip">—</span>
@@ -249,7 +245,9 @@ th{text-align:left;color:#64748b}
 <!-- ABSENCE -->
 <div class="card" id="absence" style="display:none">
   <h2>🏖️ Abwesenheit</h2>
-  <div class="muted">Zeitraum: Es werden automatisch nur <b>Mo–Fr</b> gespeichert (Wochenende wird NICHT gezählt).</div>
+  <div class="muted">
+    Zeitraum: es werden nur <b>Mo–Fr</b> gespeichert. ✅ Pro Tag ist <b>max. 1 Abwesenheit</b> erlaubt.
+  </div>
 
   <div class="row" style="margin-top:10px">
     <div><div class="muted">📅 Start</div><input type="date" id="aStart"></div>
@@ -265,6 +263,13 @@ th{text-align:left;color:#64748b}
     <button class="btn-ghost" id="addAbs">➕ Speichern</button>
   </div>
 
+  <!-- 🔥 Neu: Einzeltag löschen -->
+  <div class="row" style="margin-top:10px">
+    <div><div class="muted">🗓️ Einzeltag löschen</div><input type="date" id="aDelDate"></div>
+    <button class="btn-ghost" id="delAbsDay">🗑️ Löschen</button>
+    <span class="right muted mono" id="absMsg"></span>
+  </div>
+
   <div id="absList" style="margin-top:12px"></div>
 </div>
 
@@ -278,7 +283,7 @@ th{text-align:left;color:#64748b}
 <!-- SETTINGS -->
 <div class="card" id="settings" style="display:none">
   <h2>⚙️ Settings</h2>
-  <div class="muted">🔐 Daten sind lokal verschlüsselt. PIN wird nur pro Session benötigt (solange Safari offen bleibt).</div>
+  <div class="muted">🔐 Daten sind lokal verschlüsselt. PIN gilt pro Session (solange Safari offen bleibt).</div>
   <div class="row" style="margin-top:10px">
     <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
     <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
@@ -300,15 +305,15 @@ th{text-align:left;color:#64748b}
       <button class="btn-ghost" id="btnSetPin">🆕 PIN setzen</button>
       <span class="right muted mono" id="pinMsg"></span>
     </div>
-    <div class="muted" style="margin-top:10px">Hinweis: PIN vergessen = Daten nicht entschlüsselbar (dann nur Reset möglich).</div>
+    <div class="muted" style="margin-top:10px">PIN vergessen = Daten nicht entschlüsselbar (nur Reset möglich).</div>
   </div>
 </div>
 
 <script>
 (() => {
   const NS="ZEITERFASSUNG";
-  const AUTO_BREAK=55;               // Auto-Pause 55min
-  const TOL_WEEK_MIN = 10*60;        // ±10h pro Woche
+  const AUTO_BREAK=55;
+  const TOL_WEEK_MIN = 10*60;
   const PIN_LEN=6;
 
   const $=id=>document.getElementById(id);
@@ -324,8 +329,8 @@ th{text-align:left;color:#64748b}
     return s + pad(Math.floor(m/60)) + ":" + pad(m%60);
   };
   const d0=(s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
-  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5; // Mo–Fr
-  const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6; // So/Sa
+  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5;
+  const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6;
   const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
   function absLabel(t){
@@ -598,7 +603,9 @@ th{text-align:left;color:#64748b}
   };
 
   // Abwesenheit Zeitraum (Mo–Fr), jahresübergreifend
+  // ✅ NEU: Pro Tag max. 1 Abwesenheit (egal welcher Typ). Kein doppelt!
   $("addAbs").onclick=async()=>{
+    $("absMsg").textContent="";
     const startV=$("aStart").value;
     const endV=$("aEnd").value;
     if(!startV || !endV) return alert("Start und Ende wählen.");
@@ -607,6 +614,8 @@ th{text-align:left;color:#64748b}
     const start=d0(startV);
     const end=d0(endV);
     if(end < start) return alert("Ende muss nach Start sein.");
+
+    let added=0, skipped=0;
 
     const perYear = new Map();
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
@@ -619,13 +628,40 @@ th{text-align:left;color:#64748b}
         perYear.set(y, st);
       }
       const st = perYear.get(y);
-      if(st.A.some(a=>a.d===ds && a.t===t)) continue;
+
+      // 👉 Wenn Tag schon irgendeine Abwesenheit hat: skip (verhindert Urlaub+Feiertag etc.)
+      if(st.A.some(a=>a.d===ds)){
+        skipped++;
+        continue;
+      }
+
       st.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()+Math.random()), d:ds, t});
+      added++;
     }
+
     for(const [y, st] of perYear.entries()) await writeYearState(y, st);
 
     await loadYear(getRefYear());
     await renderAll();
+
+    $("absMsg").textContent = `✅ ${added} Tage gespeichert` + (skipped ? ` · ⚠️ ${skipped} übersprungen (bereits belegt)` : "");
+  };
+
+  // ✅ NEU: Einzeltag löschen (rückwirkend, auch wenn mal doppelt)
+  $("delAbsDay").onclick=async()=>{
+    $("absMsg").textContent="";
+    const ds=$("aDelDate").value;
+    if(!ds) return;
+    const y=d0(ds).getFullYear();
+    const st = await readYearState(y);
+    const before=st.A.length;
+    st.A = st.A.filter(a=>a.d!==ds);
+    const removed = before - st.A.length;
+    await writeYearState(y, st);
+
+    await loadYear(getRefYear());
+    await renderAll();
+    $("absMsg").textContent = removed ? `🗑️ ${removed} Abwesenheit(en) am ${ds} gelöscht` : `ℹ️ nichts gefunden am ${ds}`;
   };
 
   // Reset
@@ -652,7 +688,7 @@ th{text-align:left;color:#64748b}
     }
   };
 
-  // Bereiche
+  // Bereiche / Übersicht
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
     const monIndex=(d.getDay()+6)%7;
@@ -708,7 +744,6 @@ th{text-align:left;color:#64748b}
     return {allE, allA, emp, mgr};
   }
 
-  // Ampel: ok innerhalb ±10h/Woche, sonst warn (orange)
   function chipClassByWeeklyTolerance(deltaMin, weeksEquivalent){
     const tol = TOL_WEEK_MIN * Math.max(1, weeksEquivalent);
     return (Math.abs(deltaMin) <= tol) ? "chip-ok" : "chip-warn";
@@ -774,15 +809,12 @@ th{text-align:left;color:#64748b}
     const delta=istSum-sollSum;
     const weeksEq = workdays ? (workdays/5) : 1;
 
-    // Summary Bar einblenden
     $("summaryBar").style.display="";
 
-    // Gesamtbereich Chip (skaliert nach Anzahl Wochen im Bereich)
     const sumCls = chipClassByWeeklyTolerance(delta, weeksEq);
     $("sumChip").className = "badge " + sumCls;
     $("sumChip").textContent = `IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)} (±10:00/Woche)`;
 
-    // Woche: extra Chip + Wochenende rechts
     if($("mode").value==="week"){
       $("weekChip").style.display="";
       $("weekendChip").style.display="";
@@ -795,7 +827,6 @@ th{text-align:left;color:#64748b}
       $("weekendChip").style.display="none";
     }
 
-    // Monat: Ø/Woche Chip (auf Wochen normalisiert)
     if($("mode").value==="month"){
       const weeks=new Map();
       for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
@@ -930,7 +961,7 @@ th{text-align:left;color:#64748b}
     renderEntryList();
   }
 
-  // CSV / Share (bereichsübergreifend) – Wochenende-Hinweis in Notiz
+  // CSV / Share
   async function getMergedForCurrentRange(){
     const {start,end}=getPeriodRange();
     const merged=await getMergedForRange(start,end);
@@ -1001,7 +1032,7 @@ th{text-align:left;color:#64748b}
     alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
   }
 
-  // Wire buttons
+  // Wire
   $("btnCSV").onclick=downloadCSV;
   $("btnShare").onclick=shareCSV;
   $("btnRefresh").onclick=renderAll;
@@ -1013,13 +1044,14 @@ th{text-align:left;color:#64748b}
     await renderAll();
   };
 
-  // Abwesenheit: Ende folgt Start, bis Ende manuell geändert
+  // Init
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
   $("eDate").value=today;
   $("aStart").value=today;
   $("aEnd").value=today;
+  $("aDelDate").value=today;
 
   let aEndTouched=false;
   $("aEnd").addEventListener("change", ()=>{ aEndTouched=true; });
@@ -1027,11 +1059,9 @@ th{text-align:left;color:#64748b}
     if(!aEndTouched) $("aEnd").value = $("aStart").value;
   });
 
-  // Timer initial
   $("btnPause").disabled=true;
   setTimerStatus("⚪ bereit","");
 
-  // Start gate
   (async()=>{
     const k=await getSessionKey();
     if(!k){ showOverlay("Bitte PIN setzen oder eingeben, um zu starten."); return; }
@@ -1040,36 +1070,8 @@ th{text-align:left;color:#64748b}
     tab("timer");
   })();
 
-  // Tabs
-  function initTabs(){
-    document.querySelectorAll(".tab").forEach(t=>{
-      t.onclick=()=>tab(t.dataset.tab);
-    });
-  }
-  initTabs();
-
-  // PIN overlay buttons
-  $("btnUnlock").onclick=async()=>{
-    const pin=($("pinInput").value||"").trim();
-    if(pin.length!==PIN_LEN||!/^\d+$/.test(pin)){ $("pinMsg").textContent=`PIN muss ${PIN_LEN} Ziffern haben.`; return; }
-    await ensureSessionKey(pin);
-    hideOverlay();
-    await loadYear(getRefYear());
-    await renderAll();
-    tab("timer");
-  };
-  $("btnSetPin").onclick=async()=>{
-    const pin=($("pinInput").value||"").trim();
-    if(pin.length!==PIN_LEN||!/^\d+$/.test(pin)){ $("pinMsg").textContent=`PIN muss ${PIN_LEN} Ziffern haben.`; return; }
-    await ensureSessionKey(pin);
-    hideOverlay();
-    await loadYear(getRefYear());
-    await saveYear();
-    await renderAll();
-    alert("✅ PIN gesetzt. Bitte merken!");
-  };
-
 })();
 </script>
+
 </body>
 </html>
