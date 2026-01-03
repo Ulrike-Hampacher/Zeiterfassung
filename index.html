@@ -23,7 +23,18 @@ body{margin:0;padding:14px;font-family:-apple-system,system-ui;background:var(--
 h1{margin:0 0 6px 0;font-size:20px}
 h2{margin:6px 0 10px 0;font-size:16px}
 .muted{color:var(--muted);font-size:13px}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+
+/* ✅ FIX: sauberer Abstand bei Zeilenumbruch am Handy */
+.row{
+  display:flex;
+  column-gap:10px;
+  row-gap:12px;              /* <- mehr Luft zwischen 1. und 2. Zeile */
+  flex-wrap:wrap;
+  align-items:flex-end;
+}
+/* Optional extra Luft direkt im Übersicht-Header */
+#overview .row{ margin-bottom: 6px; }
+
 .right{margin-left:auto}
 input,select,button{font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid #ddd;background:#fff}
 button{border:none;font-weight:700;cursor:pointer}
@@ -87,7 +98,6 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   font-size: 18px;
   padding: 10px 12px;
 }
-
 @media(max-width:360px){
   .pin{ width: 82vw; letter-spacing: .14em; }
 }
@@ -95,7 +105,6 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   .w-emp{width:210px;max-width:210px}
   .w-note{width:150px;max-width:150px}
   .w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
-  /* w-mgr-mail bleibt flexibel */
 }
 </style>
 </head>
@@ -281,12 +290,9 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
 
 <script>
 (() => {
-  // ==========================
-  // Security / Crypto (PIN 6)
-  // ==========================
   const NS="ZEITERFASSUNG";
-  const AUTO_BREAK=55;          // Auto-Pause Minuten
-  const TOL=10*60;              // ±10h Ampel in Minuten
+  const AUTO_BREAK=55;
+  const TOL=10*60;
   const PIN_LEN=6;
 
   const $=id=>document.getElementById(id);
@@ -313,82 +319,62 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   }
 
   function getWeeklyTargetMinutes(){
-    const el=$("weeklyTarget");
-    const v=el ? Number(el.value) : NaN;
-    return (Number.isFinite(v) && v>0) ? v : 2400; // Fallback 40h
+    const v=Number($("weeklyTarget").value);
+    return (Number.isFinite(v) && v>0) ? v : 2400;
   }
 
-  // CSV injection protection
   function csvSafeCell(s){
-    s = (s ?? "").toString();
-    const t = s.trimStart();
-    if(t.startsWith("=") || t.startsWith("+") || t.startsWith("-") || t.startsWith("@")){
-      return "'" + s;
-    }
+    s=(s??"").toString();
+    const t=s.trimStart();
+    if(t.startsWith("=")||t.startsWith("+")||t.startsWith("-")||t.startsWith("@")) return "'"+s;
     return s;
   }
 
-  // --- Key derivation ---
   const SALT_KEY = NS+"::salt";
-  const SESSION_KEY = NS+"::session_rawkey"; // base64 of raw AES key
+  const SESSION_KEY = NS+"::session_rawkey";
 
   async function deriveAesKeyFromPin(pin, saltBytes){
-    const enc = new TextEncoder();
-    const baseKey = await crypto.subtle.importKey("raw", enc.encode(pin), {name:"PBKDF2"}, false, ["deriveKey"]);
+    const enc=new TextEncoder();
+    const baseKey=await crypto.subtle.importKey("raw", enc.encode(pin), {name:"PBKDF2"}, false, ["deriveKey"]);
     return crypto.subtle.deriveKey(
-      {name:"PBKDF2", salt: saltBytes, iterations: 150000, hash:"SHA-256"},
-      baseKey,
-      {name:"AES-GCM", length: 256},
-      true,
-      ["encrypt","decrypt"]
+      {name:"PBKDF2", salt:saltBytes, iterations:150000, hash:"SHA-256"},
+      baseKey, {name:"AES-GCM", length:256}, true, ["encrypt","decrypt"]
     );
   }
-  async function exportRawKey(key){
-    const raw = await crypto.subtle.exportKey("raw", key);
-    return b64(raw);
-  }
+  async function exportRawKey(key){ return b64(await crypto.subtle.exportKey("raw", key)); }
   async function importRawKey(rawB64){
-    const raw = ub64(rawB64);
-    return crypto.subtle.importKey("raw", raw, {name:"AES-GCM"}, true, ["encrypt","decrypt"]);
+    return crypto.subtle.importKey("raw", ub64(rawB64), {name:"AES-GCM"}, true, ["encrypt","decrypt"]);
   }
   function getOrCreateSalt(){
-    let s = localStorage.getItem(SALT_KEY);
-    if(!s){ s = b64(rand(16)); localStorage.setItem(SALT_KEY, s); }
+    let s=localStorage.getItem(SALT_KEY);
+    if(!s){ s=b64(rand(16)); localStorage.setItem(SALT_KEY,s); }
     return ub64(s);
   }
   async function ensureSessionKey(pin){
-    const salt = getOrCreateSalt();
-    const aes = await deriveAesKeyFromPin(pin, salt);
-    const rawB64 = await exportRawKey(aes);
-    sessionStorage.setItem(SESSION_KEY, rawB64);
+    const aes=await deriveAesKeyFromPin(pin, getOrCreateSalt());
+    sessionStorage.setItem(SESSION_KEY, await exportRawKey(aes));
     return aes;
   }
   async function getSessionKey(){
-    const rawB64 = sessionStorage.getItem(SESSION_KEY);
-    if(!rawB64) return null;
-    try{ return await importRawKey(rawB64); }catch(_e){ return null; }
+    const raw=sessionStorage.getItem(SESSION_KEY);
+    if(!raw) return null;
+    try{ return await importRawKey(raw); }catch{ return null; }
   }
   async function encryptJson(aesKey, obj){
-    const iv = rand(12);
-    const enc = new TextEncoder();
-    const pt = enc.encode(JSON.stringify(obj));
-    const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, aesKey, pt);
+    const iv=rand(12);
+    const enc=new TextEncoder();
+    const pt=enc.encode(JSON.stringify(obj));
+    const ct=await crypto.subtle.encrypt({name:"AES-GCM", iv}, aesKey, pt);
     return {v:1, iv:b64(iv), ct:b64(ct)};
   }
   async function decryptJson(aesKey, blob){
-    const iv = ub64(blob.iv);
-    const ct = ub64(blob.ct);
-    const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv}, aesKey, ct);
-    const dec = new TextDecoder();
-    return JSON.parse(dec.decode(pt));
+    const pt=await crypto.subtle.decrypt({name:"AES-GCM", iv:ub64(blob.iv)}, aesKey, ub64(blob.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
   }
   function yearKey(y){ return NS+"::year::"+y; }
 
-  // ==========================
-  // App state
-  // ==========================
-  let Y = new Date().getFullYear();
-  let S = { emp:"", mgr:{name:"",mail:""}, E:[], A:[] };
+  let Y=new Date().getFullYear();
+  let S={emp:"", mgr:{name:"",mail:""}, E:[], A:[]};
   let run=null;
   let editingId=null;
 
@@ -396,8 +382,8 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     $("ovl").style.display="flex";
     $("pinMsg").textContent="";
     $("pinInput").value="";
-    $("ovlText").textContent = msg || `Bitte ${PIN_LEN}-stellige PIN eingeben.`;
-    setTimeout(()=>$("pinInput").focus(), 50);
+    $("ovlText").textContent=msg||`Bitte ${PIN_LEN}-stellige PIN eingeben.`;
+    setTimeout(()=>$("pinInput").focus(),50);
   }
   function hideOverlay(){ $("ovl").style.display="none"; }
 
@@ -408,84 +394,63 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
 
   function tab(name){
     ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
-      $(id).style.display = (id===name) ? "" : "none";
+      $(id).style.display=(id===name)?"":"none";
     });
     document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
   }
   document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
 
-  // ✅ Jahr & Referenz zusammengelegt: refDate bestimmt das Jahr
   function getRefYear(){
     const v=$("refDate").value;
     return v ? d0(v).getFullYear() : new Date().getFullYear();
   }
 
   async function loadYear(y){
-    Y = y;
-    $("yearHint").textContent = `📦 Jahr: ${Y}`;
-
-    const aes = await getSessionKey();
+    Y=y; $("yearHint").textContent=`📦 Jahr: ${Y}`;
+    const aes=await getSessionKey();
     if(!aes){ showOverlay("Bitte PIN eingeben, um Daten zu laden."); return false; }
 
-    const raw = localStorage.getItem(yearKey(Y));
-    if(!raw){
-      S = { emp:"", mgr:{name:"",mail:""}, E:[], A:[] };
-      applyStateToUI();
-      return true;
-    }
+    const raw=localStorage.getItem(yearKey(Y));
+    if(!raw){ S={emp:"",mgr:{name:"",mail:""},E:[],A:[]}; applyStateToUI(); return true; }
+
     try{
-      const blob = JSON.parse(raw);
-      S = await decryptJson(aes, blob);
-      S.emp = S.emp || "";
-      S.mgr = S.mgr || {name:"",mail:""};
-      S.E = Array.isArray(S.E)?S.E:[];
-      S.A = Array.isArray(S.A)?S.A:[];
-      applyStateToUI();
-      return true;
-    }catch(_e){
+      S=await decryptJson(aes, JSON.parse(raw));
+      S.emp=S.emp||""; S.mgr=S.mgr||{name:"",mail:""};
+      S.E=Array.isArray(S.E)?S.E:[]; S.A=Array.isArray(S.A)?S.A:[];
+      applyStateToUI(); return true;
+    }catch{
       showOverlay("PIN falsch oder Daten nicht lesbar. Bitte erneut versuchen (oder Reset).");
       return false;
     }
   }
 
   async function saveYear(){
-    const aes = await getSessionKey();
+    const aes=await getSessionKey();
     if(!aes){ showOverlay("Bitte PIN eingeben, um zu speichern."); return false; }
-    const blob = await encryptJson(aes, S);
-    localStorage.setItem(yearKey(Y), JSON.stringify(blob));
+    localStorage.setItem(yearKey(Y), JSON.stringify(await encryptJson(aes,S)));
     return true;
   }
 
   function applyStateToUI(){
-    $("empName").value = S.emp || "";
-    $("mgrName").value = S.mgr?.name || "";
-    $("mgrMail").value = S.mgr?.mail || "";
-    $("timerMini").textContent = S.emp ? ("👤 "+S.emp) : "";
-    $("nameMsg").textContent = S.emp ? "✅ gespeichert" : "";
+    $("empName").value=S.emp||"";
+    $("mgrName").value=S.mgr?.name||"";
+    $("mgrMail").value=S.mgr?.mail||"";
+    $("timerMini").textContent=S.emp?("👤 "+S.emp):"";
+    $("nameMsg").textContent=S.emp?"✅ gespeichert":"";
   }
 
-  // ==========================
-  // PIN overlay actions
-  // ==========================
-  $("btnUnlock").onclick = async ()=>{
-    const pin = ($("pinInput").value||"").trim();
-    if(pin.length!==PIN_LEN || !/^\d+$/.test(pin)){
-      $("pinMsg").textContent = `PIN muss ${PIN_LEN} Ziffern haben.`;
-      return;
-    }
+  $("btnUnlock").onclick=async()=>{
+    const pin=($("pinInput").value||"").trim();
+    if(pin.length!==PIN_LEN||!/^\d+$/.test(pin)){ $("pinMsg").textContent=`PIN muss ${PIN_LEN} Ziffern haben.`; return; }
     await ensureSessionKey(pin);
     hideOverlay();
     await loadYear(getRefYear());
     await renderAll();
     tab("timer");
   };
-
-  $("btnSetPin").onclick = async ()=>{
-    const pin = ($("pinInput").value||"").trim();
-    if(pin.length!==PIN_LEN || !/^\d+$/.test(pin)){
-      $("pinMsg").textContent = `PIN muss ${PIN_LEN} Ziffern haben.`;
-      return;
-    }
+  $("btnSetPin").onclick=async()=>{
+    const pin=($("pinInput").value||"").trim();
+    if(pin.length!==PIN_LEN||!/^\d+$/.test(pin)){ $("pinMsg").textContent=`PIN muss ${PIN_LEN} Ziffern haben.`; return; }
     await ensureSessionKey(pin);
     hideOverlay();
     await loadYear(getRefYear());
@@ -493,127 +458,76 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     await renderAll();
     alert("✅ PIN gesetzt. Bitte merken!");
   };
-
-  $("btnLock").onclick = ()=>{
+  $("btnLock").onclick=()=>{
     sessionStorage.removeItem(SESSION_KEY);
     showOverlay("🔒 Gesperrt. Bitte PIN eingeben.");
   };
 
-  // ==========================
-  // Buttons: Name & Manager
-  // ==========================
-  $("saveName").onclick = async ()=>{
-    S.emp = ($("empName").value||"").trim();
-    await saveYear();
-    applyStateToUI();
-  };
+  $("saveName").onclick=async()=>{ S.emp=($("empName").value||"").trim(); await saveYear(); applyStateToUI(); };
+  $("saveMgr").onclick=async()=>{ S.mgr={name:($("mgrName").value||"").trim(), mail:($("mgrMail").value||"").trim()}; await saveYear(); alert("✅ Manager gespeichert"); };
 
-  $("saveMgr").onclick = async ()=>{
-    S.mgr = { name:($("mgrName").value||"").trim(), mail:($("mgrMail").value||"").trim() };
-    await saveYear();
-    alert("✅ Manager gespeichert");
-  };
-
-  // ==========================
-  // Timer: Start / Pause / Stop
-  // ==========================
-  $("btnStart").onclick = async ()=>{
+  $("btnStart").onclick=async()=>{
     if(run) return alert("Timer läuft schon.");
     if(!S.emp) return alert("Bitte Name speichern.");
     if(!$("timerDate").value) return alert("Bitte Datum wählen.");
-
-    const entryYear = d0($("timerDate").value).getFullYear();
-    if(entryYear !== Y){
-      const ok = await loadYear(entryYear);
-      if(!ok) return;
-    }
+    const entryYear=d0($("timerDate").value).getFullYear();
+    if(entryYear!==Y){ const ok=await loadYear(entryYear); if(!ok) return; }
 
     const now=new Date(); now.setSeconds(0,0);
     const d=d0($("timerDate").value);
     const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),now.getHours(),now.getMinutes(),0,0);
-
-    run={date:$("timerDate").value, start, pauseMin:0, pauseStart:null, note:($("timerNote").value||"").trim()};
-    $("btnPause").disabled=false;
-    $("btnPause").textContent="⏸️ Pause";
+    run={date:$("timerDate").value,start,pauseMin:0,pauseStart:null,note:($("timerNote").value||"").trim()};
+    $("btnPause").disabled=false; $("btnPause").textContent="⏸️ Pause";
     setTimerStatus("🟢 läuft","ok");
     $("timerInfo").textContent=`Start ${pad(start.getHours())}:${pad(start.getMinutes())}`;
   };
 
-  $("btnPause").onclick = ()=>{
+  $("btnPause").onclick=()=>{
     if(!run) return;
     const now=new Date(); now.setSeconds(0,0);
     if(!run.pauseStart){
-      run.pauseStart=now;
-      $("btnPause").textContent="▶️ Weiter";
-      setTimerStatus("⏸️ Pause","warn");
-    } else {
+      run.pauseStart=now; $("btnPause").textContent="▶️ Weiter"; setTimerStatus("⏸️ Pause","warn");
+    }else{
       run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
-      run.pauseStart=null;
-      $("btnPause").textContent="⏸️ Pause";
-      setTimerStatus("🟢 läuft","ok");
+      run.pauseStart=null; $("btnPause").textContent="⏸️ Pause"; setTimerStatus("🟢 läuft","ok");
     }
   };
 
-  $("btnStop").onclick = async ()=>{
+  $("btnStop").onclick=async()=>{
     if(!run) return alert("Kein Timer läuft.");
     const end=new Date(); end.setSeconds(0,0);
-
     if(run.pauseStart){
       run.pauseMin += Math.max(0, Math.round((end-run.pauseStart)/60000));
       run.pauseStart=null;
     }
-
     const gross=Math.round((end-run.start)/60000);
     if(gross<=0) return alert("Zeit ungültig.");
+    const auto=(gross>=AUTO_BREAK)?AUTO_BREAK:0;
+    const pause=auto+run.pauseMin;
 
-    const auto = gross>=AUTO_BREAK ? AUTO_BREAK : 0;
-    const pause = auto + run.pauseMin;
-
-    S.E.push({
-      id: (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Date.now())),
-      d: run.date,
-      s: run.start.toISOString(),
-      e: end.toISOString(),
-      p: pause,
-      n: run.note || ""
-    });
-
+    S.E.push({id:(crypto.randomUUID?crypto.randomUUID():"id_"+Date.now()), d:run.date, s:run.start.toISOString(), e:end.toISOString(), p:pause, n:run.note||""});
     run=null;
-    $("btnPause").disabled=true;
-    $("btnPause").textContent="⏸️ Pause";
+    $("btnPause").disabled=true; $("btnPause").textContent="⏸️ Pause";
     setTimerStatus("⚪ bereit","");
     $("timerInfo").textContent="✅ gespeichert";
     await saveYear();
     await renderAll();
   };
 
-  // ==========================
-  // Abwesenheit
-  // ==========================
-  $("addAbs").onclick = async ()=>{
+  $("addAbs").onclick=async()=>{
     if(!$("aDate").value) return alert("Datum fehlt.");
-    const yr = d0($("aDate").value).getFullYear();
-    if(yr!==Y){
-      const ok = await loadYear(yr);
-      if(!ok) return;
-    }
+    const yr=d0($("aDate").value).getFullYear();
+    if(yr!==Y){ const ok=await loadYear(yr); if(!ok) return; }
     S.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()), d:$("aDate").value, t:$("aType").value});
     await saveYear();
     await renderAll();
   };
 
-  // ==========================
-  // Rückwirkend
-  // ==========================
-  $("newManual").onclick = ()=>{
-    editingId=null;
-    $("eStart").value=""; $("eEnd").value=""; $("eNote").value="";
-    $("editMsg").textContent="";
+  $("newManual").onclick=()=>{
+    editingId=null; $("eStart").value=""; $("eEnd").value=""; $("eNote").value=""; $("editMsg").textContent="";
   };
-
-  $("saveManual").onclick = async ()=>{
+  $("saveManual").onclick=async()=>{
     if(!$("eDate").value||!$("eStart").value||!$("eEnd").value) return;
-
     const d=$("eDate").value;
     const [sh,sm]=$("eStart").value.split(":").map(Number);
     const [eh,em]=$("eEnd").value.split(":").map(Number);
@@ -621,50 +535,30 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     const e=new Date(d0(d).setHours(eh,em,0,0));
     const gross=Math.round((e-s)/60000);
     if(gross<=0){ $("editMsg").textContent="⚠️ Ende muss nach Start"; return; }
-
     const yr=d0(d).getFullYear();
-    if(yr!==Y){
-      const ok = await loadYear(yr);
-      if(!ok) return;
-    }
+    if(yr!==Y){ const ok=await loadYear(yr); if(!ok) return; }
 
-    const obj={
-      id: editingId || (crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
-      d, s:s.toISOString(), e:e.toISOString(),
-      p:(gross>=AUTO_BREAK?AUTO_BREAK:0),
-      n:($("eNote").value||"").trim()
-    };
-
+    const obj={id:editingId||(crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()), d, s:s.toISOString(), e:e.toISOString(), p:(gross>=AUTO_BREAK?AUTO_BREAK:0), n:($("eNote").value||"").trim()};
     if(editingId){
       const idx=S.E.findIndex(x=>x.id===editingId);
       if(idx>=0) S.E[idx]=obj; else S.E.push(obj);
       $("editMsg").textContent="✅ aktualisiert";
-    } else {
-      S.E.push(obj);
-      editingId=obj.id;
-      $("editMsg").textContent="✅ gespeichert";
+    }else{
+      S.E.push(obj); editingId=obj.id; $("editMsg").textContent="✅ gespeichert";
     }
     await saveYear();
     await renderAll();
   };
 
-  // ==========================
-  // Reset
-  // ==========================
-  $("btnResetThisYear").onclick = async ()=>{
+  $("btnResetThisYear").onclick=async()=>{
     const yr=getRefYear();
     if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
       localStorage.removeItem(yearKey(yr));
-      if(yr===Y){
-        S={emp:"",mgr:{name:"",mail:""},E:[],A:[]};
-        applyStateToUI();
-      }
-      await renderAll();
-      alert("✅ Jahr gelöscht");
+      if(yr===Y){ S={emp:"",mgr:{name:"",mail:""},E:[],A:[]}; applyStateToUI(); }
+      await renderAll(); alert("✅ Jahr gelöscht");
     }
   };
-
-  $("btnResetAll").onclick = async ()=>{
+  $("btnResetAll").onclick=async()=>{
     if(confirm("Wirklich ALLE Jahre löschen?")){
       const del=[];
       for(let i=0;i<localStorage.length;i++){
@@ -679,9 +573,6 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     }
   };
 
-  // ==========================
-  // Overview helpers
-  // ==========================
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
     const monIndex=(d.getDay()+6)%7;
@@ -713,19 +604,16 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   }
 
   async function ensureYearLoadedFromRef(){
-    const yr = getRefYear();
-    $("yearHint").textContent = `📦 Jahr: ${yr}`;
-    if(yr!==Y){
-      await loadYear(yr);
-    }
+    const yr=getRefYear();
+    $("yearHint").textContent=`📦 Jahr: ${yr}`;
+    if(yr!==Y) await loadYear(yr);
   }
 
   async function renderOverviewTable(){
     await ensureYearLoadedFromRef();
-
     const v=$("refDate").value;
-    const ref = v ? d0(v) : new Date();
-    const yr = ref.getFullYear();
+    const ref=v ? d0(v) : new Date();
+    const yr=ref.getFullYear();
 
     const W=getWeeklyTargetMinutes();
     const DAY=W/5;
@@ -757,18 +645,16 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
       const ist=Number.isFinite(istBy[ds]) ? istBy[ds] : 0;
       const isW=wd(d);
 
-      const absTypes = S.A.filter(a=>a.d===ds).map(a=>a.t);
-      const absLabels = absTypes.map(absLabel);
+      const absTypes=S.A.filter(a=>a.d===ds).map(a=>a.t);
+      const absLabels=absTypes.map(absLabel);
 
-      // Wenn Werktag + Abwesenheit => SOLL = 0 für diesen Tag
       const soll = Math.round(isW ? (absTypes.length>0 ? 0 : DAY) : 0);
       const saldo=ist-soll;
 
       istSum += ist;
       sollSum += soll;
 
-      const clsRow = (Math.abs(saldo) > TOL) ? "bad" : (Math.abs(saldo) > 1 ? "warn" : "ok");
-
+      const clsRow=(Math.abs(saldo)>TOL)?"bad":(Math.abs(saldo)>1?"warn":"ok");
       html+=`<tr class="${clsRow}">
         <td class="mono">${ds}</td>
         <td>${dayNames[d.getDay()]}</td>
@@ -786,7 +672,6 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     $("sumPill").className="pill "+cls;
     $("sumPill").textContent=`IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · SALDO ${hhmm(delta)}`;
 
-    // Monats-Ø/Woche (hochgerechnet auf 5 Tage je Woche, abzüglich Abwesenheitstage)
     if($("mode").value==="month"){
       const weeks=new Map();
       for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
@@ -808,7 +693,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
       $("avgPill").style.display="";
       $("avgPill").className="pill "+clsAvg;
       $("avgPill").textContent=`Ø/Woche ${hhmm(avgIst)} (Soll ${hhmm(avgSoll)})`;
-    } else {
+    }else{
       $("avgPill").style.display="none";
     }
   }
@@ -837,12 +722,11 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     if(!entries.length){ $("entryList").innerHTML=`<div class="muted">Noch keine Einträge.</div>`; return; }
 
     const rows=entries.map(e=>{
-      const net = ((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
-      const netTxt = hhmm(net);
+      const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
       return `
         <tr>
           <td class="mono">${e.d}</td>
-          <td class="mono">Netto ${netTxt} · Pause ${hhmm(e.p||0)} · ${e.n||""}</td>
+          <td class="mono">Netto ${hhmm(net)} · Pause ${hhmm(e.p||0)} · ${e.n||""}</td>
           <td>
             <button class="btn-ghost btn-sm" data-edit="${e.id}">✍️</button>
             <button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button>
@@ -851,7 +735,6 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     }).join("");
 
     $("entryList").innerHTML=`<table><thead><tr><th>Datum</th><th>Info</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
-
     document.querySelectorAll("[data-del]").forEach(b=>{
       b.onclick=async ()=>{
         const id=b.getAttribute("data-del");
@@ -884,9 +767,6 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     renderEntryList();
   }
 
-  // ==========================
-  // CSV / Share
-  // ==========================
   function getPeriodRange(){
     const v=$("refDate").value;
     const ref=v ? d0(v) : new Date();
@@ -897,14 +777,14 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     else if($("mode").value==="month") [start,end]=monthRange(ref);
     else [start,end]=weekRangeISO(ref);
 
-    return {yr, start, end};
+    return {yr,start,end};
   }
 
   function buildCSV(){
     const sep=";";
     const W=getWeeklyTargetMinutes();
     const emp=S.emp||"";
-    const {yr, start, end} = getPeriodRange();
+    const {yr,start,end}=getPeriodRange();
     const startS=toDateStr(start), endS=toDateStr(end);
 
     const rows=[];
@@ -912,14 +792,10 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
 
     const entries=S.E.filter(e=>e.d>=startS && e.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
     for(const e of entries){
-      const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
+      const net=((new Date(e.e)-new Date(e.s))/60000)-(e.p||0);
       rows.push([
-        csvSafeCell(emp),
-        String(yr),
-        String(W),
-        e.d,
-        e.s,
-        e.e,
+        csvSafeCell(emp), String(yr), String(W),
+        e.d, e.s, e.e,
         String(e.p||0),
         Number.isFinite(net)?String(Math.round(net)):"",
         hhmm(net),
@@ -928,7 +804,6 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
         csvSafeCell(S.mgr?.mail||"")
       ].join(sep));
     }
-
     const abs=S.A.filter(a=>a.d>=startS && a.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
     for(const a of abs){
       rows.push([
@@ -951,36 +826,28 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     a.download=`Zeiterfassung_${$("refDate").value||Y}_${S.emp.replaceAll(" ","_")}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
   }
-
   async function shareCSV(){
     if(!S.emp) return alert("Bitte Name speichern.");
     const csv=buildCSV();
-    const file=new File([new Blob([csv],{type:"text/csv"})], `zeiterfassung.csv`, {type:"text/csv"});
-    const title=`Zeiterfassung – ${S.emp}`;
-    const text=`Zeiterfassung\nMitarbeiter: ${S.emp}\nManager: ${(S.mgr.name||"")} ${(S.mgr.mail||"")}`.trim();
-
+    const file=new File([new Blob([csv],{type:"text/csv"})], "zeiterfassung.csv", {type:"text/csv"});
     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({title,text,files:[file]});
+      await navigator.share({title:`Zeiterfassung – ${S.emp}`, files:[file]});
       return;
     }
     alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
   }
 
-  // ==========================
-  // Wiring overview controls
-  // ==========================
   $("btnCSV").onclick=downloadCSV;
   $("btnShare").onclick=shareCSV;
   $("btnRefresh").onclick=renderAll;
   $("mode").onchange=renderAll;
   $("weeklyTarget").onchange=renderAll;
 
-  $("refDate").onchange=async ()=>{
+  $("refDate").onchange=async()=>{
     await loadYear(getRefYear());
     await renderAll();
   };
 
-  // Init
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
@@ -990,13 +857,9 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   $("btnPause").disabled=true;
   setTimerStatus("⚪ bereit","");
 
-  // Start locked unless session key already present
-  (async ()=>{
-    const k = await getSessionKey();
-    if(!k){
-      showOverlay("Bitte PIN setzen oder eingeben, um zu starten.");
-      return;
-    }
+  (async()=>{
+    const k=await getSessionKey();
+    if(!k){ showOverlay("Bitte PIN setzen oder eingeben, um zu starten."); return; }
     await loadYear(getRefYear());
     await renderAll();
     tab("timer");
