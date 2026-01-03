@@ -45,35 +45,48 @@ th,td{padding:8px;border-bottom:1px solid #eee;font-size:14px;vertical-align:top
 th{text-align:left;color:#777}
 .mono{font-family:ui-monospace,Menlo,monospace}
 
-/* ✅ kompakt */
+/* kompakt */
 .w-emp{width:220px;max-width:220px}
 .w-note{width:160px;max-width:160px}
 .w-save{width:140px;max-width:140px}
 
-/* ✅ Manager (Name + Mail) fluchten, Mail links -7 */
+/* Manager: Name + Mail fluchten, Mail left -7 */
 .w-mgr-name{width:200px;max-width:200px;margin-left:-7px}
 .w-mgr-mail{
-  width:360px; max-width:90vw; min-width:280px;
-  margin-left:-7px; /* wie besprochen */
+  width:360px; max-width:90vw; min-width:300px;
+  margin-left:-7px; /* wie gewünscht */
 }
 
-/* Speichern nicht kleben */
 .stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .stack input{margin-bottom:6px}
 .stack button{margin-top:4px}
 
 /* Ampel: Saldo-Spalte pro Tag */
-tr.ok  td:last-child{color:var(--ok);font-weight:800}
+tr.ok td:last-child{color:var(--ok);font-weight:800}
 tr.warn td:last-child{color:var(--warn);font-weight:800}
 tr.bad td:last-child{color:var(--bad);font-weight:800}
 
-/* sehr kleine Phones */
+/* Lock modal */
+.overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.45);
+  display:none; align-items:center; justify-content:center; padding:14px;
+}
+.modal{
+  width:min(520px, 100%); background:#fff; border-radius:16px;
+  padding:14px; box-shadow:0 12px 40px rgba(0,0,0,.25);
+}
+.modal h2{margin-top:0}
+.pin{
+  letter-spacing: .25em; font-weight:800; text-align:center;
+  font-size:20px;
+}
+
 @media(max-width:340px){
   .w-emp{width:210px;max-width:210px}
   .w-note{width:150px;max-width:150px}
   .w-save{width:140px;max-width:140px}
   .w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
-  /* w-mgr-mail bleibt flexibel, nicht überschreiben */
+  /* w-mgr-mail bleibt flexibel */
 }
 </style>
 </head>
@@ -82,7 +95,7 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
 
 <div class="card">
   <h1>⏱️ Zeiterfassung</h1>
-  <div class="muted">Offline · Auto-Pause <b>55 min</b> · CSV & Teilen · iOS/Android</div>
+  <div class="muted">Offline · 🔐 PIN (6-stellig) · Auto-Pause <b>55 min</b> · CSV & Teilen</div>
 </div>
 
 <div class="card">
@@ -226,25 +239,52 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
 <div class="card" id="settings" style="display:none">
   <h2>⚙️ Settings</h2>
   <div class="muted">
-    Offline: Daten liegen im Browser (pro Jahr getrennt). Wenn du viel am Code änderst, kann Reset helfen.
+    🔐 Deine Daten sind lokal verschlüsselt. PIN wird nur pro Session benötigt (solange Safari offen bleibt).
   </div>
   <div class="row" style="margin-top:10px">
-    <button class="btn-stop" id="btnResetThisYear">🧹 Aktuelles Jahr löschen</button>
-    <button class="btn-ghost" id="btnResetAll">🧨 Alle Jahre löschen</button>
+    <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
+    <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
+    <button class="btn-ghost" id="btnResetAll">🧨 Alles löschen</button>
   </div>
   <div class="muted" style="margin-top:8px">
-    Hinweis: „Aktuelles Jahr“ = Jahr vom 📌 Datum in der Übersicht.
+    Tipp: „Jahr löschen“ bezieht sich auf das Jahr vom 📌 Datum in der Übersicht.
+  </div>
+</div>
+
+<!-- PIN Overlay -->
+<div class="overlay" id="ovl">
+  <div class="modal">
+    <h2>🔐 Zeiterfassung entsperren</h2>
+    <div class="muted" id="ovlText">Bitte 6-stellige PIN eingeben.</div>
+    <div style="margin-top:10px">
+      <input id="pinInput" class="pin" inputmode="numeric" maxlength="6" placeholder="••••••" autocomplete="off">
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn-blue" id="btnUnlock">✅ Entsperren</button>
+      <button class="btn-ghost" id="btnSetPin">🆕 PIN setzen</button>
+      <span class="right muted mono" id="pinMsg"></span>
+    </div>
+    <div class="muted" style="margin-top:10px">
+      Hinweis: Wenn du die PIN vergisst, kannst du die Daten nicht entschlüsseln (nur Reset möglich).
+    </div>
   </div>
 </div>
 
 <script>
 (() => {
+  // ==========================
+  // Crypto / Storage (PIN 6)
+  // ==========================
   const NS="ZEITERFASSUNG";
   const AUTO_BREAK=55;          // Auto-Pause Minuten
-  const TOL=10*60;              // ±10h Ampel (Minuten)
+  const TOL=10*60;              // ±10h Ampel in Minuten
+  const PIN_LEN=6;
 
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
+  const b64 = (buf)=>btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const ub64 = (s)=>Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+  const rand = (n)=>crypto.getRandomValues(new Uint8Array(n));
 
   const hhmm=(m)=>{
     if(!Number.isFinite(m)) return "--:--";
@@ -257,15 +297,408 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
   const wd=(d)=> d.getDay()>=1 && d.getDay()<=5;
   const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
-  function isoWeekKey(dateObj){
-    const d=new Date(dateObj); d.setHours(0,0,0,0);
-    d.setDate(d.getDate()+3-((d.getDay()+6)%7));
-    const y=d.getFullYear();
-    const week1=new Date(y,0,4); week1.setHours(0,0,0,0);
-    week1.setDate(week1.getDate()+3-((week1.getDay()+6)%7));
-    const w=1+Math.round((d-week1)/(7*24*60*60*1000));
-    return `${y}-W${pad(w)}`;
+  function absLabel(t){
+    if(t==="vac") return "Urlaub";
+    if(t==="sick") return "Krank";
+    if(t==="hol") return "Feiertag";
+    return t;
   }
+
+  function getWeeklyTargetMinutes(){
+    const el=$("weeklyTarget");
+    const v=el ? Number(el.value) : NaN;
+    return (Number.isFinite(v) && v>0) ? v : 2400; // Fallback 40h
+  }
+
+  // CSV injection protection (Excel/Sheets)
+  function csvSafeCell(s){
+    s = (s ?? "").toString();
+    // If starts with =,+,-,@ (after trimming), prefix with '
+    const t = s.trimStart();
+    if(t.startsWith("=") || t.startsWith("+") || t.startsWith("-") || t.startsWith("@")){
+      return "'" + s;
+    }
+    return s;
+  }
+
+  // --- Key derivation ---
+  const SALT_KEY = NS+"::salt";
+  const SESSION_KEY = NS+"::session_rawkey"; // base64 of raw AES key
+
+  async function deriveAesKeyFromPin(pin, saltBytes){
+    const enc = new TextEncoder();
+    const baseKey = await crypto.subtle.importKey(
+      "raw", enc.encode(pin), {name:"PBKDF2"}, false, ["deriveKey"]
+    );
+    return crypto.subtle.deriveKey(
+      {name:"PBKDF2", salt: saltBytes, iterations: 150000, hash:"SHA-256"},
+      baseKey,
+      {name:"AES-GCM", length: 256},
+      true,
+      ["encrypt","decrypt"]
+    );
+  }
+
+  async function exportRawKey(key){
+    const raw = await crypto.subtle.exportKey("raw", key);
+    return b64(raw);
+  }
+  async function importRawKey(rawB64){
+    const raw = ub64(rawB64);
+    return crypto.subtle.importKey("raw", raw, {name:"AES-GCM"}, true, ["encrypt","decrypt"]);
+  }
+
+  function getOrCreateSalt(){
+    let s = localStorage.getItem(SALT_KEY);
+    if(!s){
+      s = b64(rand(16));
+      localStorage.setItem(SALT_KEY, s);
+    }
+    return ub64(s);
+  }
+
+  async function ensureSessionKey(pin){
+    const salt = getOrCreateSalt();
+    const aes = await deriveAesKeyFromPin(pin, salt);
+    const rawB64 = await exportRawKey(aes);
+    sessionStorage.setItem(SESSION_KEY, rawB64);
+    return aes;
+  }
+
+  async function getSessionKey(){
+    const rawB64 = sessionStorage.getItem(SESSION_KEY);
+    if(!rawB64) return null;
+    try{
+      return await importRawKey(rawB64);
+    }catch(_e){
+      return null;
+    }
+  }
+
+  async function encryptJson(aesKey, obj){
+    const iv = rand(12);
+    const enc = new TextEncoder();
+    const pt = enc.encode(JSON.stringify(obj));
+    const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, aesKey, pt);
+    return {v:1, iv:b64(iv), ct:b64(ct)};
+  }
+
+  async function decryptJson(aesKey, blob){
+    const iv = ub64(blob.iv);
+    const ct = ub64(blob.ct);
+    const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv}, aesKey, ct);
+    const dec = new TextDecoder();
+    return JSON.parse(dec.decode(pt));
+  }
+
+  function yearKey(y){ return NS+"::year::"+y; }
+
+  // ==========================
+  // App state
+  // ==========================
+  let Y = new Date().getFullYear();
+  let S = { emp:"", mgr:{name:"",mail:""}, E:[], A:[] };
+  let run=null;
+  let editingId=null;
+
+  function showOverlay(msg){
+    $("ovl").style.display="flex";
+    $("pinMsg").textContent="";
+    $("pinInput").value="";
+    $("ovlText").textContent = msg || `Bitte ${PIN_LEN}-stellige PIN eingeben.`;
+    setTimeout(()=>$("pinInput").focus(), 50);
+  }
+  function hideOverlay(){ $("ovl").style.display="none"; }
+
+  function setTimerStatus(txt,cls){
+    $("timerStatus").textContent=txt;
+    $("timerStatus").className="pill"+(cls?(" "+cls):"");
+  }
+
+  function tab(name){
+    ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
+      $(id).style.display = (id===name) ? "" : "none";
+    });
+    document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
+  }
+  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
+
+  // ✅ RefDate steuert Jahr (zusammengelegt)
+  function getRefYear(){
+    const v=$("refDate").value;
+    return v ? d0(v).getFullYear() : new Date().getFullYear();
+  }
+
+  async function loadYear(y){
+    Y = y;
+    $("yearHint").textContent = `📦 Jahr: ${Y}`;
+
+    const aes = await getSessionKey();
+    if(!aes){
+      showOverlay("Bitte PIN eingeben, um Daten zu laden.");
+      return false;
+    }
+
+    const raw = localStorage.getItem(yearKey(Y));
+    if(!raw){
+      // Neues Jahr: leer
+      S = { emp:"", mgr:{name:"",mail:""}, E:[], A:[] };
+      applyStateToUI();
+      return true;
+    }
+
+    try{
+      const blob = JSON.parse(raw);
+      S = await decryptJson(aes, blob);
+      // harte Defaults
+      S.emp = S.emp || "";
+      S.mgr = S.mgr || {name:"",mail:""};
+      S.E = Array.isArray(S.E)?S.E:[];
+      S.A = Array.isArray(S.A)?S.A:[];
+      applyStateToUI();
+      return true;
+    }catch(e){
+      // falsche PIN oder kaputte Daten
+      showOverlay("PIN falsch oder Daten nicht lesbar. Bitte erneut versuchen oder PIN neu setzen (Reset nötig).");
+      return false;
+    }
+  }
+
+  async function saveYear(){
+    const aes = await getSessionKey();
+    if(!aes){
+      showOverlay("Bitte PIN eingeben, um zu speichern.");
+      return false;
+    }
+    const blob = await encryptJson(aes, S);
+    localStorage.setItem(yearKey(Y), JSON.stringify(blob));
+    return true;
+  }
+
+  function applyStateToUI(){
+    $("empName").value = S.emp || "";
+    $("mgrName").value = S.mgr?.name || "";
+    $("mgrMail").value = S.mgr?.mail || "";
+    $("timerMini").textContent = S.emp ? ("👤 "+S.emp) : "";
+    $("nameMsg").textContent = S.emp ? "✅ gespeichert" : "";
+  }
+
+  // ==========================
+  // UI actions
+  // ==========================
+  $("btnUnlock").onclick = async ()=>{
+    const pin = ($("pinInput").value||"").trim();
+    if(pin.length!==PIN_LEN || !/^\d+$/.test(pin)){
+      $("pinMsg").textContent = `PIN muss ${PIN_LEN} Ziffern haben.`;
+      return;
+    }
+    try{
+      await ensureSessionKey(pin);
+      hideOverlay();
+      // nach unlock: passendes Jahr laden
+      await loadYear(getRefYear());
+      await renderAll();
+      $("pinMsg").textContent="";
+    }catch(e){
+      $("pinMsg").textContent="Entsperren fehlgeschlagen.";
+    }
+  };
+
+  // "PIN setzen" = setzt Session-Key + legt Salt an.
+  // (Achtung: Wenn schon Daten mit alter PIN existieren, kann man die ohne alte PIN nicht wieder öffnen.)
+  $("btnSetPin").onclick = async ()=>{
+    const pin = ($("pinInput").value||"").trim();
+    if(pin.length!==PIN_LEN || !/^\d+$/.test(pin)){
+      $("pinMsg").textContent = `PIN muss ${PIN_LEN} Ziffern haben.`;
+      return;
+    }
+    // Salt existiert oder wird erstellt; Session-Key wird gesetzt
+    await ensureSessionKey(pin);
+    hideOverlay();
+    await loadYear(getRefYear());
+    await saveYear(); // legt leeren Container an, wenn noch nichts da
+    await renderAll();
+    alert("✅ PIN gesetzt. (Bitte merken!)");
+  };
+
+  $("btnLock").onclick = ()=>{
+    sessionStorage.removeItem(SESSION_KEY);
+    showOverlay("🔒 Gesperrt. Bitte PIN eingeben.");
+  };
+
+  $("saveName").onclick = async ()=>{
+    S.emp = ($("empName").value||"").trim();
+    await saveYear();
+    applyStateToUI();
+  };
+
+  $("saveMgr").onclick = async ()=>{
+    S.mgr = { name:($("mgrName").value||"").trim(), mail:($("mgrMail").value||"").trim() };
+    await saveYear();
+    alert("✅ Manager gespeichert");
+  };
+
+  // Timer
+  $("btnStart").onclick = async ()=>{
+    if(run) return alert("Timer läuft schon.");
+    if(!S.emp) return alert("Bitte Name speichern.");
+    if(!$("timerDate").value) return alert("Bitte Datum wählen.");
+
+    // Wenn Timer-Jahr != geladenes Jahr: wechseln
+    const entryYear = d0($("timerDate").value).getFullYear();
+    if(entryYear !== Y){
+      const ok = await loadYear(entryYear);
+      if(!ok) return; // locked
+    }
+
+    const now=new Date(); now.setSeconds(0,0);
+    const d=d0($("timerDate").value);
+    const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),now.getHours(),now.getMinutes(),0,0);
+
+    run={date:$("timerDate").value, start, pauseMin:0, pauseStart:null, note:($("timerNote").value||"").trim()};
+    $("btnPause").disabled=false;
+    $("btnPause").textContent="⏸️ Pause";
+    setTimerStatus("🟢 läuft","ok");
+    $("timerInfo").textContent=`Start ${pad(start.getHours())}:${pad(start.getMinutes())}`;
+  };
+
+  $("btnPause").onclick = ()=>{
+    if(!run) return;
+    const now=new Date(); now.setSeconds(0,0);
+    if(!run.pauseStart){
+      run.pauseStart=now;
+      $("btnPause").textContent="▶️ Weiter";
+      setTimerStatus("⏸️ Pause","warn");
+    } else {
+      run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
+      run.pauseStart=null;
+      $("btnPause").textContent="⏸️ Pause";
+      setTimerStatus("🟢 läuft","ok");
+    }
+  };
+
+  $("btnStop").onclick = async ()=>{
+    if(!run) return alert("Kein Timer läuft.");
+    const end=new Date(); end.setSeconds(0,0);
+
+    if(run.pauseStart){
+      run.pauseMin += Math.max(0, Math.round((end-run.pauseStart)/60000));
+      run.pauseStart=null;
+    }
+
+    const gross=Math.round((end-run.start)/60000);
+    if(gross<=0) return alert("Zeit ungültig.");
+
+    const auto = gross>=AUTO_BREAK ? AUTO_BREAK : 0;
+    const pause = auto + run.pauseMin;
+
+    S.E.push({
+      id: (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Date.now())),
+      d: run.date,
+      s: run.start.toISOString(),
+      e: end.toISOString(),
+      p: pause,
+      n: run.note || ""
+    });
+
+    run=null;
+    $("btnPause").disabled=true;
+    $("btnPause").textContent="⏸️ Pause";
+    setTimerStatus("⚪ bereit","");
+    $("timerInfo").textContent="✅ gespeichert";
+    await saveYear();
+    await renderAll();
+  };
+
+  // Abwesenheit
+  $("addAbs").onclick = async ()=>{
+    if(!$("aDate").value) return alert("Datum fehlt.");
+    const yr = d0($("aDate").value).getFullYear();
+    if(yr!==Y){
+      const ok = await loadYear(yr);
+      if(!ok) return;
+    }
+    S.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()), d:$("aDate").value, t:$("aType").value});
+    await saveYear();
+    await renderAll();
+  };
+
+  // Rückwirkend
+  $("newManual").onclick = ()=>{
+    editingId=null;
+    $("eStart").value=""; $("eEnd").value=""; $("eNote").value="";
+    $("editMsg").textContent="";
+  };
+
+  $("saveManual").onclick = async ()=>{
+    if(!$("eDate").value||!$("eStart").value||!$("eEnd").value) return;
+
+    const d=$("eDate").value;
+    const [sh,sm]=$("eStart").value.split(":").map(Number);
+    const [eh,em]=$("eEnd").value.split(":").map(Number);
+    const s=new Date(d0(d).setHours(sh,sm,0,0));
+    const e=new Date(d0(d).setHours(eh,em,0,0));
+    const gross=Math.round((e-s)/60000);
+    if(gross<=0){ $("editMsg").textContent="⚠️ Ende muss nach Start"; return; }
+
+    const yr=d0(d).getFullYear();
+    if(yr!==Y){
+      const ok = await loadYear(yr);
+      if(!ok) return;
+    }
+
+    const obj={
+      id: editingId || (crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
+      d, s:s.toISOString(), e:e.toISOString(),
+      p:(gross>=AUTO_BREAK?AUTO_BREAK:0),
+      n:($("eNote").value||"").trim()
+    };
+
+    if(editingId){
+      const idx=S.E.findIndex(x=>x.id===editingId);
+      if(idx>=0) S.E[idx]=obj; else S.E.push(obj);
+      $("editMsg").textContent="✅ aktualisiert";
+    } else {
+      S.E.push(obj);
+      editingId=obj.id;
+      $("editMsg").textContent="✅ gespeichert";
+    }
+    await saveYear();
+    await renderAll();
+  };
+
+  // Reset
+  $("btnResetThisYear").onclick = async ()=>{
+    const yr=getRefYear();
+    if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
+      localStorage.removeItem(yearKey(yr));
+      if(yr===Y){
+        S={emp:"",mgr:{name:"",mail:""},E:[],A:[]};
+        applyStateToUI();
+      }
+      await renderAll();
+      alert("✅ Jahr gelöscht");
+    }
+  };
+
+  $("btnResetAll").onclick = async ()=>{
+    if(confirm("Wirklich ALLE Jahre löschen?")){
+      const del=[];
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(k && k.startsWith(NS+"::year::")) del.push(k);
+      }
+      del.forEach(k=>localStorage.removeItem(k));
+      S={emp:"",mgr:{name:"",mail:""},E:[],A:[]};
+      applyStateToUI();
+      await renderAll();
+      alert("✅ Alles gelöscht");
+    }
+  };
+
+  // ==========================
+  // Overview rendering helpers
+  // ==========================
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
     const monIndex=(d.getDay()+6)%7;
@@ -286,373 +719,44 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     const end=new Date(y,11,31); end.setHours(0,0,0,0);
     return [start,end];
   }
-
-  function absLabel(t){
-    if(t==="vac") return "Urlaub";
-    if(t==="sick") return "Krank";
-    if(t==="hol") return "Feiertag";
-    return t;
+  function isoWeekKey(dateObj){
+    const d=new Date(dateObj); d.setHours(0,0,0,0);
+    d.setDate(d.getDate()+3-((d.getDay()+6)%7));
+    const y=d.getFullYear();
+    const week1=new Date(y,0,4); week1.setHours(0,0,0,0);
+    week1.setDate(week1.getDate()+3-((week1.getDay()+6)%7));
+    const w=1+Math.round((d-week1)/(7*24*60*60*1000));
+    return `${y}-W${pad(w)}`;
   }
 
-  function getWeeklyTargetMinutes(){
-    const el=$("weeklyTarget");
-    const v=el ? Number(el.value) : NaN;
-    return (Number.isFinite(v) && v>0) ? v : 2400; // Fallback 40h
-  }
-
-  // State
-  let Y=new Date().getFullYear();
-  let S={emp:"",mgr:{name:"",mail:""},E:[],A:[]};
-  let run=null;
-  let editingId=null;
-
-  const key=(y)=>NS+"::"+y;
-
-  function load(y){
-    Y=y;
-    S=JSON.parse(localStorage.getItem(key(y))||'{"emp":"","mgr":{"name":"","mail":""},"E":[],"A":[]}');
-    $("empName").value=S.emp||"";
-    $("mgrName").value=S.mgr?.name||"";
-    $("mgrMail").value=S.mgr?.mail||"";
-  }
-  function save(){ localStorage.setItem(key(Y),JSON.stringify(S)); }
-
-  function tab(name){
-    ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
-      $(id).style.display = (id===name) ? "" : "none";
-    });
-    document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
-  }
-  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
-
-  function setTimerStatus(txt,cls){
-    $("timerStatus").textContent=txt;
-    $("timerStatus").className="pill"+(cls?(" "+cls):"");
-  }
-
-  // ✅ Jahr & Referenz zusammengelegt:
-  // refDate bestimmt das Jahr => automatisch laden
-  function ensureYearFromRef(){
-    const v=$("refDate").value;
-    if(!v) return;
-    const yr=d0(v).getFullYear();
+  async function ensureYearLoadedFromRef(){
+    const yr = getRefYear();
+    $("yearHint").textContent = `📦 Jahr: ${yr}`;
     if(yr!==Y){
-      // Auto-switch year store
-      load(yr);
+      await loadYear(yr);
     }
-    $("yearHint").textContent = `📦 Jahr: ${Y}`;
   }
 
-  // Buttons: Name
-  $("saveName").onclick=()=>{
-    S.emp=$("empName").value.trim();
-    save();
-    $("nameMsg").textContent = S.emp ? "✅ gespeichert" : "⚠️ fehlt";
-    $("timerMini").textContent = S.emp ? ("👤 "+S.emp) : "";
-  };
-
-  $("saveMgr").onclick=()=>{
-    S.mgr={name:$("mgrName").value.trim(), mail:$("mgrMail").value.trim()};
-    save();
-    alert("✅ Manager gespeichert");
-  };
-
-  // Timer
-  $("btnStart").onclick=()=>{
-    if(run) return alert("Timer läuft schon.");
-    if(!S.emp) return alert("Bitte Name speichern.");
-    if(!$("timerDate").value) return alert("Bitte Datum wählen.");
-
-    const now=new Date(); now.setSeconds(0,0);
-    const d=d0($("timerDate").value);
-    const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),now.getHours(),now.getMinutes(),0,0);
-
-    run={date:$("timerDate").value, start, pauseMin:0, pauseStart:null, note:($("timerNote").value||"").trim()};
-    $("btnPause").disabled=false;
-    $("btnPause").textContent="⏸️ Pause";
-    setTimerStatus("🟢 läuft","ok");
-    $("timerInfo").textContent=`Start ${pad(start.getHours())}:${pad(start.getMinutes())}`;
-  };
-
-  $("btnPause").onclick=()=>{
-    if(!run) return;
-    const now=new Date(); now.setSeconds(0,0);
-    if(!run.pauseStart){
-      run.pauseStart=now;
-      $("btnPause").textContent="▶️ Weiter";
-      setTimerStatus("⏸️ Pause","warn");
-    } else {
-      run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
-      run.pauseStart=null;
-      $("btnPause").textContent="⏸️ Pause";
-      setTimerStatus("🟢 läuft","ok");
-    }
-  };
-
-  $("btnStop").onclick=()=>{
-    if(!run) return alert("Kein Timer läuft.");
-    const end=new Date(); end.setSeconds(0,0);
-
-    if(run.pauseStart){
-      run.pauseMin += Math.max(0, Math.round((end-run.pauseStart)/60000));
-      run.pauseStart=null;
-    }
-
-    const gross=Math.round((end-run.start)/60000);
-    if(gross<=0) return alert("Zeit ungültig.");
-
-    const auto = gross>=AUTO_BREAK ? AUTO_BREAK : 0;
-    const pause = auto + run.pauseMin;
-
-    // Speichere in "Jahr" des Timer-Datums
-    const entryYear=d0(run.date).getFullYear();
-    if(entryYear!==Y){
-      load(entryYear);
-    }
-
-    S.E.push({
-      id: (crypto.randomUUID ? crypto.randomUUID() : ("id_"+Date.now())),
-      d: run.date,
-      s: run.start.toISOString(),
-      e: end.toISOString(),
-      p: pause,
-      n: run.note || ""
-    });
-
-    run=null;
-    $("btnPause").disabled=true;
-    $("btnPause").textContent="⏸️ Pause";
-    setTimerStatus("⚪ bereit","");
-    $("timerInfo").textContent="✅ gespeichert";
-    save();
-    renderAll();
-  };
-
-  // Absence
-  $("addAbs").onclick=()=>{
-    if(!$("aDate").value) return alert("Datum fehlt.");
-    const yr=d0($("aDate").value).getFullYear();
-    if(yr!==Y) load(yr);
-    S.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()), d:$("aDate").value, t:$("aType").value});
-    save(); renderAll();
-  };
-
-  // Edit
-  $("newManual").onclick=()=>{
-    editingId=null;
-    $("eStart").value=""; $("eEnd").value=""; $("eNote").value="";
-    $("editMsg").textContent="";
-  };
-
-  $("saveManual").onclick=()=>{
-    if(!$("eDate").value||!$("eStart").value||!$("eEnd").value) return;
-
-    const d=$("eDate").value;
-    const [sh,sm]=$("eStart").value.split(":").map(Number);
-    const [eh,em]=$("eEnd").value.split(":").map(Number);
-    const s=new Date(d0(d).setHours(sh,sm,0,0));
-    const e=new Date(d0(d).setHours(eh,em,0,0));
-    const gross=Math.round((e-s)/60000);
-    if(gross<=0){ $("editMsg").textContent="⚠️ Ende muss nach Start"; return; }
-
-    const yr=d0(d).getFullYear();
-    if(yr!==Y) load(yr);
-
-    const obj={
-      id: editingId || (crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
-      d, s:s.toISOString(), e:e.toISOString(),
-      p:(gross>=AUTO_BREAK?AUTO_BREAK:0),
-      n:($("eNote").value||"").trim()
-    };
-
-    if(editingId){
-      const idx=S.E.findIndex(x=>x.id===editingId);
-      if(idx>=0) S.E[idx]=obj; else S.E.push(obj);
-      $("editMsg").textContent="✅ aktualisiert";
-    } else {
-      S.E.push(obj);
-      editingId=obj.id;
-      $("editMsg").textContent="✅ gespeichert";
-    }
-    save(); renderAll();
-  };
-
-  // Settings reset
-  $("btnResetThisYear").onclick=()=>{
-    // aktuelles Jahr = Jahr der refDate (wenn gesetzt), sonst Y
-    const v=$("refDate").value;
-    const yr=v ? d0(v).getFullYear() : Y;
-    if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
-      localStorage.removeItem(key(yr));
-      if(yr===Y) load(Y);
-      renderAll();
-      alert("✅ Jahr gelöscht");
-    }
-  };
-  $("btnResetAll").onclick=()=>{
-    if(confirm("Wirklich ALLE Jahre löschen?")){
-      // Nur Keys löschen, die zu dieser App gehören
-      const del=[];
-      for(let i=0;i<localStorage.length;i++){
-        const k=localStorage.key(i);
-        if(k && k.startsWith(NS+"::")) del.push(k);
-      }
-      del.forEach(k=>localStorage.removeItem(k));
-      load(new Date().getFullYear());
-      renderAll();
-      alert("✅ Alles gelöscht");
-    }
-  };
-
-  // CSV/Share: exportiert den aktuell angezeigten Zeitraum (refDate+mode)
-  function buildCSV(){
-    const sep=";";
-    const W=getWeeklyTargetMinutes();
-    const emp=S.emp||"";
-    const rows=[];
-    rows.push(["Mitarbeiter","Jahr","WochenSoll_min","Datum","Start","Ende","Pause_min","Netto_min","Netto_hhmm","Notiz"].join(sep));
+  async function renderOverviewTable(){
+    await ensureYearLoadedFromRef();
 
     const v=$("refDate").value;
-    const ref=v ? d0(v) : new Date();
-    const yr=ref.getFullYear();
-    if(yr!==Y) load(yr); // exportiert das Jahr des Ref-Datums
-
-    let start,end;
-    if($("mode").value==="year") [start,end]=yearRange(yr);
-    else if($("mode").value==="month") [start,end]=monthRange(ref);
-    else [start,end]=weekRangeISO(ref);
-
-    const inRangeStr=(ds)=> ds>=toDateStr(start) && ds<=toDateStr(end);
-
-    const entries=S.E.filter(e=>inRangeStr(e.d)).sort((a,b)=>a.d.localeCompare(b.d));
-    for(const e of entries){
-      const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
-      rows.push([
-        emp,String(yr),String(W),
-        e.d,e.s,e.e,String(e.p||0),
-        Number.isFinite(net)?String(Math.round(net)):"",
-        hhmm(net),
-        (e.n||"").replaceAll(";",",")
-      ].join(sep));
-    }
-    const abs=S.A.filter(a=>inRangeStr(a.d)).sort((a,b)=>a.d.localeCompare(b.d));
-    for(const a of abs){
-      rows.push([emp,String(yr),String(W),a.d,"","","0","0","00:00",absLabel(a.t)].join(sep));
-    }
-    save();
-    return rows.join("\n");
-  }
-
-  function downloadCSV(){
-    if(!S.emp) return alert("Bitte Name speichern.");
-    const csv=buildCSV();
-    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download=`Zeiterfassung_${$("refDate").value||Y}_${S.emp.replaceAll(" ","_")}.csv`;
-    document.body.appendChild(a); a.click(); a.remove();
-  }
-
-  async function shareCSV(){
-    if(!S.emp) return alert("Bitte Name speichern.");
-    const csv=buildCSV();
-    const file=new File([new Blob([csv],{type:"text/csv"})], `zeiterfassung.csv`, {type:"text/csv"});
-    const title=`Zeiterfassung – ${S.emp}`;
-    const text=`Zeiterfassung\nMitarbeiter: ${S.emp}\nManager: ${(S.mgr.name||"")} ${(S.mgr.mail||"")}`.trim();
-
-    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({title,text,files:[file]});
-      return;
-    }
-    alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
-  }
-
-  $("btnCSV").onclick=downloadCSV;
-  $("btnShare").onclick=shareCSV;
-
-  // Rendering
-  function renderAbsList(){
-    if(!S.A.length){ $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten.</div>`; return; }
-    const rows=S.A.slice().sort((a,b)=>b.d.localeCompare(a.d)).map(a=>`
-      <tr>
-        <td class="mono">${a.d}</td>
-        <td>${absLabel(a.t)}</td>
-        <td><button class="btn-ghost btn-sm" data-del-abs="${a.id}">🗑️</button></td>
-      </tr>`).join("");
-    $("absList").innerHTML=`<table><thead><tr><th>Datum</th><th>Typ</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
-    document.querySelectorAll("[data-del-abs]").forEach(b=>{
-      b.onclick=()=>{
-        const id=b.getAttribute("data-del-abs");
-        S.A=S.A.filter(x=>x.id!==id);
-        save(); renderAll();
-      };
-    });
-  }
-
-  function renderEntryList(){
-    const entries=S.E.slice().sort((a,b)=>b.d.localeCompare(a.d));
-    if(!entries.length){ $("entryList").innerHTML=`<div class="muted">Noch keine Einträge.</div>`; return; }
-
-    const rows=entries.map(e=>{
-      const net = ((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
-      const netTxt = hhmm(net);
-      const bad = (netTxt==="--:--") ? ` <span class="pill bad">⚠️</span>` : "";
-      return `
-        <tr>
-          <td class="mono">${e.d}</td>
-          <td class="mono">Netto ${netTxt}${bad} · Pause ${hhmm(e.p||0)} · ${e.n||""}</td>
-          <td>
-            <button class="btn-ghost btn-sm" data-edit="${e.id}">✍️</button>
-            <button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button>
-          </td>
-        </tr>`;
-    }).join("");
-
-    $("entryList").innerHTML=`<table><thead><tr><th>Datum</th><th>Info</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
-
-    document.querySelectorAll("[data-del]").forEach(b=>{
-      b.onclick=()=>{
-        const id=b.getAttribute("data-del");
-        S.E=S.E.filter(x=>x.id!==id);
-        save(); renderAll();
-      };
-    });
-    document.querySelectorAll("[data-edit]").forEach(b=>{
-      b.onclick=()=>{
-        const id=b.getAttribute("data-edit");
-        const e=S.E.find(x=>x.id===id);
-        if(!e) return;
-        editingId=id;
-        $("eDate").value=e.d;
-        const s=new Date(e.s), en=new Date(e.e);
-        $("eStart").value=`${pad(s.getHours())}:${pad(s.getMinutes())}`;
-        $("eEnd").value=`${pad(en.getHours())}:${pad(en.getMinutes())}`;
-        $("eNote").value=e.n||"";
-        $("editMsg").textContent="Bearbeiten aktiv";
-        tab("edit");
-      };
-    });
-  }
-
-  function renderOverviewTable(){
-    ensureYearFromRef(); // lädt automatisch das Jahr des Ref-Datums
+    const ref = v ? d0(v) : new Date();
+    const yr = ref.getFullYear();
 
     const W=getWeeklyTargetMinutes();
     const DAY=W/5;
 
-    const v=$("refDate").value;
-    const ref=v ? d0(v) : new Date();
-    const yr=ref.getFullYear();
-    $("yearHint").textContent = `📦 Jahr: ${yr}`;
-
     let start,end;
     if($("mode").value==="year") [start,end]=yearRange(yr);
     else if($("mode").value==="month") [start,end]=monthRange(ref);
     else [start,end]=weekRangeISO(ref);
 
+    const startS=toDateStr(start), endS=toDateStr(end);
+
     const istBy={};
     for(const e of S.E){
-      if(e.d < toDateStr(start) || e.d > toDateStr(end)) continue;
+      if(e.d < startS || e.d > endS) continue;
       const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
       if(!Number.isFinite(net)) continue;
       istBy[e.d]=(istBy[e.d]||0)+Math.round(net);
@@ -723,37 +827,193 @@ tr.bad td:last-child{color:var(--bad);font-weight:800}
     }
   }
 
-  function renderAll(){
-    $("timerMini").textContent = S.emp ? ("👤 "+S.emp) : "";
-    $("nameMsg").textContent = S.emp ? "✅ gespeichert" : "";
-    renderOverviewTable();
-    renderAbsList();
-    renderEntryList();
-    save();
+  function renderAbsList(){
+    if(!S.A.length){ $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten.</div>`; return; }
+    const rows=S.A.slice().sort((a,b)=>b.d.localeCompare(a.d)).map(a=>`
+      <tr>
+        <td class="mono">${a.d}</td>
+        <td>${absLabel(a.t)}</td>
+        <td><button class="btn-ghost btn-sm" data-del-abs="${a.id}">🗑️</button></td>
+      </tr>`).join("");
+    $("absList").innerHTML=`<table><thead><tr><th>Datum</th><th>Typ</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    document.querySelectorAll("[data-del-abs]").forEach(b=>{
+      b.onclick=async ()=>{
+        const id=b.getAttribute("data-del-abs");
+        S.A=S.A.filter(x=>x.id!==id);
+        await saveYear();
+        await renderAll();
+      };
+    });
   }
 
-  // Wiring
+  function renderEntryList(){
+    const entries=S.E.slice().sort((a,b)=>b.d.localeCompare(a.d));
+    if(!entries.length){ $("entryList").innerHTML=`<div class="muted">Noch keine Einträge.</div>`; return; }
+
+    const rows=entries.map(e=>{
+      const net = ((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
+      const netTxt = hhmm(net);
+      const bad = (netTxt==="--:--") ? ` <span class="pill bad">⚠️</span>` : "";
+      return `
+        <tr>
+          <td class="mono">${e.d}</td>
+          <td class="mono">Netto ${netTxt}${bad} · Pause ${hhmm(e.p||0)} · ${e.n||""}</td>
+          <td>
+            <button class="btn-ghost btn-sm" data-edit="${e.id}">✍️</button>
+            <button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button>
+          </td>
+        </tr>`;
+    }).join("");
+
+    $("entryList").innerHTML=`<table><thead><tr><th>Datum</th><th>Info</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+
+    document.querySelectorAll("[data-del]").forEach(b=>{
+      b.onclick=async ()=>{
+        const id=b.getAttribute("data-del");
+        S.E=S.E.filter(x=>x.id!==id);
+        await saveYear();
+        await renderAll();
+      };
+    });
+    document.querySelectorAll("[data-edit]").forEach(b=>{
+      b.onclick=()=>{
+        const id=b.getAttribute("data-edit");
+        const e=S.E.find(x=>x.id===id);
+        if(!e) return;
+        editingId=id;
+        $("eDate").value=e.d;
+        const s=new Date(e.s), en=new Date(e.e);
+        $("eStart").value=`${pad(s.getHours())}:${pad(s.getMinutes())}`;
+        $("eEnd").value=`${pad(en.getHours())}:${pad(en.getMinutes())}`;
+        $("eNote").value=e.n||"";
+        $("editMsg").textContent="Bearbeiten aktiv";
+        tab("edit");
+      };
+    });
+  }
+
+  async function renderAll(){
+    applyStateToUI();
+    await renderOverviewTable();
+    renderAbsList();
+    renderEntryList();
+  }
+
+  // ==========================
+  // CSV / Share (export current period)
+  // ==========================
+  function getPeriodRange(){
+    const v=$("refDate").value;
+    const ref=v ? d0(v) : new Date();
+    const yr=ref.getFullYear();
+
+    let start,end;
+    if($("mode").value==="year") [start,end]=yearRange(yr);
+    else if($("mode").value==="month") [start,end]=monthRange(ref);
+    else [start,end]=weekRangeISO(ref);
+
+    return {yr, start, end};
+  }
+
+  function buildCSV(){
+    const sep=";";
+    const W=getWeeklyTargetMinutes();
+    const emp=S.emp||"";
+    const {yr, start, end} = getPeriodRange();
+    const startS=toDateStr(start), endS=toDateStr(end);
+
+    const rows=[];
+    rows.push(["Mitarbeiter","Jahr","WochenSoll_min","Datum","Start","Ende","Pause_min","Netto_min","Netto_hhmm","Notiz","ManagerName","ManagerMail"].join(sep));
+
+    const entries=S.E.filter(e=>e.d>=startS && e.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
+    for(const e of entries){
+      const net=((new Date(e.e)-new Date(e.s))/60000) - (e.p||0);
+      rows.push([
+        csvSafeCell(emp),
+        String(yr),
+        String(W),
+        e.d,
+        e.s,
+        e.e,
+        String(e.p||0),
+        Number.isFinite(net)?String(Math.round(net)):"",
+        hhmm(net),
+        csvSafeCell(e.n||""),
+        csvSafeCell(S.mgr?.name||""),
+        csvSafeCell(S.mgr?.mail||"")
+      ].join(sep));
+    }
+
+    const abs=S.A.filter(a=>a.d>=startS && a.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
+    for(const a of abs){
+      rows.push([
+        csvSafeCell(emp), String(yr), String(W),
+        a.d, "", "", "0", "0", "00:00",
+        csvSafeCell(absLabel(a.t)),
+        csvSafeCell(S.mgr?.name||""),
+        csvSafeCell(S.mgr?.mail||"")
+      ].join(sep));
+    }
+    return rows.join("\n");
+  }
+
+  function downloadCSV(){
+    if(!S.emp) return alert("Bitte Name speichern.");
+    const csv=buildCSV();
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`Zeiterfassung_${toDateStr(d0($("refDate").value))}_${S.emp.replaceAll(" ","_")}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  async function shareCSV(){
+    if(!S.emp) return alert("Bitte Name speichern.");
+    const csv=buildCSV();
+    const file=new File([new Blob([csv],{type:"text/csv"})], `zeiterfassung.csv`, {type:"text/csv"});
+    const title=`Zeiterfassung – ${S.emp}`;
+    const text=`Zeiterfassung\nMitarbeiter: ${S.emp}\nManager: ${(S.mgr.name||"")} ${(S.mgr.mail||"")}`.trim();
+
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({title,text,files:[file]});
+      return;
+    }
+    alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
+  }
+
+  // wiring
+  $("btnCSV").onclick=downloadCSV;
+  $("btnShare").onclick=shareCSV;
   $("btnRefresh").onclick=renderAll;
   $("mode").onchange=renderAll;
   $("weeklyTarget").onchange=renderAll;
 
-  $("refDate").onchange=()=>{
-    ensureYearFromRef();
-    renderAll();
+  $("refDate").onchange=async ()=>{
+    await loadYear(getRefYear());
+    await renderAll();
   };
 
-  // Init
+  // init
   const today=new Date().toISOString().slice(0,10);
-  $("timerDate").value = today;
-  $("refDate").value   = today;
-  $("eDate").value     = today;
-  $("aDate").value     = today;
+  $("timerDate").value=today;
+  $("refDate").value=today;
+  $("eDate").value=today;
+  $("aDate").value=today;
 
-  load(new Date().getFullYear());
   $("btnPause").disabled=true;
   setTimerStatus("⚪ bereit","");
-  renderAll();
-  tab("timer");
+
+  // start locked unless session key already present
+  (async ()=>{
+    const k = await getSessionKey();
+    if(!k){
+      showOverlay("Bitte PIN setzen oder eingeben, um zu starten.");
+      return;
+    }
+    await loadYear(getRefYear());
+    await renderAll();
+    tab("timer");
+  })();
 })();
 </script>
 
