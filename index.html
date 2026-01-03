@@ -26,6 +26,7 @@
     .muted{ color:var(--muted); font-size:13px; line-height:1.35; }
     .mono{ font-family: ui-monospace,SFMono-Regular,Menlo,monospace; }
     .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+
     input, select, button, textarea{
       font-size:16px; padding:10px 12px; border-radius:var(--r2);
       border:1px solid #ddd; background:#fff;
@@ -38,32 +39,30 @@
     .btn-blue{ background:var(--blue); color:#fff; }
     .btn-ghost{ background:#eee; color:#111; }
     .btn-sm{ padding:8px 10px; font-size:14px; border-radius:10px; font-weight:800; }
+
     .pill{ display:inline-block; padding:6px 12px; border-radius:999px; font-size:13px; background:#eee; }
     .pill.ok{ background:var(--okbg); color:var(--ok); }
     .pill.warn{ background:var(--warnbg); color:var(--warn); }
     .pill.bad{ background:var(--badbg); color:var(--bad); }
+
     .tabs{ display:flex; gap:8px; flex-wrap:wrap; }
     .tab{ padding:10px 14px; border-radius:var(--r2); background:#eee; cursor:pointer; user-select:none; }
     .tab.active{ background:#111; color:#fff; }
+
     table{ width:100%; border-collapse:collapse; }
     td, th{ padding:8px; border-bottom:1px solid #eee; font-size:14px; vertical-align:top; }
     th{ text-align:left; color:rgba(0,0,0,.7); }
+
     .box{ background:#fafafa; border:1px solid #eee; border-radius:14px; padding:12px; }
     .right{ margin-left:auto; }
-    .grid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-    @media (max-width:680px){ .grid2{ grid-template-columns:1fr; } }
 
-    .nameWrap{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
-    .nameField{ flex: 1 1 520px; min-width:260px; max-width:760px; }
-    .saveBtn{ flex:0 0 auto; white-space:nowrap; }
-    .nameMsg{ flex-basis:100%; }
-
-    .noteShort{ width:260px; max-width:92vw; }
-    .noteShort2{ width:240px; max-width:92vw; }
-    @media (max-width:420px){
-      .nameField{ min-width:92vw; max-width:92vw; }
-      .noteShort, .noteShort2{ width:92vw; }
-    }
+    /* Kurz & sauber: Mitarbeiter/Manager Felder kompakt, Speichern immer darunter */
+    .stack{ display:flex; flex-direction:column; gap:8px; align-items:flex-start; }
+    .w-emp{ width:320px; max-width:92vw; }
+    .w-note{ width:220px; max-width:92vw; }
+    .w-mgr-name{ width:260px; max-width:92vw; }
+    .w-mgr-mail{ width:300px; max-width:92vw; }
+    .w-save{ width:180px; }
 
     .errCard{ display:none; border:2px solid var(--red); }
   </style>
@@ -76,14 +75,14 @@
     <h2 style="margin:0 0 6px 0">❗ Fehler</h2>
     <div class="mono" id="errText" style="white-space:pre-wrap"></div>
     <div class="muted" style="margin-top:8px">
-      Tipp: Falls nach Updates “alt” angezeigt wird: Tab schließen & neu öffnen.
+      Tipp: Wenn nach Update noch “alt” angezeigt wird: Safari Tab schließen & neu öffnen.
     </div>
   </div>
 
   <div class="card">
     <h1>⏱️ Zeiterfassung</h1>
     <div class="muted">
-      Offline · Auto-Pause <b>55 min</b> (wenn Brutto ≥ 55) · ⏸️ Pause-Knopf zählt zusätzlich · CSV & Mail
+      Offline · Auto-Pause <b>55 min</b> (nur wenn Brutto ≥ 55) · ⏸️ Pause-Knopf zählt extra · CSV/Teilen/Mail
     </div>
   </div>
 
@@ -98,17 +97,15 @@
     </div>
   </div>
 
-  <!-- TIMER -->
+  <!-- TIMER (Seite 1: nur Name + Timer) -->
   <div class="card" id="timer">
     <h2>⏱️ Timer</h2>
 
-    <div class="nameWrap">
-      <div class="nameField">
-        <div class="muted">👤 Mitarbeiter</div>
-        <input id="empName" placeholder="Vorname Nachname" style="width:100%">
-      </div>
-      <button class="btn-ghost saveBtn" id="btnSaveName">💾 Speichern</button>
-      <div class="muted nameMsg" id="nameMsg"></div>
+    <div class="stack">
+      <div class="muted">👤 Mitarbeiter</div>
+      <input id="empName" class="w-emp" placeholder="Vorname Nachname" />
+      <button class="btn-ghost w-save" id="btnSaveName">💾 Speichern</button>
+      <div class="muted" id="nameMsg"></div>
     </div>
 
     <div class="row" style="margin-top:10px">
@@ -116,9 +113,9 @@
         <div class="muted">📅 Datum</div>
         <input type="date" id="timerDate">
       </div>
-      <div class="noteShort">
+      <div>
         <div class="muted">📝 Notiz</div>
-        <input id="timerNote" placeholder="z.B. Workshop" style="width:100%">
+        <input id="timerNote" class="w-note" placeholder="z.B. Workshop">
       </div>
       <span class="right muted mono" id="timerMini"></span>
     </div>
@@ -177,22 +174,19 @@
 
     <div class="box" style="margin-top:12px">
       <h2 style="margin-top:0">👔 Manager</h2>
-      <div class="grid2">
-        <div>
-          <div class="muted">Name</div>
-          <input id="mgrName" placeholder="z.B. Max Mustermann" style="width:100%">
-        </div>
-        <div>
-          <div class="muted">E-Mail</div>
-          <input id="mgrMail" placeholder="manager@firma.de" style="width:100%">
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <button class="btn-ghost" id="btnSaveMgr">💾 Speichern</button>
-        <a class="btn-ghost" id="mailLink"
+
+      <div class="stack">
+        <div class="muted">Name</div>
+        <input id="mgrName" class="w-mgr-name" placeholder="z.B. Max Mustermann">
+        <div class="muted">E-Mail</div>
+        <input id="mgrMail" class="w-mgr-mail" placeholder="manager@firma.de">
+        <button class="btn-ghost w-save" id="btnSaveMgr">💾 Speichern</button>
+
+        <a class="btn-ghost"
+           id="mailLink"
            style="text-decoration:none; display:inline-block; padding:10px 12px; border-radius:12px;"
            href="#">✉️ Mail öffnen</a>
-        <span class="muted">Mail enthält CSV im Text (iOS-sicher).</span>
+        <div class="muted">Mail enthält CSV im Text (iOS-sicher).</div>
       </div>
     </div>
 
@@ -216,10 +210,9 @@
         <div class="muted">🔴 Ende</div>
         <input type="time" id="eEnd">
       </div>
-
-      <div class="noteShort2">
+      <div>
         <div class="muted">📝 Notiz</div>
-        <input id="eNote" placeholder="kurz" style="width:100%">
+        <input id="eNote" class="w-note" placeholder="kurz">
       </div>
     </div>
 
@@ -230,7 +223,7 @@
     </div>
 
     <div class="muted" style="margin-top:8px">
-      Regeln: Ende nach Start · Auto-Pause 55 min (wenn Brutto ≥ 55)
+      Regeln: Ende nach Start · Auto-Pause 55 min (nur wenn Brutto ≥ 55)
     </div>
   </div>
 
@@ -261,7 +254,7 @@
   <!-- ENTRIES -->
   <div class="card" id="entries" style="display:none">
     <h2>🧾 Einträge</h2>
-    <div class="muted">✍️ = bearbeiten (öffnet Rückwirkend) · 🗑️ = löschen</div>
+    <div class="muted">✍️ = bearbeiten · 🗑️ = löschen</div>
     <div id="entryList" style="margin-top:10px"></div>
   </div>
 
@@ -269,7 +262,7 @@
   <div class="card" id="settings" style="display:none">
     <h2>⚙️ Settings</h2>
     <div class="muted">
-      Daten liegen lokal im Browser (offline). Pro Jahr wird getrennt gespeichert – neues Jahr startet bei 0.
+      Daten liegen lokal im Browser (offline). Pro Jahr getrennt gespeichert – neues Jahr startet automatisch bei 0.
     </div>
     <div class="row" style="margin-top:10px">
       <button class="btn-stop" id="btnReset">🧹 Daten dieses Jahres löschen</button>
@@ -280,8 +273,8 @@
 <script>
 (() => {
   const APP_NS  = "ZEITERFASSUNG";
-  const AUTO_BREAK_MIN = 55;
-  const MONTH_TOL_MIN  = 10 * 60;
+  const AUTO_BREAK_MIN = 55;       // Auto-Pause
+  const MONTH_TOL_MIN  = 10 * 60;  // ±10h Toleranz
 
   function showErr(msg){
     const box = document.getElementById("errBox");
@@ -326,7 +319,7 @@
   function weekRangeISO(ref){
     const d = new Date(ref);
     d.setHours(0,0,0,0);
-    const monIndex = (d.getDay() + 6) % 7;
+    const monIndex = (d.getDay() + 6) % 7; // Mo=0
     const start = new Date(d); start.setDate(d.getDate() - monIndex);
     const end = new Date(start); end.setDate(start.getDate() + 6);
     start.setHours(0,0,0,0); end.setHours(0,0,0,0);
@@ -625,6 +618,7 @@
       const minus=absMinusForDate(ds);
       const soll=Math.max(0,baseSoll-minus);
       const saldo=ist-soll;
+
       const absTypes=state.abs.filter(a=>a.date===ds).map(a=>absLabel(a.type));
       html += `<tr>
         <td class="mono">${ds}</td>
@@ -638,6 +632,7 @@
     }
     html += `</tbody></table>`;
     $("overviewTable").innerHTML=html;
+
     renderMailLink();
   }
 
@@ -712,7 +707,6 @@
     const mode=$("mode").value;
     const refStr=$("refDate").value || new Date().toISOString().slice(0,10);
     const ref=parseLocalDate(refStr);
-
     let start,end;
     if(mode==="week") [start,end]=weekRangeISO(ref);
     else if(mode==="month") [start,end]=monthRange(ref);
@@ -793,22 +787,30 @@
     }
   }
 
+  // FIX: Jahr-Auswahl immer möglich (aktuelles Jahr ±3 + bekannte Jahre)
   function renderYearSelect(){
-    const ys=new Set(listKnownYears());
-    ys.add(new Date().getFullYear());
-    const years=[...ys].sort((a,b)=>b-a);
-    $("yearSelect").innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join("");
-    $("yearSelect").value=String(activeYear);
+    const nowY = new Date().getFullYear();
+    const baseYears = [];
+    for(let y = nowY - 3; y <= nowY + 3; y++) baseYears.push(y);
+    const known = listKnownYears();
+    const years = Array.from(new Set([...baseYears, ...known])).sort((a,b)=>b-a);
+
+    $("yearSelect").innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
+    $("yearSelect").value = String(activeYear);
   }
 
   function renderAll(){
     $("timerMini").textContent = state.empName ? `👤 ${state.empName}` : "";
     $("nameMsg").textContent = state.empName ? "✅ gespeichert" : "";
-    renderAbsList(); renderEntryList(); renderOverview(); renderMailLink(); renderYearSelect();
+    renderAbsList();
+    renderEntryList();
+    renderOverview();
+    renderMailLink();
+    renderYearSelect();
     saveYear();
   }
 
-  // wire
+  // Wire
   $("btnSaveName").addEventListener("click", saveName);
   $("btnStart").addEventListener("click", startTimer);
   $("btnPause").addEventListener("click", togglePause);
@@ -850,6 +852,7 @@
 
     renderAll();
   }
+
   init();
 })();
 </script>
