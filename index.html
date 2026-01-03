@@ -1,211 +1,857 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Zeiterfassung</title>
-<meta name="apple-mobile-web-app-title" content="Zeiterfassung">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="robots" content="noindex,nofollow">
+  <meta charset="utf-8" />
+  <title>Zeiterfassung</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Zeiterfassung" />
+  <meta name="theme-color" content="#111" />
+  <meta name="robots" content="noindex,nofollow" />
 
-<style>
-body{font-family:-apple-system,system-ui;background:#f4f6f8;margin:0}
-header{background:#111;color:#fff;padding:14px 16px}
-h1{margin:0;font-size:20px}
-main{padding:16px}
-.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-label{font-size:13px;color:#444}
-input,select,textarea,button{
-  width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;font-size:15px
-}
-textarea{height:60px}
-.row{display:flex;gap:10px}
-button{border:none;background:#111;color:#fff}
-button.secondary{background:#666}
-button.danger{background:#c62828}
-button.ok{background:#2e7d32}
-.small{font-size:12px;color:#666}
-.center{text-align:center}
-.bad{color:#c62828;font-weight:600}
-.good{color:#2e7d32;font-weight:600}
-hr{border:none;border-top:1px solid #eee;margin:10px 0}
-</style>
+  <style>
+    :root{
+      --bg:#f4f4f6; --card:#fff; --text:#111; --muted:rgba(0,0,0,.62);
+      --shadow:0 2px 12px rgba(0,0,0,.08);
+      --r:16px; --r2:12px;
+      --okbg:#dcfce7; --ok:#166534;
+      --warnbg:#fef3c7; --warn:#92400e;
+      --badbg:#fee2e2; --bad:#991b1b;
+      --blue:#2563eb; --green:#16a34a; --red:#dc2626; --dark:#0f172a;
+    }
+    body{ margin:0; padding:16px; font-family:-apple-system,system-ui; background:var(--bg); color:var(--text); }
+    .card{ background:var(--card); border-radius:var(--r); padding:14px; margin-bottom:14px; box-shadow:var(--shadow); }
+    h1{ margin:0 0 6px 0; font-size:20px; }
+    h2{ margin:6px 0 10px 0; font-size:16px; }
+    .muted{ color:var(--muted); font-size:13px; line-height:1.35; }
+    .mono{ font-family: ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+    input, select, button, textarea{
+      font-size:16px; padding:10px 12px; border-radius:var(--r2);
+      border:1px solid #ddd; background:#fff;
+    }
+    textarea{ resize:vertical; min-height:54px; }
+    button{ border:none; font-weight:800; cursor:pointer; }
+    .btn-start{ background:var(--green); color:#fff; }
+    .btn-pause{ background:var(--dark); color:#fff; }
+    .btn-stop{ background:var(--red); color:#fff; }
+    .btn-blue{ background:var(--blue); color:#fff; }
+    .btn-ghost{ background:#eee; color:#111; }
+    .btn-sm{ padding:8px 10px; font-size:14px; border-radius:10px; font-weight:800; }
+    .pill{ display:inline-block; padding:6px 12px; border-radius:999px; font-size:13px; background:#eee; }
+    .pill.ok{ background:var(--okbg); color:var(--ok); }
+    .pill.warn{ background:var(--warnbg); color:var(--warn); }
+    .pill.bad{ background:var(--badbg); color:var(--bad); }
+    .tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+    .tab{ padding:10px 14px; border-radius:var(--r2); background:#eee; cursor:pointer; user-select:none; }
+    .tab.active{ background:#111; color:#fff; }
+    table{ width:100%; border-collapse:collapse; }
+    td, th{ padding:8px; border-bottom:1px solid #eee; font-size:14px; vertical-align:top; }
+    th{ text-align:left; color:rgba(0,0,0,.7); }
+    .box{ background:#fafafa; border:1px solid #eee; border-radius:14px; padding:12px; }
+    .right{ margin-left:auto; }
+    .grid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    @media (max-width:680px){ .grid2{ grid-template-columns:1fr; } }
+
+    .nameWrap{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+    .nameField{ flex: 1 1 520px; min-width:260px; max-width:760px; }
+    .saveBtn{ flex:0 0 auto; white-space:nowrap; }
+    .nameMsg{ flex-basis:100%; }
+
+    .noteShort{ width:260px; max-width:92vw; }
+    .noteShort2{ width:240px; max-width:92vw; }
+    @media (max-width:420px){
+      .nameField{ min-width:92vw; max-width:92vw; }
+      .noteShort, .noteShort2{ width:92vw; }
+    }
+
+    .errCard{ display:none; border:2px solid var(--red); }
+  </style>
 </head>
 
 <body>
 
-<!-- PIN LOCK -->
-<div id="pinLock" style="position:fixed;inset:0;background:#111;display:flex;align-items:center;justify-content:center;z-index:9999">
-  <div style="background:#fff;padding:20px;border-radius:16px;width:90%;max-width:320px;text-align:center">
-    <h2>🔒 Zeiterfassung</h2>
-    <p>PIN eingeben</p>
-    <input id="pinInput" type="password" inputmode="numeric">
-    <button onclick="checkPin()" style="margin-top:10px">Entsperren</button>
-    <div id="pinErr" style="color:#c62828;margin-top:6px"></div>
+  <!-- ERROR BOX -->
+  <div class="card errCard" id="errBox">
+    <h2 style="margin:0 0 6px 0">❗ Fehler</h2>
+    <div class="mono" id="errText" style="white-space:pre-wrap"></div>
+    <div class="muted" style="margin-top:8px">
+      Tipp: Falls nach Updates “alt” angezeigt wird: Tab schließen & neu öffnen.
+    </div>
   </div>
-</div>
 
-<header>
-  <h1>⏱️ Zeiterfassung</h1>
-</header>
-
-<main>
-
-<!-- NAME -->
-<div class="card">
-  <label>Mitarbeiter</label>
-  <div class="row">
-    <input id="name">
-    <button class="secondary" onclick="saveName()">Speichern</button>
+  <div class="card">
+    <h1>⏱️ Zeiterfassung</h1>
+    <div class="muted">
+      Offline · Auto-Pause <b>55 min</b> (wenn Brutto ≥ 55) · ⏸️ Pause-Knopf zählt zusätzlich · CSV & Mail
+    </div>
   </div>
-</div>
 
-<!-- TIMER -->
-<div class="card center">
-  <div id="timerState" class="small">⚪ Bereit</div>
-  <div class="row">
-    <button class="ok" onclick="start()">▶ Start</button>
-    <button class="secondary" onclick="pause()">⏸ Pause</button>
-    <button class="danger" onclick="stop()">■ Stop</button>
+  <div class="card">
+    <div class="tabs">
+      <div class="tab active" data-tab="timer">⏱️ Timer</div>
+      <div class="tab" data-tab="overview">📊 Übersicht</div>
+      <div class="tab" data-tab="edit">✍️ Rückwirkend</div>
+      <div class="tab" data-tab="absence">🏖️ Abwesenheit</div>
+      <div class="tab" data-tab="entries">🧾 Einträge</div>
+      <div class="tab" data-tab="settings">⚙️ Settings</div>
+    </div>
   </div>
-  <div class="small">Automatische Pause: <b>55 min</b></div>
-</div>
 
-<!-- RÜCKWIRKEND -->
-<div class="card">
-  <label>Rückwirkender Eintrag</label>
-  <div class="row">
-    <input type="date" id="rDate">
-    <input type="time" id="rStart">
-    <input type="time" id="rEnd">
+  <!-- TIMER -->
+  <div class="card" id="timer">
+    <h2>⏱️ Timer</h2>
+
+    <div class="nameWrap">
+      <div class="nameField">
+        <div class="muted">👤 Mitarbeiter</div>
+        <input id="empName" placeholder="Vorname Nachname" style="width:100%">
+      </div>
+      <button class="btn-ghost saveBtn" id="btnSaveName">💾 Speichern</button>
+      <div class="muted nameMsg" id="nameMsg"></div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <div class="muted">📅 Datum</div>
+        <input type="date" id="timerDate">
+      </div>
+      <div class="noteShort">
+        <div class="muted">📝 Notiz</div>
+        <input id="timerNote" placeholder="z.B. Workshop" style="width:100%">
+      </div>
+      <span class="right muted mono" id="timerMini"></span>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn-start" id="btnStart">▶️ Start</button>
+      <button class="btn-pause" id="btnPause" disabled>⏸️ Pause</button>
+      <button class="btn-stop" id="btnStop">■ Stop</button>
+
+      <span class="pill" id="timerStatus">⚪ bereit</span>
+      <span class="right muted mono" id="timerInfo"></span>
+    </div>
   </div>
-  <select id="rType">
-    <option>Arbeit</option>
-    <option>Urlaub</option>
-    <option>Krank</option>
-    <option>Feiertag</option>
-  </select>
-  <textarea id="rNote" placeholder="Notiz (kurz)"></textarea>
-  <button onclick="addRetro()">Hinzufügen</button>
-</div>
 
-<!-- ÜBERSICHT -->
-<div class="card">
-  <label>Übersicht (Monat)</label>
-  <select id="weeklyTarget">
-    <option value="40">🇩🇪 40 h / Woche</option>
-    <option value="38.5">🇦🇹 38,5 h / Woche</option>
-  </select>
-  <div id="summary"></div>
-</div>
+  <!-- OVERVIEW -->
+  <div class="card" id="overview" style="display:none">
+    <h2>📊 Übersicht</h2>
 
-<!-- EXPORT -->
-<div class="card center">
-  <button onclick="exportCSV()">📤 CSV Export</button>
-  <button class="danger" onclick="resetAll()">🧹 Alles löschen</button>
-</div>
+    <div class="row">
+      <div>
+        <div class="muted">📅 Jahr</div>
+        <select id="yearSelect"></select>
+      </div>
 
-</main>
+      <div>
+        <div class="muted">🎯 Wochen-Soll</div>
+        <select id="weeklyTarget">
+          <option value="2400">40:00 🇩🇪</option>
+          <option value="2310">38:30 🇦🇹</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="muted">🧭 Modus</div>
+        <select id="mode">
+          <option value="week">Woche (ISO)</option>
+          <option value="month">Monat</option>
+          <option value="year">Jahr</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="muted">📌 Referenz</div>
+        <input type="date" id="refDate">
+      </div>
+
+      <button class="btn-ghost" id="btnRefresh">↻ Refresh</button>
+      <button class="btn-blue" id="btnCSV">⬇️ CSV</button>
+      <button class="btn-ghost" id="btnShare">📤 Senden</button>
+    </div>
+
+    <div style="margin-top:10px">
+      <span class="pill ok" id="sumPill">—</span>
+      <span class="pill" id="avgPill" style="display:none;margin-left:6px">—</span>
+    </div>
+
+    <div class="box" style="margin-top:12px">
+      <h2 style="margin-top:0">👔 Manager</h2>
+      <div class="grid2">
+        <div>
+          <div class="muted">Name</div>
+          <input id="mgrName" placeholder="z.B. Max Mustermann" style="width:100%">
+        </div>
+        <div>
+          <div class="muted">E-Mail</div>
+          <input id="mgrMail" placeholder="manager@firma.de" style="width:100%">
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn-ghost" id="btnSaveMgr">💾 Speichern</button>
+        <a class="btn-ghost" id="mailLink"
+           style="text-decoration:none; display:inline-block; padding:10px 12px; border-radius:12px;"
+           href="#">✉️ Mail öffnen</a>
+        <span class="muted">Mail enthält CSV im Text (iOS-sicher).</span>
+      </div>
+    </div>
+
+    <div id="overviewTable" style="margin-top:12px"></div>
+  </div>
+
+  <!-- EDIT -->
+  <div class="card" id="edit" style="display:none">
+    <h2>✍️ Rückwirkend</h2>
+
+    <div class="row">
+      <div>
+        <div class="muted">📅 Datum</div>
+        <input type="date" id="eDate">
+      </div>
+      <div>
+        <div class="muted">🟢 Start</div>
+        <input type="time" id="eStart">
+      </div>
+      <div>
+        <div class="muted">🔴 Ende</div>
+        <input type="time" id="eEnd">
+      </div>
+
+      <div class="noteShort2">
+        <div class="muted">📝 Notiz</div>
+        <input id="eNote" placeholder="kurz" style="width:100%">
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button class="btn-ghost" id="btnSaveManual">💾 Speichern</button>
+      <button class="btn-ghost" id="btnNewManual">🧽 Neu</button>
+      <span class="right muted mono" id="editMsg"></span>
+    </div>
+
+    <div class="muted" style="margin-top:8px">
+      Regeln: Ende nach Start · Auto-Pause 55 min (wenn Brutto ≥ 55)
+    </div>
+  </div>
+
+  <!-- ABSENCE -->
+  <div class="card" id="absence" style="display:none">
+    <h2>🏖️ Abwesenheit</h2>
+
+    <div class="row">
+      <div>
+        <div class="muted">📅 Datum</div>
+        <input type="date" id="aDate">
+      </div>
+      <div>
+        <div class="muted">🏷️ Typ</div>
+        <select id="aType">
+          <option value="vac">🏖️ Urlaub</option>
+          <option value="sick">🤒 Krank</option>
+          <option value="hol">🎌 Feiertag</option>
+        </select>
+      </div>
+      <button class="btn-ghost" id="btnAddAbs">➕ Speichern</button>
+      <span class="muted">Reduziert Soll nur Mo–Fr.</span>
+    </div>
+
+    <div id="absList" style="margin-top:12px"></div>
+  </div>
+
+  <!-- ENTRIES -->
+  <div class="card" id="entries" style="display:none">
+    <h2>🧾 Einträge</h2>
+    <div class="muted">✍️ = bearbeiten (öffnet Rückwirkend) · 🗑️ = löschen</div>
+    <div id="entryList" style="margin-top:10px"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="card" id="settings" style="display:none">
+    <h2>⚙️ Settings</h2>
+    <div class="muted">
+      Daten liegen lokal im Browser (offline). Pro Jahr wird getrennt gespeichert – neues Jahr startet bei 0.
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn-stop" id="btnReset">🧹 Daten dieses Jahres löschen</button>
+      <button class="btn-ghost" id="btnResetAllYears">🧨 Alles löschen (alle Jahre)</button>
+    </div>
+  </div>
 
 <script>
-/* ====== CONFIG ====== */
-const PIN="4729";
-const PAUSE_MIN=55;
-const KEY="zeiterfassung_v3";
+(() => {
+  const APP_NS  = "ZEITERFASSUNG";
+  const AUTO_BREAK_MIN = 55;
+  const MONTH_TOL_MIN  = 10 * 60;
 
-/* ====== PIN ====== */
-function checkPin(){
-  if(pinInput.value===PIN){
-    pinLock.style.display="none";
-    sessionStorage.pin_ok=1;
-  } else pinErr.textContent="Falscher PIN";
-}
-if(sessionStorage.pin_ok) pinLock.style.display="none";
-
-/* ====== DATA ====== */
-let data=JSON.parse(localStorage.getItem(KEY)||"{}");
-data.entries=data.entries||[];
-data.name=data.name||"";
-name.value=data.name;
-
-/* ====== NAME ====== */
-function saveName(){
-  data.name=name.value;
-  save();
-}
-
-/* ====== TIMER ====== */
-let running=null;
-function start(){
-  if(running) return;
-  running={start:Date.now()};
-  timerState.textContent="🟢 Läuft";
-}
-function pause(){
-  if(!running) return;
-  running.pause=true;
-  timerState.textContent="⏸ Pausiert";
-}
-function stop(){
-  if(!running) return;
-  const end=Date.now();
-  data.entries.push({
-    date:new Date().toISOString().slice(0,10),
-    min:Math.max(0,Math.round((end-running.start)/60000)-PAUSE_MIN),
-    type:"Arbeit"
-  });
-  running=null;
-  timerState.textContent="⏹️ Gestoppt";
-  save(); render();
-}
-
-/* ====== RETRO ====== */
-function addRetro(){
-  const d=rDate.value,s=rStart.value,e=rEnd.value;
-  if(!d||!s||!e) return;
-  const min=(new Date(d+"T"+e)-new Date(d+"T"+s))/60000-PAUSE_MIN;
-  data.entries.push({date:d,min:Math.max(0,min),type:rType.value});
-  save(); render();
-}
-
-/* ====== SUMMARY ====== */
-function render(){
-  const tgt=weeklyTarget.value;
-  let sum=0;
-  data.entries.forEach(e=>{
-    if(e.type==="Arbeit") sum+=e.min;
-  });
-  const weeks=4.33;
-  const soll=weeks*tgt*60;
-  const diff=sum-soll;
-  summary.innerHTML=`
-    <p>Ist: ${(sum/60).toFixed(1)} h</p>
-    <p>Soll: ${(soll/60).toFixed(1)} h</p>
-    <p class="${Math.abs(diff)>600?'bad':'good'}">
-      Abweichung: ${(diff/60).toFixed(1)} h
-    </p>`;
-}
-weeklyTarget.onchange=render;
-
-/* ====== CSV ====== */
-function exportCSV(){
-  let csv="Name,Datum,Minuten,Typ\n";
-  data.entries.forEach(e=>{
-    csv+=`${data.name},${e.date},${e.min},${e.type}\n`;
-  });
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
-  a.download="Zeiterfassung.csv"; a.click();
-}
-
-/* ====== RESET ====== */
-function resetAll(){
-  if(confirm("Alles löschen?")){
-    localStorage.removeItem(KEY); location.reload();
+  function showErr(msg){
+    const box = document.getElementById("errBox");
+    const txt = document.getElementById("errText");
+    if(!box || !txt) return;
+    box.style.display = "";
+    txt.textContent = String(msg || "Unbekannter Fehler");
   }
-}
-function save(){localStorage.setItem(KEY,JSON.stringify(data));}
-render();
+  window.addEventListener("error", (e) => {
+    showErr(`${e.message}\n${e.filename||""}:${e.lineno||""}:${e.colno||""}`);
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    showErr(`Promise error: ${e.reason?.message || e.reason}`);
+  });
+
+  const $ = (id) => document.getElementById(id);
+  const pad = (n) => String(n).padStart(2,"0");
+  function hhmm(min){
+    const sign = min < 0 ? "-" : "";
+    min = Math.abs(Math.round(min));
+    return sign + pad(Math.floor(min/60)) + ":" + pad(min%60);
+  }
+  function parseLocalDate(dStr){
+    const [y,m,d] = dStr.split("-").map(Number);
+    return new Date(y, m-1, d, 0,0,0,0);
+  }
+  function isWeekday(d){ const w=d.getDay(); return w>=1 && w<=5; }
+  function minsBetween(a,b){ return Math.round((b - a) / 60000); }
+  function autoPause(grossMin){ return grossMin >= AUTO_BREAK_MIN ? AUTO_BREAK_MIN : 0; }
+
+  function isoWeekKey(dateObj){
+    const d = new Date(dateObj);
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+    const isoYear = d.getFullYear();
+    const week1 = new Date(isoYear,0,4);
+    week1.setHours(0,0,0,0);
+    week1.setDate(week1.getDate() + 3 - ((week1.getDay() + 6) % 7));
+    const weekNo = 1 + Math.round((d - week1) / (7*24*60*60*1000));
+    return `${isoYear}-W${String(weekNo).padStart(2,"0")}`;
+  }
+  function weekRangeISO(ref){
+    const d = new Date(ref);
+    d.setHours(0,0,0,0);
+    const monIndex = (d.getDay() + 6) % 7;
+    const start = new Date(d); start.setDate(d.getDate() - monIndex);
+    const end = new Date(start); end.setDate(start.getDate() + 6);
+    start.setHours(0,0,0,0); end.setHours(0,0,0,0);
+    return [start,end];
+  }
+  function monthRange(ref){
+    const d = new Date(ref);
+    const start = new Date(d.getFullYear(), d.getMonth(), 1);
+    const end = new Date(d.getFullYear(), d.getMonth()+1, 0);
+    start.setHours(0,0,0,0); end.setHours(0,0,0,0);
+    return [start,end];
+  }
+  function yearRange(y){
+    const start = new Date(y,0,1); start.setHours(0,0,0,0);
+    const end = new Date(y,11,31); end.setHours(0,0,0,0);
+    return [start,end];
+  }
+  function inRange(dateStr, start, end){
+    const t = parseLocalDate(dateStr).getTime();
+    return t >= start.getTime() && t <= end.getTime();
+  }
+
+  function weeklyTargetMin(){ return Number($("weeklyTarget").value || 2400); }
+  function dayTargetMin(){ return Math.round(weeklyTargetMin()/5); }
+
+  function absLabel(t){
+    if(t==="vac") return "Urlaub";
+    if(t==="sick") return "Krank";
+    if(t==="hol") return "Feiertag";
+    return t;
+  }
+
+  function dbKeyForYear(y){ return `${APP_NS}::${y}`; }
+  function listKnownYears(){
+    const years = new Set();
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(`${APP_NS}::`)){
+        const y = k.split("::")[1];
+        if(/^\d{4}$/.test(y)) years.add(Number(y));
+      }
+    }
+    return [...years].sort((a,b)=>b-a);
+  }
+
+  let state=null;
+  let activeYear=new Date().getFullYear();
+
+  function loadYear(y){
+    activeYear = y;
+    const raw = localStorage.getItem(dbKeyForYear(y));
+    state = raw ? JSON.parse(raw) : { empName:"", mgr:{name:"",mail:""}, entries:[], abs:[] };
+    $("empName").value = state.empName || "";
+    $("mgrName").value = state.mgr.name || "";
+    $("mgrMail").value = state.mgr.mail || "";
+  }
+  function saveYear(){ localStorage.setItem(dbKeyForYear(activeYear), JSON.stringify(state)); }
+
+  function makeId(){
+    return (crypto && crypto.randomUUID) ? crypto.randomUUID() : ("id_"+Math.random().toString(16).slice(2)+"_"+Date.now());
+  }
+
+  function showTab(name){
+    document.querySelectorAll(".tab").forEach(t=>{
+      t.classList.toggle("active", t.getAttribute("data-tab")===name);
+    });
+    ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
+      $(id).style.display = (id===name) ? "" : "none";
+    });
+  }
+  document.querySelectorAll(".tab").forEach(tab=>{
+    tab.addEventListener("click", ()=>showTab(tab.getAttribute("data-tab")));
+  });
+
+  let running=null;
+  function setTimerStatus(text, cls){
+    const pill = $("timerStatus");
+    pill.textContent = text;
+    pill.className = "pill" + (cls ? (" " + cls) : "");
+  }
+  function netMinutes(entry){
+    const s = new Date(entry.start);
+    const e = new Date(entry.end);
+    const gross = minsBetween(s,e);
+    return Math.max(0, gross - (entry.pause||0));
+  }
+  function absMinusForDate(dateStr){
+    const d = parseLocalDate(dateStr);
+    if(!isWeekday(d)) return 0;
+    return state.abs.some(a => a.date === dateStr) ? dayTargetMin() : 0;
+  }
+
+  function saveName(){
+    const v = ($("empName").value || "").trim();
+    state.empName = v;
+    saveYear();
+    $("nameMsg").textContent = v ? "✅ gespeichert" : "⚠️ Name fehlt";
+    $("timerMini").textContent = v ? `👤 ${v}` : "";
+    renderMailLink();
+    renderAll();
+  }
+  function saveManager(){
+    state.mgr = { name: ($("mgrName").value||"").trim(), mail: ($("mgrMail").value||"").trim() };
+    saveYear(); renderMailLink(); alert("✅ Manager gespeichert");
+  }
+
+  function startTimer(){
+    if(running) return alert("Timer läuft bereits.");
+    if(!state.empName) return alert("Bitte Mitarbeitername speichern.");
+    const dateStr = $("timerDate").value;
+    if(!dateStr) return alert("Bitte Datum wählen.");
+
+    const now = new Date(); now.setSeconds(0,0);
+    const d = parseLocalDate(dateStr);
+    const startDt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), now.getHours(), now.getMinutes(), 0);
+
+    running = { dateStr, startDt, pauseStartDt:null, pauseMin:0, note: ($("timerNote").value||"").trim() };
+    $("btnPause").disabled = false;
+    $("btnPause").textContent = "⏸️ Pause";
+    setTimerStatus("🟢 läuft", "ok");
+    $("timerInfo").textContent = `Start ${pad(startDt.getHours())}:${pad(startDt.getMinutes())}`;
+  }
+  function togglePause(){
+    if(!running) return;
+    const now = new Date(); now.setSeconds(0,0);
+    if(!running.pauseStartDt){
+      running.pauseStartDt = now;
+      $("btnPause").textContent = "▶️ Weiter";
+      setTimerStatus("⏸️ Pause", "warn");
+      $("timerInfo").textContent = `Pause seit ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    } else {
+      running.pauseMin += Math.max(0, minsBetween(running.pauseStartDt, now));
+      running.pauseStartDt = null;
+      $("btnPause").textContent = "⏸️ Pause";
+      setTimerStatus("🟢 läuft", "ok");
+      $("timerInfo").textContent = `Pausenzeit ${hhmm(running.pauseMin)}`;
+    }
+  }
+  function stopTimer(){
+    if(!running) return alert("Kein laufender Timer.");
+    const end = new Date(); end.setSeconds(0,0);
+
+    if(running.pauseStartDt){
+      running.pauseMin += Math.max(0, minsBetween(running.pauseStartDt, end));
+      running.pauseStartDt = null;
+    }
+
+    const gross = minsBetween(running.startDt, end);
+    if(gross <= 0) return alert("Ungültige Zeit (Ende vor Start).");
+
+    const pause = autoPause(gross) + Math.max(0, running.pauseMin);
+
+    state.entries.push({
+      id: makeId(), date: running.dateStr,
+      start: running.startDt.toISOString(), end: end.toISOString(),
+      pause, note: running.note || ""
+    });
+
+    running=null;
+    saveYear();
+    $("btnPause").disabled = true;
+    $("btnPause").textContent = "⏸️ Pause";
+    setTimerStatus("⚪ bereit", "");
+    $("timerInfo").textContent = "✅ gespeichert";
+    renderAll();
+  }
+
+  let editingId=null;
+  function clearManual(){
+    editingId=null; $("eStart").value=""; $("eEnd").value=""; $("eNote").value=""; $("editMsg").textContent="";
+  }
+  function saveManual(){
+    if(running) return alert("Bitte Timer zuerst stoppen.");
+    const dStr=$("eDate").value, st=$("eStart").value, en=$("eEnd").value;
+    if(!dStr||!st||!en){ $("editMsg").textContent="⚠️ Datum/Start/Ende fehlt."; return; }
+    const d=parseLocalDate(dStr);
+    const [sh,sm]=st.split(":").map(Number), [eh,em]=en.split(":").map(Number);
+    const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),sh,sm,0);
+    const end=new Date(d.getFullYear(),d.getMonth(),d.getDate(),eh,em,0);
+    const gross=minsBetween(start,end);
+    if(gross<=0){ $("editMsg").textContent="⚠️ Ende muss nach Start liegen."; return; }
+
+    const obj={ id: editingId||makeId(), date:dStr, start:start.toISOString(), end:end.toISOString(),
+      pause:autoPause(gross), note:($("eNote").value||"").trim()
+    };
+    if(editingId){
+      const idx=state.entries.findIndex(x=>x.id===editingId);
+      if(idx>=0) state.entries[idx]=obj; else state.entries.push(obj);
+      $("editMsg").textContent="✅ aktualisiert";
+    } else { state.entries.push(obj); editingId=obj.id; $("editMsg").textContent="✅ gespeichert"; }
+    saveYear(); renderAll();
+  }
+
+  function addAbs(){
+    const d=$("aDate").value, t=$("aType").value;
+    if(!d) return alert("Datum fehlt.");
+    state.abs.push({id:makeId(), date:d, type:t});
+    saveYear(); renderAll();
+  }
+
+  function workMinutesByDateInRange(start,end){
+    const map={};
+    for(const e of state.entries){
+      if(!e.end) continue;
+      if(!inRange(e.date,start,end)) continue;
+      map[e.date]=(map[e.date]||0)+netMinutes(e);
+    }
+    return map;
+  }
+  function summaryForRange(start,end){
+    const workByDate=workMinutesByDateInRange(start,end);
+    let ist=0,soll=0;
+    const cur=new Date(start); cur.setHours(0,0,0,0);
+    while(cur<=end){
+      const ds=`${cur.getFullYear()}-${pad(cur.getMonth()+1)}-${pad(cur.getDate())}`;
+      const dayIst=workByDate[ds]||0;
+      const baseSoll=isWeekday(cur)?dayTargetMin():0;
+      const minus=absMinusForDate(ds);
+      ist+=dayIst; soll+=Math.max(0,baseSoll-minus);
+      cur.setDate(cur.getDate()+1);
+    }
+    return {ist,soll,saldo:ist-soll,workByDate};
+  }
+
+  function monthAverageWeeklyScaled(refDate){
+    const [ms,me]=monthRange(refDate);
+    const workByDate=workMinutesByDateInRange(ms,me);
+    const buckets=new Map();
+    const cur=new Date(ms); cur.setHours(0,0,0,0);
+    while(cur<=me){
+      const ds=`${cur.getFullYear()}-${pad(cur.getMonth()+1)}-${pad(cur.getDate())}`;
+      const key=isoWeekKey(cur);
+      if(!buckets.has(key)) buckets.set(key,{ist:0,weekdays:0,absWeekdays:0});
+      const b=buckets.get(key);
+      b.ist += (workByDate[ds]||0);
+      if(isWeekday(cur)){
+        b.weekdays+=1;
+        if(absMinusForDate(ds)>0) b.absWeekdays+=1;
+      }
+      cur.setDate(cur.getDate()+1);
+    }
+    const active=[...buckets.values()].filter(b=>b.weekdays>0);
+    const scaledIst=active.map(b=>b.ist*(5/b.weekdays));
+    const avgScaledIst=scaledIst.length?(scaledIst.reduce((s,v)=>s+v,0)/scaledIst.length):0;
+
+    const W=weeklyTargetMin(), DAY=dayTargetMin();
+    const scaledSoll=active.map(b=>W-(b.absWeekdays*DAY));
+    const avgSoll=scaledSoll.length?(scaledSoll.reduce((s,v)=>s+v,0)/scaledSoll.length):W;
+    return {avgScaledIst,avgSoll,weeksCount:active.length};
+  }
+
+  function renderOverview(){
+    const mode=$("mode").value;
+    const refStr=$("refDate").value;
+    if(!refStr){ $("overviewTable").innerHTML=`<div class="muted">Bitte Referenzdatum wählen.</div>`; return; }
+    const ref=parseLocalDate(refStr);
+    let start,end;
+    if(mode==="week") [start,end]=weekRangeISO(ref);
+    else if(mode==="month") [start,end]=monthRange(ref);
+    else [start,end]=yearRange(activeYear);
+
+    const s=summaryForRange(start,end);
+    const sumPill=$("sumPill"), avgPill=$("avgPill");
+    avgPill.style.display="none";
+
+    let cls="ok";
+    if(mode==="month"){
+      const avg=monthAverageWeeklyScaled(ref);
+      const W=weeklyTargetMin();
+      const low=W-MONTH_TOL_MIN, high=W+MONTH_TOL_MIN;
+      avgPill.style.display="";
+      avgPill.textContent=`📈 Ø/Woche ${hhmm(Math.round(avg.avgScaledIst))} (Soll ${hhmm(W)} ±10:00)`;
+      if(avg.avgScaledIst<low||avg.avgScaledIst>high){ cls="bad"; avgPill.className="pill bad"; }
+      else if(Math.abs(avg.avgScaledIst-W)>1){ cls="warn"; avgPill.className="pill warn"; }
+      else { cls="ok"; avgPill.className="pill ok"; }
+    } else {
+      if(Math.abs(s.saldo)>MONTH_TOL_MIN) cls="bad";
+      else if(Math.abs(s.saldo)>1) cls="warn";
+      else cls="ok";
+    }
+    sumPill.className=`pill ${cls}`;
+    sumPill.textContent=`IST ${hhmm(s.ist)} · SOLL ${hhmm(s.soll)} · SALDO ${hhmm(s.saldo)}`;
+
+    const workByDate=s.workByDate;
+    const dayNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
+    const DAY=dayTargetMin();
+
+    let html=`<table><thead><tr>
+      <th>Datum</th><th>Tag</th><th>IST</th><th>SOLL</th><th>Abw.</th><th>SALDO</th>
+    </tr></thead><tbody>`;
+    const cur=new Date(start); cur.setHours(0,0,0,0);
+    while(cur<=end){
+      const ds=`${cur.getFullYear()}-${pad(cur.getMonth()+1)}-${pad(cur.getDate())}`;
+      const ist=workByDate[ds]||0;
+      const baseSoll=isWeekday(cur)?DAY:0;
+      const minus=absMinusForDate(ds);
+      const soll=Math.max(0,baseSoll-minus);
+      const saldo=ist-soll;
+      const absTypes=state.abs.filter(a=>a.date===ds).map(a=>absLabel(a.type));
+      html += `<tr>
+        <td class="mono">${ds}</td>
+        <td>${dayNames[cur.getDay()]}</td>
+        <td class="mono">${hhmm(ist)}</td>
+        <td class="mono">${hhmm(soll)}</td>
+        <td>${absTypes.join(", ")}</td>
+        <td class="mono">${hhmm(saldo)}</td>
+      </tr>`;
+      cur.setDate(cur.getDate()+1);
+    }
+    html += `</tbody></table>`;
+    $("overviewTable").innerHTML=html;
+    renderMailLink();
+  }
+
+  function renderAbsList(){
+    const abs=[...state.abs].sort((a,b)=>b.date.localeCompare(a.date));
+    if(!abs.length){ $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten.</div>`; return; }
+    let html=`<table><thead><tr><th>Datum</th><th>Typ</th><th></th></tr></thead><tbody>`;
+    for(const a of abs.slice(0,400)){
+      html += `<tr>
+        <td class="mono">${a.date}</td><td>${absLabel(a.type)}</td>
+        <td><button class="btn-ghost btn-sm" data-del-abs="${a.id}">🗑️</button></td>
+      </tr>`;
+    }
+    html += `</tbody></table>`;
+    $("absList").innerHTML=html;
+    document.querySelectorAll("[data-del-abs]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id=btn.getAttribute("data-del-abs");
+        state.abs=state.abs.filter(x=>x.id!==id);
+        saveYear(); renderAll();
+      });
+    });
+  }
+
+  function renderEntryList(){
+    const entries=[...state.entries].sort((a,b)=>b.date.localeCompare(a.date));
+    if(!entries.length){ $("entryList").innerHTML=`<div class="muted">Noch keine Einträge.</div>`; return; }
+
+    let html=`<table><thead><tr><th>Datum</th><th>Info</th><th></th></tr></thead><tbody>`;
+    for(const e of entries.slice(0,500)){
+      const s=new Date(e.start), en=new Date(e.end);
+      const info=`Netto ${hhmm(netMinutes(e))} · Pause ${hhmm(e.pause||0)} · ${pad(s.getHours())}:${pad(s.getMinutes())}–${pad(en.getHours())}:${pad(en.getMinutes())} · ${e.note||""}`;
+      const safe=encodeURIComponent(JSON.stringify(e));
+      html += `<tr>
+        <td class="mono">${e.date}</td>
+        <td class="mono">${info}</td>
+        <td>
+          <button class="btn-ghost btn-sm" data-edit="${safe}">✍️</button>
+          <button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button>
+        </td>
+      </tr>`;
+    }
+    html += `</tbody></table>`;
+    $("entryList").innerHTML=html;
+
+    document.querySelectorAll("[data-del]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id=btn.getAttribute("data-del");
+        state.entries=state.entries.filter(x=>x.id!==id);
+        saveYear(); renderAll();
+      });
+    });
+    document.querySelectorAll("[data-edit]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const e=JSON.parse(decodeURIComponent(btn.getAttribute("data-edit")));
+        editingId=e.id;
+        $("eDate").value=e.date;
+        const s=new Date(e.start), en=new Date(e.end);
+        $("eStart").value=`${pad(s.getHours())}:${pad(s.getMinutes())}`;
+        $("eEnd").value=`${pad(en.getHours())}:${pad(en.getMinutes())}`;
+        $("eNote").value=e.note||"";
+        $("editMsg").textContent="Bearbeiten aktiv";
+        showTab("edit");
+      });
+    });
+  }
+
+  function buildCSV(forMailBody=false){
+    const sep = forMailBody ? "  " : ";";
+    const header = ["Mitarbeiter","Jahr","WochenSoll_min","Datum","Start","Ende","Pause_min","Netto_min","Netto_hhmm","Notiz"].join(sep);
+
+    const mode=$("mode").value;
+    const refStr=$("refDate").value || new Date().toISOString().slice(0,10);
+    const ref=parseLocalDate(refStr);
+
+    let start,end;
+    if(mode==="week") [start,end]=weekRangeISO(ref);
+    else if(mode==="month") [start,end]=monthRange(ref);
+    else [start,end]=yearRange(activeYear);
+
+    const rows=[header];
+    const emp=(state.empName||"").trim();
+    const W=weeklyTargetMin();
+
+    const ents=state.entries.filter(e=>e.end && inRange(e.date,start,end)).sort((a,b)=>a.date.localeCompare(b.date));
+    for(const e of ents){
+      const net=netMinutes(e);
+      rows.push([emp,String(activeYear),String(W),e.date,e.start,e.end,String(e.pause||0),String(net),hhmm(net),(e.note||"").replaceAll(";",",")].join(sep));
+    }
+    const abs=state.abs.filter(a=>inRange(a.date,start,end)).sort((a,b)=>a.date.localeCompare(b.date));
+    for(const a of abs){
+      rows.push([emp,String(activeYear),String(W),a.date,"","","0","0","00:00",absLabel(a.type)].join(sep));
+    }
+    const s=summaryForRange(start,end);
+    rows.push("");
+    rows.push(["SUMMARY","","","", "", "", "", String(s.ist), hhmm(s.ist), "IST"].join(sep));
+    rows.push(["SUMMARY","","","", "", "", "", String(s.soll), hhmm(s.soll), "SOLL"].join(sep));
+    rows.push(["SUMMARY","","","", "", "", "", String(s.saldo), hhmm(s.saldo), "SALDO"].join(sep));
+    return rows.join("\n");
+  }
+
+  function downloadCSV(){
+    if(!state.empName) return alert("Bitte Mitarbeitername speichern.");
+    const csv=buildCSV(false);
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`Zeiterfassung_${activeYear}_${state.empName.replaceAll(" ","_")}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  async function shareCSV(){
+    if(!state.empName) return alert("Bitte Mitarbeitername speichern.");
+    const csv=buildCSV(false);
+    const file=new File([new Blob([csv],{type:"text/csv"})], `zeiterfassung_${activeYear}.csv`, {type:"text/csv"});
+    const title=`Zeiterfassung – ${state.empName} (${activeYear})`;
+    const text=`Hallo ${state.mgr.name || "Manager"},\nanbei meine Zeiterfassung (${activeYear}) als CSV.\n`;
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({title,text,files:[file]});
+      return;
+    }
+    alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
+  }
+
+  function renderMailLink(){
+    const mail=($("mgrMail").value||state.mgr.mail||"").trim();
+    const mgrName=($("mgrName").value||state.mgr.name||"").trim();
+    const emp=(state.empName||"").trim();
+    const link=$("mailLink");
+    if(!mail){
+      link.href="#";
+      link.textContent="✉️ Mail öffnen";
+      link.onclick=(e)=>{e.preventDefault(); alert("Bitte Manager-E-Mail speichern.");};
+      return;
+    }
+    const subject=encodeURIComponent(`Zeiterfassung ${activeYear} – ${emp || "Mitarbeiter"}`);
+    const body=encodeURIComponent(buildCSV(true));
+    link.href=`mailto:${encodeURIComponent(mail)}?subject=${subject}&body=${body}`;
+    link.onclick=null;
+    link.textContent=`✉️ Mail an ${mgrName ? mgrName : "Manager"}`;
+  }
+
+  function resetYear(){
+    if(confirm(`Wirklich alle Daten für ${activeYear} löschen?`)){
+      localStorage.removeItem(dbKeyForYear(activeYear));
+      loadYear(activeYear); renderAll();
+    }
+  }
+  function resetAllYears(){
+    if(confirm("Wirklich ALLE Jahre löschen?")){
+      listKnownYears().forEach(y=>localStorage.removeItem(dbKeyForYear(y)));
+      loadYear(new Date().getFullYear()); renderAll();
+    }
+  }
+
+  function renderYearSelect(){
+    const ys=new Set(listKnownYears());
+    ys.add(new Date().getFullYear());
+    const years=[...ys].sort((a,b)=>b-a);
+    $("yearSelect").innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join("");
+    $("yearSelect").value=String(activeYear);
+  }
+
+  function renderAll(){
+    $("timerMini").textContent = state.empName ? `👤 ${state.empName}` : "";
+    $("nameMsg").textContent = state.empName ? "✅ gespeichert" : "";
+    renderAbsList(); renderEntryList(); renderOverview(); renderMailLink(); renderYearSelect();
+    saveYear();
+  }
+
+  // wire
+  $("btnSaveName").addEventListener("click", saveName);
+  $("btnStart").addEventListener("click", startTimer);
+  $("btnPause").addEventListener("click", togglePause);
+  $("btnStop").addEventListener("click", stopTimer);
+
+  $("btnRefresh").addEventListener("click", renderAll);
+  $("btnCSV").addEventListener("click", downloadCSV);
+  $("btnShare").addEventListener("click", shareCSV);
+
+  $("btnSaveMgr").addEventListener("click", saveManager);
+  $("btnSaveManual").addEventListener("click", saveManual);
+  $("btnNewManual").addEventListener("click", clearManual);
+
+  $("btnAddAbs").addEventListener("click", addAbs);
+  $("btnReset").addEventListener("click", resetYear);
+  $("btnResetAllYears").addEventListener("click", resetAllYears);
+
+  ["weeklyTarget","mode","refDate"].forEach(id => $(id).addEventListener("change", renderAll));
+  ["mgrName","mgrMail"].forEach(id => $(id).addEventListener("input", renderMailLink));
+
+  $("yearSelect").addEventListener("change", ()=>{
+    const y=Number($("yearSelect").value);
+    loadYear(y); renderAll();
+  });
+
+  function init(){
+    const today=new Date().toISOString().slice(0,10);
+    activeYear=new Date().getFullYear();
+    loadYear(activeYear);
+
+    $("timerDate").value=today;
+    $("refDate").value=today;
+    $("eDate").value=today;
+    $("aDate").value=today;
+
+    $("btnPause").disabled=true;
+    setTimerStatus("⚪ bereit","");
+    $("timerInfo").textContent="";
+
+    renderAll();
+  }
+  init();
+})();
 </script>
 
 </body>
