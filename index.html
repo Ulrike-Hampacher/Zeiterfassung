@@ -56,13 +56,31 @@
     .box{ background:#fafafa; border:1px solid #eee; border-radius:14px; padding:12px; }
     .right{ margin-left:auto; }
 
-    /* Kurz & sauber: Mitarbeiter/Manager Felder kompakt, Speichern immer darunter */
-    .stack{ display:flex; flex-direction:column; gap:8px; align-items:flex-start; }
-    .w-emp{ width:312px; max-width:92vw; }
-    .w-note{ width:220px; max-width:92vw; }
-    .w-mgr-name{ width:260px; max-width:92vw; }
-    .w-mgr-mail{ width:300px; max-width:92vw; }
-    .w-save{ width:180px; }
+    /* Responsiv: automatisch passend auf Handy + Tablet */
+:root{
+  --field: min(92vw, 320px);       /* Standardfeld (z.B. Mitarbeiter) */
+  --fieldNote: min(92vw, 240px);   /* Notiz etwas kürzer */
+  --fieldMgrName: min(92vw, 260px);
+  --fieldMgrMail: min(92vw, 320px);
+  --btn: min(92vw, 190px);
+}
+
+/* auf größeren Screens etwas mehr Luft */
+@media (min-width: 520px){
+  :root{
+    --field: 320px;
+    --fieldNote: 220px;
+    --fieldMgrName: 260px;
+    --fieldMgrMail: 300px;
+    --btn: 180px;
+  }
+}
+
+.w-emp{ width: var(--field); }
+.w-note{ width: var(--fieldNote); }
+.w-mgr-name{ width: var(--fieldMgrName); }
+.w-mgr-mail{ width: var(--fieldMgrMail); }
+.w-save{ width: var(--btn); }
 
     .errCard{ display:none; border:2px solid var(--red); }
   </style>
