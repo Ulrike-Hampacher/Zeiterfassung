@@ -25,13 +25,14 @@
     h2{ margin:6px 0 10px 0; font-size:16px; }
     .muted{ color:var(--muted); font-size:13px; line-height:1.35; }
     .mono{ font-family: ui-monospace,SFMono-Regular,Menlo,monospace; }
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
 
-    input, select, button, textarea{
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+    .right{ margin-left:auto; }
+
+    input, select, button{
       font-size:16px; padding:10px 12px; border-radius:var(--r2);
       border:1px solid #ddd; background:#fff;
     }
-    textarea{ resize:vertical; min-height:54px; }
     button{ border:none; font-weight:800; cursor:pointer; }
     .btn-start{ background:var(--green); color:#fff; }
     .btn-pause{ background:var(--dark); color:#fff; }
@@ -54,64 +55,38 @@
     th{ text-align:left; color:rgba(0,0,0,.7); }
 
     .box{ background:#fafafa; border:1px solid #eee; border-radius:14px; padding:12px; }
-    .right{ margin-left:auto; }
 
-    /* Responsiv: automatisch passend auf Handy + Tablet */
-:root{
-  --field: min(92vw, 320px);       /* Standardfeld (z.B. Mitarbeiter) */
-  --fieldNote: min(92vw, 240px);   /* Notiz etwas kürzer */
-  --fieldMgrName: min(92vw, 260px);
-  --fieldMgrMail: min(92vw, 320px);
-  --btn: min(92vw, 190px);
-}
+    /* Kompakte Felder */
+    .w-emp{ width:280px; max-width:92vw; }
+    .w-note{ width:200px; max-width:92vw; }
+    .w-mgr-name{ width:240px; max-width:92vw; }
+    .w-mgr-mail{ width:260px; max-width:92vw; }
+    .w-save{ width:170px; max-width:92vw; }
 
-/* auf größeren Screens etwas mehr Luft */
-@media (min-width: 520px){
-  :root{
-    --field: 320px;
-    --fieldNote: 220px;
-    --fieldMgrName: 260px;
-    --fieldMgrMail: 300px;
-    --btn: 180px;
-  }
-}
+    /* Speichern nicht angeklebt */
+    .stack{ display:flex; flex-direction:column; gap:8px; align-items:flex-start; }
+    .stack input{ margin-bottom:6px; }
+    .stack button{ margin-top:4px; }
 
-.w-emp{ width: var(--field); }
-.w-note{ width: var(--fieldNote); }
-.w-mgr-name{ width: var(--fieldMgrName); }
-.w-mgr-mail{ width: var(--fieldMgrMail); }
-.w-save{ width: var(--btn); }
-
-@media (max-width: 390px){
-  :root{
-    --field: 92vw;
-    --fieldNote: 92vw;
-    --fieldMgrName: 92vw;
-    --fieldMgrMail: 92vw;
-    --btn: 92vw;
-  }
-}
+    /* Auf sehr kleinen Phones volle Breite */
+    @media (max-width: 390px){
+      .w-emp, .w-note, .w-mgr-name, .w-mgr-mail, .w-save{ width:92vw; }
+    }
 
     .errCard{ display:none; border:2px solid var(--red); }
   </style>
 </head>
 
 <body>
-
-  <!-- ERROR BOX -->
   <div class="card errCard" id="errBox">
     <h2 style="margin:0 0 6px 0">❗ Fehler</h2>
     <div class="mono" id="errText" style="white-space:pre-wrap"></div>
-    <div class="muted" style="margin-top:8px">
-      Tipp: Wenn nach Update noch “alt” angezeigt wird: Safari Tab schließen & neu öffnen.
-    </div>
+    <div class="muted" style="margin-top:8px">Tipp: Safari Tab schließen & neu öffnen.</div>
   </div>
 
   <div class="card">
     <h1>⏱️ Zeiterfassung</h1>
-    <div class="muted">
-      Offline · Auto-Pause <b>55 min</b> (nur wenn Brutto ≥ 55) · ⏸️ Pause-Knopf zählt extra · CSV/Teilen/Mail
-    </div>
+    <div class="muted">Offline · Auto-Pause <b>55 min</b> (nur wenn Brutto ≥ 55) · ⏸ Pause zählt extra · CSV/Teilen</div>
   </div>
 
   <div class="card">
@@ -125,7 +100,7 @@
     </div>
   </div>
 
-  <!-- TIMER (Seite 1: nur Name + Timer) -->
+  <!-- TIMER -->
   <div class="card" id="timer">
     <h2>⏱️ Timer</h2>
 
@@ -152,7 +127,6 @@
       <button class="btn-start" id="btnStart">▶️ Start</button>
       <button class="btn-pause" id="btnPause" disabled>⏸️ Pause</button>
       <button class="btn-stop" id="btnStop">■ Stop</button>
-
       <span class="pill" id="timerStatus">⚪ bereit</span>
       <span class="right muted mono" id="timerInfo"></span>
     </div>
@@ -167,7 +141,6 @@
         <div class="muted">📅 Jahr</div>
         <select id="yearSelect"></select>
       </div>
-
       <div>
         <div class="muted">🎯 Wochen-Soll</div>
         <select id="weeklyTarget">
@@ -175,7 +148,6 @@
           <option value="2310">38:30 🇦🇹</option>
         </select>
       </div>
-
       <div>
         <div class="muted">🧭 Modus</div>
         <select id="mode">
@@ -184,12 +156,10 @@
           <option value="year">Jahr</option>
         </select>
       </div>
-
       <div>
         <div class="muted">📌 Referenz</div>
         <input type="date" id="refDate">
       </div>
-
       <button class="btn-ghost" id="btnRefresh">↻ Refresh</button>
       <button class="btn-blue" id="btnCSV">⬇️ CSV</button>
       <button class="btn-ghost" id="btnShare">📤 Senden</button>
@@ -202,19 +172,13 @@
 
     <div class="box" style="margin-top:12px">
       <h2 style="margin-top:0">👔 Manager</h2>
-
       <div class="stack">
         <div class="muted">Name</div>
         <input id="mgrName" class="w-mgr-name" placeholder="z.B. Max Mustermann">
         <div class="muted">E-Mail</div>
         <input id="mgrMail" class="w-mgr-mail" placeholder="manager@firma.de">
         <button class="btn-ghost w-save" id="btnSaveMgr">💾 Speichern</button>
-
-        <a class="btn-ghost"
-           id="mailLink"
-           style="text-decoration:none; display:inline-block; padding:10px 12px; border-radius:12px;"
-           href="#">✉️ Mail öffnen</a>
-        <div class="muted">Mail enthält CSV im Text (iOS-sicher).</div>
+        <div class="muted">Wird für „Senden“ als Vorschlag genutzt (du wählst im Share-Menü die App).</div>
       </div>
     </div>
 
@@ -224,7 +188,6 @@
   <!-- EDIT -->
   <div class="card" id="edit" style="display:none">
     <h2>✍️ Rückwirkend</h2>
-
     <div class="row">
       <div>
         <div class="muted">📅 Datum</div>
@@ -243,22 +206,17 @@
         <input id="eNote" class="w-note" placeholder="kurz">
       </div>
     </div>
-
     <div class="row" style="margin-top:10px">
       <button class="btn-ghost" id="btnSaveManual">💾 Speichern</button>
       <button class="btn-ghost" id="btnNewManual">🧽 Neu</button>
       <span class="right muted mono" id="editMsg"></span>
     </div>
-
-    <div class="muted" style="margin-top:8px">
-      Regeln: Ende nach Start · Auto-Pause 55 min (nur wenn Brutto ≥ 55)
-    </div>
+    <div class="muted" style="margin-top:8px">Regeln: Ende nach Start · Auto-Pause 55 min (wenn Brutto ≥ 55)</div>
   </div>
 
   <!-- ABSENCE -->
   <div class="card" id="absence" style="display:none">
     <h2>🏖️ Abwesenheit</h2>
-
     <div class="row">
       <div>
         <div class="muted">📅 Datum</div>
@@ -275,7 +233,6 @@
       <button class="btn-ghost" id="btnAddAbs">➕ Speichern</button>
       <span class="muted">Reduziert Soll nur Mo–Fr.</span>
     </div>
-
     <div id="absList" style="margin-top:12px"></div>
   </div>
 
@@ -289,9 +246,7 @@
   <!-- SETTINGS -->
   <div class="card" id="settings" style="display:none">
     <h2>⚙️ Settings</h2>
-    <div class="muted">
-      Daten liegen lokal im Browser (offline). Pro Jahr getrennt gespeichert – neues Jahr startet automatisch bei 0.
-    </div>
+    <div class="muted">Daten liegen lokal im Browser (offline). Pro Jahr getrennt gespeichert – neues Jahr startet bei 0.</div>
     <div class="row" style="margin-top:10px">
       <button class="btn-stop" id="btnReset">🧹 Daten dieses Jahres löschen</button>
       <button class="btn-ghost" id="btnResetAllYears">🧨 Alles löschen (alle Jahre)</button>
@@ -301,8 +256,8 @@
 <script>
 (() => {
   const APP_NS  = "ZEITERFASSUNG";
-  const AUTO_BREAK_MIN = 55;       // Auto-Pause
-  const MONTH_TOL_MIN  = 10 * 60;  // ±10h Toleranz
+  const AUTO_BREAK_MIN = 55;
+  const MONTH_TOL_MIN  = 10 * 60;
 
   function showErr(msg){
     const box = document.getElementById("errBox");
@@ -347,7 +302,7 @@
   function weekRangeISO(ref){
     const d = new Date(ref);
     d.setHours(0,0,0,0);
-    const monIndex = (d.getDay() + 6) % 7; // Mo=0
+    const monIndex = (d.getDay() + 6) % 7;
     const start = new Date(d); start.setDate(d.getDate() - monIndex);
     const end = new Date(start); end.setDate(start.getDate() + 6);
     start.setHours(0,0,0,0); end.setHours(0,0,0,0);
@@ -446,12 +401,11 @@
     saveYear();
     $("nameMsg").textContent = v ? "✅ gespeichert" : "⚠️ Name fehlt";
     $("timerMini").textContent = v ? `👤 ${v}` : "";
-    renderMailLink();
     renderAll();
   }
   function saveManager(){
     state.mgr = { name: ($("mgrName").value||"").trim(), mail: ($("mgrMail").value||"").trim() };
-    saveYear(); renderMailLink(); alert("✅ Manager gespeichert");
+    saveYear(); alert("✅ Manager gespeichert");
   }
 
   function startTimer(){
@@ -494,7 +448,6 @@
       running.pauseMin += Math.max(0, minsBetween(running.pauseStartDt, end));
       running.pauseStartDt = null;
     }
-
     const gross = minsBetween(running.startDt, end);
     if(gross <= 0) return alert("Ungültige Zeit (Ende vor Start).");
 
@@ -660,8 +613,6 @@
     }
     html += `</tbody></table>`;
     $("overviewTable").innerHTML=html;
-
-    renderMailLink();
   }
 
   function renderAbsList(){
@@ -728,9 +679,9 @@
     });
   }
 
-  function buildCSV(forMailBody=false){
-    const sep = forMailBody ? "  " : ";";
-    const header = ["Mitarbeiter","Jahr","WochenSoll_min","Datum","Start","Ende","Pause_min","Netto_min","Netto_hhmm","Notiz"].join(sep);
+  function buildCSV(){
+    const sep=";";
+    const header=["Mitarbeiter","Jahr","WochenSoll_min","Datum","Start","Ende","Pause_min","Netto_min","Netto_hhmm","Notiz"].join(sep);
 
     const mode=$("mode").value;
     const refStr=$("refDate").value || new Date().toISOString().slice(0,10);
@@ -758,12 +709,13 @@
     rows.push(["SUMMARY","","","", "", "", "", String(s.ist), hhmm(s.ist), "IST"].join(sep));
     rows.push(["SUMMARY","","","", "", "", "", String(s.soll), hhmm(s.soll), "SOLL"].join(sep));
     rows.push(["SUMMARY","","","", "", "", "", String(s.saldo), hhmm(s.saldo), "SALDO"].join(sep));
+
     return rows.join("\n");
   }
 
   function downloadCSV(){
     if(!state.empName) return alert("Bitte Mitarbeitername speichern.");
-    const csv=buildCSV(false);
+    const csv=buildCSV();
     const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
@@ -773,33 +725,17 @@
 
   async function shareCSV(){
     if(!state.empName) return alert("Bitte Mitarbeitername speichern.");
-    const csv=buildCSV(false);
+    const csv=buildCSV();
     const file=new File([new Blob([csv],{type:"text/csv"})], `zeiterfassung_${activeYear}.csv`, {type:"text/csv"});
     const title=`Zeiterfassung – ${state.empName} (${activeYear})`;
-    const text=`Hallo ${state.mgr.name || "Manager"},\nanbei meine Zeiterfassung (${activeYear}) als CSV.\n`;
+    const text=`Zeiterfassung ${activeYear} – ${state.empName}\nManager: ${state.mgr.name || ""} ${state.mgr.mail || ""}`.trim();
+
     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({title,text,files:[file]});
       return;
     }
-    alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
-  }
-
-  function renderMailLink(){
-    const mail=($("mgrMail").value||state.mgr.mail||"").trim();
-    const mgrName=($("mgrName").value||state.mgr.name||"").trim();
-    const emp=(state.empName||"").trim();
-    const link=$("mailLink");
-    if(!mail){
-      link.href="#";
-      link.textContent="✉️ Mail öffnen";
-      link.onclick=(e)=>{e.preventDefault(); alert("Bitte Manager-E-Mail speichern.");};
-      return;
-    }
-    const subject=encodeURIComponent(`Zeiterfassung ${activeYear} – ${emp || "Mitarbeiter"}`);
-    const body=encodeURIComponent(buildCSV(true));
-    link.href=`mailto:${encodeURIComponent(mail)}?subject=${subject}&body=${body}`;
-    link.onclick=null;
-    link.textContent=`✉️ Mail an ${mgrName ? mgrName : "Manager"}`;
+    // Fallback: wenigstens CSV Download
+    alert("Teilen nicht verfügbar. Bitte CSV herunterladen und dann senden.");
   }
 
   function resetYear(){
@@ -815,7 +751,7 @@
     }
   }
 
-  // FIX: Jahr-Auswahl immer möglich (aktuelles Jahr ±3 + bekannte Jahre)
+  // Jahr-Auswahl: immer möglich (aktuelles ±3 + bekannte Jahre)
   function renderYearSelect(){
     const nowY = new Date().getFullYear();
     const baseYears = [];
@@ -833,32 +769,37 @@
     renderAbsList();
     renderEntryList();
     renderOverview();
-    renderMailLink();
     renderYearSelect();
     saveYear();
   }
 
-  // Wire
+  function saveName(){
+    const v = ($("empName").value || "").trim();
+    state.empName = v;
+    saveYear();
+    renderAll();
+  }
+  function saveManager(){
+    state.mgr = { name: ($("mgrName").value||"").trim(), mail: ($("mgrMail").value||"").trim() };
+    saveYear(); alert("✅ Manager gespeichert");
+  }
+
+  // Re-wire functions after hoisting
   $("btnSaveName").addEventListener("click", saveName);
+  $("btnSaveMgr").addEventListener("click", saveManager);
   $("btnStart").addEventListener("click", startTimer);
   $("btnPause").addEventListener("click", togglePause);
   $("btnStop").addEventListener("click", stopTimer);
-
+  $("btnSaveManual").addEventListener("click", saveManual);
+  $("btnNewManual").addEventListener("click", clearManual);
+  $("btnAddAbs").addEventListener("click", addAbs);
   $("btnRefresh").addEventListener("click", renderAll);
   $("btnCSV").addEventListener("click", downloadCSV);
   $("btnShare").addEventListener("click", shareCSV);
-
-  $("btnSaveMgr").addEventListener("click", saveManager);
-  $("btnSaveManual").addEventListener("click", saveManual);
-  $("btnNewManual").addEventListener("click", clearManual);
-
-  $("btnAddAbs").addEventListener("click", addAbs);
   $("btnReset").addEventListener("click", resetYear);
   $("btnResetAllYears").addEventListener("click", resetAllYears);
 
   ["weeklyTarget","mode","refDate"].forEach(id => $(id).addEventListener("change", renderAll));
-  ["mgrName","mgrMail"].forEach(id => $(id).addEventListener("input", renderMailLink));
-
   $("yearSelect").addEventListener("change", ()=>{
     const y=Number($("yearSelect").value);
     loadYear(y); renderAll();
@@ -877,13 +818,11 @@
     $("btnPause").disabled=true;
     setTimerStatus("⚪ bereit","");
     $("timerInfo").textContent="";
-
     renderAll();
   }
 
   init();
 })();
 </script>
-
 </body>
 </html>
