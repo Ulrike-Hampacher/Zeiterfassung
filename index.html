@@ -45,24 +45,31 @@ th,td{padding:8px;border-bottom:1px solid #eee;font-size:14px;vertical-align:top
 th{text-align:left;color:#777}
 .mono{font-family:ui-monospace,Menlo,monospace}
 
-/* ✅ KOMPAKT (auch am Handy) */
+/* ✅ KOMPAKT (MA/Manager kurz) */
 .w-emp{width:240px;max-width:240px}
 .w-note{width:180px;max-width:180px}
 .w-mgr-name{width:220px;max-width:220px}
-.w-mgr-mail{width:240px;max-width:240px}
+
+/* ✅ Manager E-Mail: länger + flexibel (passt auf Handy & Desktop) */
+.w-mgr-mail{
+  width: 320px;        /* Standard breit */
+  max-width: 75vw;     /* am Handy nicht zu breit */
+  min-width: 240px;    /* nie zu klein */
+}
+
+/* Speichern nicht angeklebt */
 .w-save{width:160px;max-width:160px}
+.stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.stack input{margin-bottom:6px}
+.stack button{margin-top:4px}
+
+/* Extra-kleine Phones: minimal kleiner, aber bleibt kompakt */
 @media(max-width:340px){
   .w-emp{width:220px;max-width:220px}
   .w-note{width:160px;max-width:160px}
   .w-mgr-name{width:200px;max-width:200px}
-  .w-mgr-mail{width:220px;max-width:220px}
   .w-save{width:150px;max-width:150px}
 }
-
-/* Speichern nicht angeklebt */
-.stack{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
-.stack input{margin-bottom:6px}
-.stack button{margin-top:4px}
 </style>
 </head>
 
@@ -160,7 +167,7 @@ th{text-align:left;color:#777}
       <div class="muted">Name</div>
       <input id="mgrName" class="w-mgr-name" placeholder="Name">
       <div class="muted">E-Mail</div>
-      <input id="mgrMail" class="w-mgr-mail" placeholder="mail@firma.de">
+      <input id="mgrMail" class="w-mgr-mail" placeholder="vorname.nachname@firma.de">
       <button class="btn-ghost w-save" id="saveMgr">💾 Speichern</button>
     </div>
   </div>
@@ -213,8 +220,8 @@ th{text-align:left;color:#777}
 <div class="card" id="settings" style="display:none">
   <h2>⚙️ Settings</h2>
   <div class="muted">
-    Daten liegen lokal im Browser (offline). Wenn du Code-Versionen wechselst, können alte Daten „nicht passen“
-    → dann siehst du z.B. <span class="mono">--:--</span> statt Zeiten.
+    Daten liegen lokal im Browser (offline). Wenn du Code-Versionen wechselst, können alte Daten „nicht passen“.
+    Dann zeigt die App <span class="mono">--:--</span> statt Zeiten (NaN-Schutz).
   </div>
 
   <div class="row" style="margin-top:10px">
@@ -223,7 +230,7 @@ th{text-align:left;color:#777}
   </div>
 
   <div class="muted" style="margin-top:10px">
-    Tipp: Wenn es „komisch“ aussieht, erst „Dieses Jahr löschen“ probieren. „Alle Jahre“ ist der Reset-Hammer.
+    Tipp: Erst „Dieses Jahr löschen“ probieren. „Alle Jahre“ ist der Reset-Hammer.
   </div>
 </div>
 
@@ -231,7 +238,7 @@ th{text-align:left;color:#777}
 (() => {
   const NS="ZEITERFASSUNG";
   const AUTO_BREAK=55;          // Auto-Pause in Minuten
-  const TOL=10*60;              // ±10h Ampel
+  const TOL=10*60;              // ±10h Ampel (Minuten)
 
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
@@ -474,7 +481,7 @@ th{text-align:left;color:#777}
     }
   };
 
-  // CSV/Share
+  // CSV/Share (einfach & robust)
   function buildCSV(){
     const sep=";";
     const W=+$("weeklyTarget").value;
