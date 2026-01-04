@@ -103,10 +103,38 @@ th{text-align:left;color:#64748b}
 }
 .small-badge .e{font-size:12px;line-height:1}
 
-/* Einträge: Suche + Summe mehr nach links (und im Container bleiben) */
-.entries-search-wrap{ margin-left:auto; margin-right:-16px; }
-.entries-sum-wrap{ margin-left:auto; margin-right:-16px; }
-#entriesSearch{ width:min(340px, 78vw); }
+/* Einträge: alles "mehr nach links", aber sauber im Feld */
+.entries-search-wrap{
+  margin-left:0;           /* nicht mehr nach rechts schieben */
+  margin-right:0;
+  width:100%;
+}
+
+#entriesSearch{
+  width:min(340px, 92vw);  /* am Handy mehr Platz */
+}
+
+.entries-sum-wrap{
+  margin-left:0;
+  margin-right:0;
+  width:100%;
+  display:flex;
+  justify-content:flex-start; /* Badge links */
+}
+
+#entriesSum{
+  margin-left:0;
+}
+
+/* CSV Button bei Einträge: links/unter Badge (passt am Handy) */
+#entriesExportCSV{
+  margin-left:0;
+}
+
+/* Optional: Einträge-Header/Controls etwas enger */
+@media(max-width:430px){
+  .row{ column-gap:8px; row-gap:10px; }
+}
 
 /* Notiz: kompakt */
 .note-cell{display:flex; align-items:center; gap:6px; max-width:260px}
