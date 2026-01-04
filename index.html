@@ -11,9 +11,6 @@
 <meta name="theme-color" content="#0b1220" />
 <meta name="robots" content="noindex,nofollow" />
 
-<link id="appleIcon" rel="apple-touch-icon" href="" />
-<link id="faviconIcon" rel="icon" href="" />
-
 <style>
 :root{
   --bg:#f4f6f8; --card:#fff; --text:#0f172a; --muted:#64748b;
@@ -21,8 +18,8 @@
   --ok:#166534; --okbg:#dcfce7;
   --warn:#9a3412; --warnbg:#fff7ed;
   --primary:#2563eb;
-  --chip:#eef2ff;
   --shadow:0 2px 12px rgba(0,0,0,.08);
+  --chip:#eef2ff;
 }
 *{box-sizing:border-box}
 body{margin:0;padding:14px;font-family:-apple-system,system-ui;background:var(--bg);color:var(--text)}
@@ -54,10 +51,12 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .tab.active{background:#111;color:#fff}
 
 .badge{
-  display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;
-  font-size:12px;font-weight:900;background:var(--chip);
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 12px;border-radius:999px;
+  font-size:12px;font-weight:900;
+  background:var(--chip);
   border:1px solid rgba(0,0,0,.06);
-  white-space:nowrap; /* default, overridden for sumChip */
+  white-space:nowrap;
 }
 .chip-ok{background:var(--okbg);color:var(--ok)}
 .chip-warn{background:var(--warnbg);color:var(--warn)}
@@ -67,36 +66,54 @@ th,td{padding:8px;border-bottom:1px solid #eef2f7;font-size:14px;vertical-align:
 th{text-align:left;color:#64748b}
 
 .w-emp{width:220px;max-width:220px}
-.w-note{width:160px;max-width:160px}
 .w-save{width:170px;max-width:170px}
+.w-note{width:170px;max-width:170px}
 .w-edit-note{width:220px;max-width:220px;height:44px}
 
-/* Manager Felder: kurz + Mail länger, etwas rein (left) */
 .w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
 .w-mgr-mail{width:360px;max-width:88vw;min-width:320px;margin-left:-11px}
 
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
-.modal{width:min(560px,100%);background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
-.modal h2{margin-top:0}
-.pin{width:min(360px,86vw);max-width:86vw;letter-spacing:.08em;font-weight:900;text-align:center;font-size:18px;padding:10px 12px}
-
-@media(max-width:340px){
+@media(max-width:360px){
   .w-emp{width:210px;max-width:210px}
-  .w-note{width:150px;max-width:150px}
+  .w-note{width:160px;max-width:160px}
   .w-edit-note{width:200px;max-width:200px}
   .w-mgr-name{width:180px;max-width:180px;margin-left:-7px}
   .w-mgr-mail{min-width:320px;margin-left:-11px}
 }
 
-/* ✅ Übersicht: Summe darf umbrechen (2 Zeilen) */
+/* ✅ Übersicht Summe: zweizeilig / handyfreundlich */
 #sumChip{
   white-space:normal !important;
   line-height:1.25;
   max-width:100%;
   display:block;
 }
-/* ✅ Mehr Abstand, falls eine zweite Zeile entsteht */
 #overviewControls{ row-gap:16px; }
+
+/* ✅ WE Badge: klein, mit Emoji, neben IST */
+.we-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  margin-left:6px;
+  padding:2px 7px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  line-height:1.2;
+  background:#eef2f7;
+  color:#111827;
+  border:1px solid rgba(0,0,0,.10);
+  vertical-align:middle;
+  white-space:nowrap;
+}
+.we-badge .we-emoji{font-size:12px;line-height:1}
+
+/* PIN overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
+.modal{width:min(560px,100%);background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.modal h2{margin-top:0}
+.pin{width:min(360px,86vw);max-width:86vw;letter-spacing:.08em;font-weight:900;text-align:center;font-size:18px;padding:10px 12px}
 
 /* ===== PRINT/PDF ===== */
 @media print{
@@ -106,11 +123,8 @@ th{text-align:left;color:#64748b}
   #overview{display:block !important;}
   #overviewControls, #btnRefresh, #btnCSV, #btnShare, #btnPDF {display:none !important;}
   #managerBlock {display:none !important;} /* ✅ Manager NICHT im PDF */
-  #appHeader{display:block !important;}
   #topHint{display:none !important;}
   a[href]:after{content:""}
-  table{page-break-inside:auto}
-  tr{page-break-inside:avoid;page-break-after:auto}
 }
 </style>
 </head>
@@ -118,12 +132,12 @@ th{text-align:left;color:#64748b}
 <body>
 
 <div class="card" id="appHeader">
-  <h1 id="appTitle">Zeiterfassung</h1>
-  <div class="muted" id="topHint">✨ Offline · 🔐 PIN+Recovery · ⏳ Auto-Pause 55 min · 🧾 Einträge · 🖨️ PDF</div>
+  <h1>Zeiterfassung</h1>
+  <div class="muted" id="topHint">🔐 PIN+Recovery · Offline · Auto-Pause 55 min · 📊 Übersicht · 🖨️ PDF · ⬇️ CSV</div>
 </div>
 
 <div class="card" id="tabsCard">
-  <div class="tabs" id="tabs">
+  <div class="tabs">
     <div class="tab active" data-tab="timer">⏱️ Timer</div>
     <div class="tab" data-tab="overview">📊 Übersicht</div>
     <div class="tab" data-tab="edit">🗓️ Rückwirkend</div>
@@ -135,10 +149,10 @@ th{text-align:left;color:#64748b}
 
 <!-- TIMER -->
 <div class="card" id="timer">
-  <h2 id="hTimer">⏱️ Timer</h2>
+  <h2>⏱️ Timer</h2>
 
   <div class="row" style="margin-bottom:10px">
-    <div class="muted" style="width:100%" id="lblEmp">👤 Mitarbeiter</div>
+    <div class="muted" style="width:100%">👤 Mitarbeiter</div>
     <input id="empName" class="w-emp" placeholder="Vorname Nachname" />
     <button class="btn-ghost w-save" id="saveName">💾 Speichern</button>
     <span class="right muted mono" id="timerMini"></span>
@@ -147,11 +161,11 @@ th{text-align:left;color:#64748b}
 
   <div class="row" style="margin-top:12px">
     <div>
-      <div class="muted" id="lblDate">📅 Datum</div>
+      <div class="muted">📅 Datum</div>
       <input type="date" id="timerDate" />
     </div>
     <div>
-      <div class="muted" id="lblNote">📝 Notiz</div>
+      <div class="muted">📝 Notiz <span class="muted">(optional)</span></div>
       <input id="timerNote" class="w-note" placeholder="kurz" />
     </div>
     <span class="right muted mono" id="timerInfo"></span>
@@ -167,16 +181,16 @@ th{text-align:left;color:#64748b}
 
 <!-- OVERVIEW -->
 <div class="card" id="overview" style="display:none">
-  <h2 id="hOverview">📊 Übersicht</h2>
+  <h2>📊 Übersicht</h2>
 
-  <!-- ✅ PDF Kopf (immer sichtbar, Manager wird nur im PDF ausgeblendet) -->
-  <div class="muted" id="pdfEmpLine" style="margin-top:6px;">
+  <!-- PDF Kopf -->
+  <div class="muted" style="margin-top:6px;">
     👤 Mitarbeiter: <span id="pdfEmpName">—</span>
   </div>
-  <div class="muted" id="pdfRangeLine" style="margin-top:4px;">
+  <div class="muted" style="margin-top:4px;">
     📅 Zeitraum: <span id="pdfRangeText">—</span>
   </div>
-  <div class="muted" id="pdfSumLine" style="margin-top:4px;">
+  <div class="muted" style="margin-top:4px;">
     ⏱️ IST/SOLL/Δ: <span id="pdfSumText">—</span>
   </div>
 
@@ -216,7 +230,7 @@ th{text-align:left;color:#64748b}
   <!-- ✅ Manager in App, aber NICHT im PDF -->
   <div id="managerBlock" style="margin-top:14px">
     <h2>👔 Manager</h2>
-    <div class="row" id="mgrControls">
+    <div class="row">
       <div class="muted" style="width:100%">Name</div>
       <input id="mgrName" class="w-mgr-name" placeholder="Name" />
       <div class="muted" style="width:100%">E-Mail</div>
@@ -230,7 +244,7 @@ th{text-align:left;color:#64748b}
 
 <!-- EDIT -->
 <div class="card" id="edit" style="display:none">
-  <h2 id="hEdit">🗓️ Rückwirkend</h2>
+  <h2>🗓️ Rückwirkend</h2>
   <div class="row">
     <div><div class="muted">📅 Datum</div><input type="date" id="eDate" /></div>
     <div><div class="muted">⏱️ Start</div><input type="time" id="eStart" /></div>
@@ -246,10 +260,10 @@ th{text-align:left;color:#64748b}
 
 <!-- ABSENCE -->
 <div class="card" id="absence" style="display:none">
-  <h2 id="hAbs">🏖️ Abwesenheit</h2>
-  <div class="muted" id="absHint">📆 Zeitraum · Mo–Fr · pro Tag max. 1 (ersetzt doppelte Einträge)</div>
+  <h2>🏖️ Abwesenheit</h2>
+  <div class="muted">📆 Zeitraum · Mo–Fr · pro Tag max. 1 (ersetzt doppelte automatisch)</div>
 
-  <div class="row" style="margin-top:10px" id="absRow1">
+  <div class="row" style="margin-top:10px">
     <div><div class="muted">Start</div><input type="date" id="aStart" /></div>
     <div><div class="muted">Ende</div><input type="date" id="aEnd" /></div>
     <div>
@@ -263,7 +277,7 @@ th{text-align:left;color:#64748b}
     <button class="btn-ghost" id="addAbs">💾 Speichern</button>
   </div>
 
-  <div class="row" style="margin-top:12px" id="absRow2">
+  <div class="row" style="margin-top:12px">
     <div><div class="muted">Einzeltag löschen</div><input type="date" id="aDelDate" /></div>
     <button class="btn-ghost" id="delAbsDay">🗑️ Löschen</button>
     <span class="right muted mono" id="absMsg"></span>
@@ -274,9 +288,9 @@ th{text-align:left;color:#64748b}
 
 <!-- ENTRIES -->
 <div class="card" id="entries" style="display:none">
-  <h2 id="hEntries">🧾 Einträge</h2>
+  <h2>🧾 Einträge</h2>
 
-  <div class="row" id="entriesControls">
+  <div class="row">
     <div>
       <div class="muted">🧩 Filter</div>
       <select id="entriesFilter">
@@ -313,32 +327,13 @@ th{text-align:left;color:#64748b}
 
 <!-- SETTINGS -->
 <div class="card" id="settings" style="display:none">
-  <h2 id="hSettings">⚙️ Settings</h2>
-  <div class="muted" id="secHint">🔐 Lokal verschlüsselt · Entsperrt bleibt bis Safari geschlossen wird</div>
+  <h2>⚙️ Settings</h2>
+  <div class="muted">🔐 Entsperrt bleibt bis Safari geschlossen wird (Session).</div>
 
   <div class="row" style="margin-top:12px">
     <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
     <button class="btn-ghost" id="btnChangePin">🔁 PIN ändern</button>
     <button class="btn-ghost" id="btnNewRecovery">🧩 Recovery-Key</button>
-  </div>
-
-  <div class="row" style="margin-top:12px">
-    <div>
-      <div class="muted">😊 Emojis</div>
-      <select id="emojiMode">
-        <option value="fun" selected>Mehr</option>
-        <option value="pro">Weniger</option>
-        <option value="off">Aus</option>
-      </select>
-    </div>
-    <div>
-      <div class="muted">🧾 Header</div>
-      <select id="headerMode">
-        <option value="full" selected>Groß</option>
-        <option value="compact">Kompakt</option>
-        <option value="off">Aus</option>
-      </select>
-    </div>
   </div>
 
   <div class="row" style="margin-top:12px">
@@ -374,8 +369,8 @@ th{text-align:left;color:#64748b}
       <button class="btn-ghost" id="btnCopyRecovery" style="display:none">Recovery kopieren</button>
     </div>
 
-    <div class="muted" style="margin-top:10px" id="pinFooter">
-      🧩 PIN vergessen? → Recovery-Key nutzen. PIN+Recovery vergessen → nur Reset (Daten weg).
+    <div class="muted" style="margin-top:10px">
+      🧩 PIN vergessen? → Recovery-Key nutzen. Beides weg → nur Reset (Daten weg).
     </div>
 
     <div class="card" id="recoveryBox" style="display:none;margin-top:12px;background:#fbfbfb">
@@ -390,13 +385,11 @@ th{text-align:left;color:#64748b}
 (() => {
   const NS="ZEITERFASSUNG";
   const AUTO_BREAK=55;     // ✅ Auto-Pause 55 min
-  const TOL_WEEK_MIN=600;  // ✅ ±10h pro Woche ok
+  const TOL_WEEK_MIN=600;  // ✅ ±10h pro Woche ok (600 Minuten)
 
-  const EMOJI_PREF = NS+"::emoji_mode";
-  const HEADER_PREF= NS+"::header_mode";
   const VAULT_KEY = NS+"::vault_v1";
   const SESSION_MASTER = NS+"::session_master_raw";
-  const HOME_ICON_PNG_KEY = NS+"::home_icon_blue_clock_yellowz_png";
+  const YEAR_KEY = (y)=> NS+"::year::"+y;
 
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
@@ -415,7 +408,6 @@ th{text-align:left;color:#64748b}
     return s + pad(Math.floor(m/60)) + ":" + pad(m%60);
   };
 
-  // Tabs
   function tab(name){
     ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
       $(id).style.display=(id===name)?"":"none";
@@ -424,144 +416,10 @@ th{text-align:left;color:#64748b}
   }
   document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
 
-  // Emoji/Header mode
-  function getEmojiMode(){ return localStorage.getItem(EMOJI_PREF) || "fun"; }
-  function getHeaderMode(){ return localStorage.getItem(HEADER_PREF) || "full"; }
-
-  function applyHeaderMode(){
-    const mode=getHeaderMode();
-    const header=$("appHeader");
-    if(mode==="off"){ header.style.display="none"; return; }
-    header.style.display="";
-    $("topHint").style.display = (mode==="compact") ? "none" : "";
-  }
-
-  function applyEmojiMode(){
-    const mode=getEmojiMode();
-    const off = mode==="off";
-    const pro = mode==="pro";
-
-    const labels = {
-      timer:  off?"Timer":(pro?"Timer":"⏱️ Timer"),
-      overview:off?"Übersicht":(pro?"Übersicht":"📊 Übersicht"),
-      edit:   off?"Rückwirkend":(pro?"Rückwirkend":"🗓️ Rückwirkend"),
-      absence:off?"Abwesenheit":(pro?"Abwesenheit":"🏖️ Abwesenheit"),
-      entries:off?"Einträge":(pro?"Einträge":"🧾 Einträge"),
-      settings:off?"Settings":(pro?"Settings":"⚙️ Settings"),
-    };
-    document.querySelectorAll(".tab").forEach(el=>{
-      el.textContent = labels[el.dataset.tab] || el.textContent;
-    });
-
-    $("hTimer").textContent = labels.timer;
-    $("hOverview").textContent = labels.overview;
-    $("hEdit").textContent = labels.edit;
-    $("hAbs").textContent = labels.absence;
-    $("hEntries").textContent = labels.entries;
-    $("hSettings").textContent = labels.settings;
-
-    $("btnStart").textContent = off?"Start":(pro?"Start":"▶️ Start");
-    $("btnPause").textContent = off?"Pause":(pro?"Pause":"⏸️ Pause");
-    $("btnStop").textContent  = off?"Stop":(pro?"Stop":"⏹️ Stop");
-    $("saveName").textContent = off?"Speichern":(pro?"Speichern":"💾 Speichern");
-    $("saveMgr").textContent  = off?"Speichern":(pro?"Speichern":"💾 Speichern");
-    $("btnRefresh").textContent = off?"↻":(pro?"↻":"🔄");
-    $("btnCSV").textContent = off?"CSV":(pro?"CSV":"⬇️ CSV");
-    $("btnShare").textContent = off?"Teilen":(pro?"Teilen":"📤 Teilen");
-    $("btnPDF").textContent = off?"PDF":(pro?"PDF":"🖨️ PDF");
-    $("entriesExportCSV").textContent = off?"CSV":(pro?"CSV":"⬇️ CSV");
-  }
-
-  // ===== App Icon (Blue + clock + glowing yellow Z) =====
-  function svgToDataURL(svg){ return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim()); }
-  async function svgToPngDataURL(svg, size=1024){
-    const img = new Image();
-    img.decoding="async";
-    const url = svgToDataURL(svg);
-    await new Promise((res, rej)=>{ img.onload=res; img.onerror=()=>rej(new Error("ICON")); img.src=url; });
-    const canvas=document.createElement("canvas");
-    canvas.width=size; canvas.height=size;
-    const ctx=canvas.getContext("2d");
-    ctx.drawImage(img,0,0,size,size);
-    return canvas.toDataURL("image/png");
-  }
-  function homeIconSVG(){
-    const blue1="#0ea5e9", blue2="#2563eb";
-    const yellow="#facc15";
-    const white="#e5e7eb";
-    return `
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${blue1}"/>
-      <stop offset="1" stop-color="${blue2}"/>
-    </linearGradient>
-    <radialGradient id="shine" cx="50%" cy="30%" r="70%">
-      <stop offset="0" stop-color="rgba(255,255,255,0.28)"/>
-      <stop offset="1" stop-color="rgba(255,255,255,0)"/>
-    </radialGradient>
-    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
-      <feDropShadow dx="0" dy="22" stdDeviation="18" flood-color="#000" flood-opacity=".22"/>
-    </filter>
-    <filter id="zglow" x="-35%" y="-35%" width="170%" height="170%">
-      <feGaussianBlur stdDeviation="14" result="b"/>
-      <feColorMatrix in="b" type="matrix"
-        values="1 0 0 0 0
-                0 0.9 0 0 0
-                0 0 0.1 0 0
-                0 0 0 1 0" result="g"/>
-      <feMerge>
-        <feMergeNode in="g"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-
-  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
-  <rect width="1024" height="1024" rx="220" fill="url(#shine)"/>
-
-  <g filter="url(#zglow)" opacity="0.95">
-    <path d="M250 290H774V404L480 668H774V782H250V670L545 406H250V290Z"
-      fill="${yellow}"/>
-  </g>
-
-  <g filter="url(#shadow)">
-    <circle cx="512" cy="540" r="270" fill="rgba(11,18,32,0.20)" stroke="rgba(255,255,255,0.40)" stroke-width="10"/>
-    <circle cx="512" cy="540" r="250" fill="rgba(11,18,32,0.16)" stroke="rgba(255,255,255,0.25)" stroke-width="6"/>
-
-    <g stroke="rgba(255,255,255,0.65)" stroke-width="10" stroke-linecap="round">
-      <line x1="512" y1="300" x2="512" y2="335"/>
-      <line x1="512" y1="745" x2="512" y2="780"/>
-      <line x1="272" y1="540" x2="307" y2="540"/>
-      <line x1="717" y1="540" x2="752" y2="540"/>
-    </g>
-
-    <g stroke="${white}" stroke-width="18" stroke-linecap="round">
-      <line x1="512" y1="540" x2="512" y2="430"/>
-      <line x1="512" y1="540" x2="610" y2="590"/>
-    </g>
-
-    <circle cx="512" cy="540" r="16" fill="${white}"/>
-  </g>
-</svg>`;
-  }
-  async function initHomeIcon(){
-    try{
-      const ICON_VERSION="BLUECLOCK_ZGLOW_Y1";
-      const KEY = HOME_ICON_PNG_KEY + "::" + ICON_VERSION;
-      let png = localStorage.getItem(KEY);
-      if(!png){
-        png = await svgToPngDataURL(homeIconSVG(), 1024);
-        localStorage.setItem(KEY, png);
-      }
-      $("appleIcon").href = png;
-      $("faviconIcon").href = png;
-    }catch(e){}
-  }
-
-  // ===== Security / Vault =====
+  // ===== Security / Vault (PIN + Recovery) =====
   function hex(bytes){ return [...bytes].map(b=>b.toString(16).padStart(2,"0")).join(""); }
   function chunk(s,n){ return (s.match(new RegExp(".{1,"+n+"}","g"))||[]).join("-"); }
+
   async function pbkdf2KeyFromSecret(secret, saltBytes){
     const enc=new TextEncoder();
     const baseKey = await crypto.subtle.importKey("raw", enc.encode(secret), {name:"PBKDF2"}, false, ["deriveKey"]);
@@ -584,6 +442,7 @@ th{text-align:left;color:#64748b}
     const pt=await crypto.subtle.decrypt({name:"AES-GCM", iv:ub64(blob.iv)}, key, ub64(blob.ct));
     return JSON.parse(new TextDecoder().decode(pt));
   }
+
   function hasVault(){ return !!localStorage.getItem(VAULT_KEY); }
   async function getSessionMaster(){
     const raw=sessionStorage.getItem(SESSION_MASTER);
@@ -658,7 +517,6 @@ th{text-align:left;color:#64748b}
     return recovery;
   }
 
-  function yearKey(y){ return NS+"::year::"+y; }
   async function encryptJson(obj){
     const master=await getSessionMaster();
     if(!master) throw new Error("LOCKED");
@@ -670,28 +528,22 @@ th{text-align:left;color:#64748b}
     return await aesDecrypt(master, blob);
   }
   async function readYearState(y){
-    const raw=localStorage.getItem(yearKey(y));
-    if(!raw) return {emp:"", rec:"", recv:"", E:[], A:[]};
+    const raw=localStorage.getItem(YEAR_KEY(y));
+    if(!raw) return {emp:"", mgrName:"", mgrMail:"", E:[], A:[]};
     const obj=await decryptJson(JSON.parse(raw));
     return {
       emp: obj.emp || "",
-      rec: obj.rec || "",
-      recv: obj.recv || "",
+      mgrName: obj.mgrName || "",
+      mgrMail: obj.mgrMail || "",
       E: Array.isArray(obj.E)?obj.E:[],
       A: Array.isArray(obj.A)?obj.A:[]
     };
   }
   async function writeYearState(y, state){
-    localStorage.setItem(yearKey(y), JSON.stringify(await encryptJson(state)));
+    localStorage.setItem(YEAR_KEY(y), JSON.stringify(await encryptJson(state)));
   }
 
-  // ===== App state =====
-  let Y=new Date().getFullYear();
-  let S={emp:"", rec:"", recv:"", E:[], A:[]};
-  let run=null;
-  let editingId=null;
-
-  // Overlay
+  // Overlay UI
   function showOverlay(msg){
     $("ovl").style.display="flex";
     $("pinMsg").textContent="";
@@ -705,7 +557,13 @@ th{text-align:left;color:#64748b}
   }
   function hideOverlay(){ $("ovl").style.display="none"; }
 
-  // utils
+  // ===== App state =====
+  let Y=new Date().getFullYear();
+  let S={emp:"", mgrName:"", mgrMail:"", E:[], A:[]};
+  let run=null;
+  let editingId=null;
+  let aEndTouched=false;
+
   function parseISO(s){ const d=new Date(s); return isNaN(d.getTime())?null:d; }
   function fmtTimeHM(d){ if(!d) return "--:--"; return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
   function netMinutes(entry){
@@ -721,8 +579,8 @@ th{text-align:left;color:#64748b}
     Y=y;
     S=await readYearState(Y);
     $("empName").value=S.emp||"";
-    $("mgrName").value=S.rec||"";
-    $("mgrMail").value=S.recv||"";
+    $("mgrName").value=S.mgrName||"";
+    $("mgrMail").value=S.mgrMail||"";
     $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
     $("nameMsg").textContent=S.emp ? "✅ gespeichert" : "";
     $("pdfEmpName").textContent=S.emp || "—";
@@ -734,7 +592,7 @@ th{text-align:left;color:#64748b}
     $("timerStatus").className="badge"+(cls?(" "+cls):"");
   }
 
-  // Start/Pause/Stop
+  // ===== Timer: Start / Pause / Stop =====
   $("btnStart").onclick=async()=>{
     if(run) return alert("⛔ Timer läuft schon.");
     if(!S.emp) return alert("👤 Bitte Name speichern.");
@@ -750,7 +608,7 @@ th{text-align:left;color:#64748b}
     run={date:$("timerDate").value,start,pauseMin:0,pauseStart:null,note:($("timerNote").value||"").trim()};
     $("btnPause").disabled=false;
     setTimerStatus("🟢 läuft", "chip-ok");
-    $("timerInfo").textContent=`⏱️ Start ${fmtTimeHM(start)}`;
+    $("timerInfo").textContent=`Start ${fmtTimeHM(start)}`;
   };
 
   $("btnPause").onclick=()=>{
@@ -758,12 +616,12 @@ th{text-align:left;color:#64748b}
     const now=new Date(); now.setSeconds(0,0);
     if(!run.pauseStart){
       run.pauseStart=now;
-      $("btnPause").textContent = (getEmojiMode()==="off") ? "Weiter" : ((getEmojiMode()==="pro")?"Weiter":"▶️ Weiter");
+      $("btnPause").textContent="▶️ Weiter";
       setTimerStatus("⏸️ Pause", "chip-warn");
     }else{
       run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
       run.pauseStart=null;
-      $("btnPause").textContent = (getEmojiMode()==="off") ? "Pause" : ((getEmojiMode()==="pro")?"Pause":"⏸️ Pause");
+      $("btnPause").textContent="⏸️ Pause";
       setTimerStatus("🟢 läuft", "chip-ok");
     }
   };
@@ -785,8 +643,11 @@ th{text-align:left;color:#64748b}
 
     S.E.push({
       id:(crypto.randomUUID?crypto.randomUUID():"id_"+Date.now()),
-      d:run.date, s:run.start.toISOString(), e:end.toISOString(),
-      p:pause, n:run.note||""
+      d:run.date,
+      s:run.start.toISOString(),
+      e:end.toISOString(),
+      p:pause,
+      n:run.note||""
     });
 
     run=null;
@@ -798,7 +659,7 @@ th{text-align:left;color:#64748b}
     await renderAll();
   };
 
-  // Save name / manager
+  // Name & Manager speichern
   $("saveName").onclick=async()=>{
     S.emp=($("empName").value||"").trim();
     await saveYear();
@@ -807,13 +668,13 @@ th{text-align:left;color:#64748b}
     $("pdfEmpName").textContent=S.emp || "—";
   };
   $("saveMgr").onclick=async()=>{
-    S.rec=($("mgrName").value||"").trim();
-    S.recv=($("mgrMail").value||"").trim();
+    S.mgrName=($("mgrName").value||"").trim();
+    S.mgrMail=($("mgrMail").value||"").trim();
     await saveYear();
     alert("✅ Manager gespeichert");
   };
 
-  // Rückwirkend
+  // Rückwirkend: neu + speichern (mit Auto-Pause 55)
   $("newManual").onclick=()=>{
     editingId=null;
     $("eStart").value=""; $("eEnd").value=""; $("eNote").value="";
@@ -857,8 +718,7 @@ th{text-align:left;color:#64748b}
     await renderAll();
   };
 
-  // Abwesenheit (Zeitraum) + pro Tag max. 1 + Start=Ende default
-  let aEndTouched=false;
+  // Abwesenheit: Ende=Start default
   $("aEnd").addEventListener("change",()=>{aEndTouched=true});
   $("aStart").addEventListener("change",()=>{ if(!aEndTouched) $("aEnd").value=$("aStart").value; });
 
@@ -879,7 +739,7 @@ th{text-align:left;color:#64748b}
     const perYear=new Map();
 
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-      if(!wd(d)) continue;
+      if(!wd(d)) continue; // nur Mo–Fr
       const ds=toDateStr(d);
       const y=d.getFullYear();
 
@@ -887,17 +747,17 @@ th{text-align:left;color:#64748b}
       const st=perYear.get(y);
 
       const before=st.A.length;
-      st.A = st.A.filter(a=>a.d!==ds);
+      st.A = st.A.filter(a=>a.d!==ds); // ✅ max 1 pro Tag
       replaced += (before - st.A.length);
 
       st.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()+Math.random()), d:ds, t});
       added++;
     }
+
     for(const [y,st] of perYear.entries()) await writeYearState(y, st);
 
     await loadYear(getRefYear());
     await renderAll();
-
     $("absMsg").textContent = `✅ ${added} Tage gespeichert` + (replaced?` (♻️ ${replaced} ersetzt)`:"");
   };
 
@@ -916,10 +776,10 @@ th{text-align:left;color:#64748b}
     $("absMsg").textContent = removed ? `🗑️ ${removed} gelöscht` : "🤷 nichts gefunden";
   };
 
-  // Übersicht helpers
+  // Übersicht: Zeitraum & Summen
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
-    const monIndex=(d.getDay()+6)%7;
+    const monIndex=(d.getDay()+6)%7;           // Mo=0..So=6
     const start=new Date(d); start.setDate(d.getDate()-monIndex);
     const end=new Date(start); end.setDate(start.getDate()+6);
     start.setHours(0,0,0,0); end.setHours(0,0,0,0);
@@ -961,16 +821,16 @@ th{text-align:left;color:#64748b}
   async function getMergedForRange(start,end){
     const years=new Set([start.getFullYear(), end.getFullYear()]);
     const allE=[], allA=[];
-    let emp=S.emp||"", rec=S.rec||"", recv=S.recv||"";
+    let emp=S.emp||"", mgrName=S.mgrName||"", mgrMail=S.mgrMail||"";
     for(const y of years){
       const st=await readYearState(y);
       if(!emp && st.emp) emp=st.emp;
-      if(!rec && st.rec) rec=st.rec;
-      if(!recv && st.recv) recv=st.recv;
+      if(!mgrName && st.mgrName) mgrName=st.mgrName;
+      if(!mgrMail && st.mgrMail) mgrMail=st.mgrMail;
       allE.push(...(st.E||[]));
       allA.push(...(st.A||[]));
     }
-    return {allE,allA,emp,rec,recv};
+    return {allE,allA,emp,mgrName,mgrMail};
   }
 
   async function renderOverview(){
@@ -978,11 +838,14 @@ th{text-align:left;color:#64748b}
     const W=getWeeklyTargetMinutes();
     const DAY=W/5;
     const startS=toDateStr(start), endS=toDateStr(end);
-    const merged=await getMergedForRange(start,end);
-    const E=merged.allE, A=merged.allA;
 
     $("rangeHint").textContent = `${startS} → ${endS}`;
-    $("pdfRangeText").textContent = `${startS} → ${endS}`; // ✅ PDF
+    $("pdfRangeText").textContent = `${startS} → ${endS}`;
+
+    const merged=await getMergedForRange(start,end);
+    $("pdfEmpName").textContent = merged.emp || S.emp || "—";
+
+    const E=merged.allE, A=merged.allA;
 
     const istBy={};
     for(const e of E){
@@ -1011,15 +874,17 @@ th{text-align:left;color:#64748b}
       istSum += ist; sollSum += soll;
       if(isW) workdays++;
 
-      let abw = absTypes.length ? absTypes.map(t=>absBadge(t)).join(" ") : "";
-      if(isWeekend(d) && ist>0){
-        abw = (abw ? (abw+" ") : "") + `<span class="badge">🗓️ Wochenende</span>`;
-      }
+      const abw = absTypes.length ? absTypes.map(t=>absBadge(t)).join(" ") : "";
+
+      // ✅ WE: NICHT in Abw., sondern mini neben IST
+      const weBadge = (isWeekend(d) && ist>0)
+        ? `<span class="we-badge"><span class="we-emoji">🧑‍💻</span>WE</span>`
+        : "";
 
       html+=`<tr>
         <td class="mono">${ds}</td>
         <td>${dayNames[d.getDay()]}</td>
-        <td class="mono">${hhmm(ist)}</td>
+        <td class="mono">${hhmm(ist)}${weBadge}</td>
         <td class="mono">${hhmm(soll)}</td>
         <td>${abw}</td>
         <td class="mono">${hhmm(delta)}</td>
@@ -1033,13 +898,10 @@ th{text-align:left;color:#64748b}
     const cls = chipClassByWeeklyTolerance(delta, weeksEq);
 
     $("sumChip").className="badge "+cls;
-
-    /* ✅ zweizeilig, handyfreundlich */
     $("sumChip").innerHTML =
       `<div><b>${cls==="chip-ok"?"✅":"⚠️"} IST ${hhmm(istSum)}</b> · SOLL ${hhmm(sollSum)}</div>` +
       `<div>Δ ${hhmm(delta)} <span class="muted">(±10:00/Woche ok)</span></div>`;
 
-    /* ✅ PDF Zeile */
     $("pdfSumText").textContent = `IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)}`;
 
     $("avgChip").style.display = ($("mode").value==="month") ? "" : "none";
@@ -1049,7 +911,17 @@ th{text-align:left;color:#64748b}
     }
   }
 
-  // Einträge
+  // Abwesenheiten Liste
+  function renderAbsList(){
+    if(!S.A.length){ $("absList").innerHTML=`<div class="muted">🤷 Keine Abwesenheiten im Jahr ${Y}.</div>`; return; }
+    const arr=S.A.slice().sort((a,b)=>a.d.localeCompare(b.d));
+    let html=`<table><thead><tr><th>📅 Datum</th><th>🏷️ Typ</th></tr></thead><tbody>`;
+    for(const a of arr) html+=`<tr><td class="mono">${a.d}</td><td>${absBadge(a.t)}</td></tr>`;
+    html+=`</tbody></table>`;
+    $("absList").innerHTML=html;
+  }
+
+  // Einträge: Filter + Suche + Löschen
   function rangeForEntries(filter){
     const ref = $("refDate").value ? d0($("refDate").value) : new Date();
     if(filter==="week") return weekRangeISO(ref);
@@ -1060,7 +932,7 @@ th{text-align:left;color:#64748b}
       const s=d0(f), e=d0(t);
       return s<=e ? [s,e] : [e,s];
     }
-    return weekRangeISO(ref);
+    return monthRange(ref);
   }
   function normalizeSearch(s){ return (s||"").trim().toLowerCase(); }
   function safeText(s){ return (s??"").toString(); }
@@ -1079,7 +951,6 @@ th{text-align:left;color:#64748b}
   <td class="mono">${hhmm(net)}</td>
   <td>${safeText(e.n||"")}</td>
   <td>
-    <button class="btn-ghost btn-sm" data-edit="${e.id}">✍️</button>
     <button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button>
   </td>
 </tr>`;
@@ -1102,7 +973,6 @@ th{text-align:left;color:#64748b}
       const nm=netMinutes(e);
       if(Number.isFinite(nm)) sum += nm;
     }
-
     $("entriesSum").textContent = `🧾 ${startS} → ${endS} · ${entries.length} Einträge · Σ ${hhmm(sum)}`;
 
     if(!entries.length){
@@ -1120,7 +990,9 @@ th{text-align:left;color:#64748b}
     document.querySelectorAll("[data-del]").forEach(b=>{
       b.onclick=async()=>{
         const id=b.getAttribute("data-del");
-        for(const y of [start.getFullYear(), end.getFullYear(), Y]){
+        // ✅ Löschen kann über Jahresgrenzen liegen -> in allen betroffenen Jahren suchen
+        const years=[start.getFullYear(), end.getFullYear(), Y];
+        for(const y of [...new Set(years)]){
           const st=await readYearState(y);
           const before=st.E.length;
           st.E=st.E.filter(x=>x.id!==id);
@@ -1133,32 +1005,9 @@ th{text-align:left;color:#64748b}
         await renderAll();
       };
     });
-
-    document.querySelectorAll("[data-edit]").forEach(b=>{
-      b.onclick=async()=>{
-        const id=b.getAttribute("data-edit");
-        let found=null;
-        for(const y of [start.getFullYear(), end.getFullYear(), Y]){
-          const st=await readYearState(y);
-          const e=st.E.find(x=>x.id===id);
-          if(e){ found={y,e}; break; }
-        }
-        if(!found) return;
-        if(found.y!==Y) await loadYear(found.y);
-        editingId=id;
-
-        $("eDate").value=found.e.d;
-        const s=parseISO(found.e.s), en=parseISO(found.e.e);
-        $("eStart").value = s ? `${pad(s.getHours())}:${pad(s.getMinutes())}` : "";
-        $("eEnd").value = en ? `${pad(en.getHours())}:${pad(en.getMinutes())}` : "";
-        $("eNote").value = found.e.n || "";
-        $("editMsg").textContent="✍️ Bearbeiten aktiv";
-        tab("edit");
-      };
-    });
   }
 
-  // CSV + Share + PDF
+  // CSV / Share / PDF
   function csvSafe(s){
     s=safeText(s);
     const t=s.trimStart();
@@ -1184,8 +1033,8 @@ th{text-align:left;color:#64748b}
         Number.isFinite(nm)?String(Math.round(nm)):"",
         hhmm(nm),
         csvSafe(e.n||""),
-        csvSafe(merged.rec||S.rec||""),
-        csvSafe(merged.recv||S.recv||"")
+        csvSafe(merged.mgrName||S.mgrName||""),
+        csvSafe(merged.mgrMail||S.mgrMail||"")
       ].join(sep));
     }
     return rows.join("\n");
@@ -1200,6 +1049,8 @@ th{text-align:left;color:#64748b}
     a.download=`Zeiterfassung_${$("mode").value}_${$("refDate").value}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
   };
+  $("entriesExportCSV").onclick=async()=>{ $("btnCSV").click(); };
+
   $("btnShare").onclick=async()=>{
     if(!S.emp) return alert("👤 Bitte Name speichern.");
     const csv=await buildCSV();
@@ -1210,13 +1061,14 @@ th{text-align:left;color:#64748b}
     }
     alert("📤 Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
   };
+
   $("btnPDF").onclick=async()=>{
     await renderOverview();
     tab("overview");
     setTimeout(()=>window.print(), 200);
   };
 
-  // Settings
+  // Settings actions
   $("btnLock").onclick=()=>{
     clearSessionMaster();
     showOverlay("🔒 Gesperrt. Entsperre mit PIN oder Recovery-Key.");
@@ -1243,7 +1095,7 @@ th{text-align:left;color:#64748b}
   $("btnResetThisYear").onclick=async()=>{
     const yr=getRefYear();
     if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
-      localStorage.removeItem(yearKey(yr));
+      localStorage.removeItem(YEAR_KEY(yr));
       await loadYear(getRefYear());
       await renderAll();
       alert("✅ Jahr gelöscht");
@@ -1254,7 +1106,7 @@ th{text-align:left;color:#64748b}
       const del=[];
       for(let i=0;i<localStorage.length;i++){
         const k=localStorage.key(i);
-        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY || k.startsWith(HOME_ICON_PNG_KEY) || k===EMOJI_PREF || k===HEADER_PREF)) del.push(k);
+        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY)) del.push(k);
       }
       del.forEach(k=>localStorage.removeItem(k));
       clearSessionMaster();
@@ -1263,17 +1115,24 @@ th{text-align:left;color:#64748b}
     }
   };
 
-  // Emoji/Header selects
-  $("emojiMode").onchange=()=>{
-    localStorage.setItem(EMOJI_PREF, $("emojiMode").value);
-    applyEmojiMode();
-  };
-  $("headerMode").onchange=()=>{
-    localStorage.setItem(HEADER_PREF, $("headerMode").value);
-    applyHeaderMode();
-  };
+  // Entries controls
+  function updateEntriesCustomVisibility(){
+    const isCustom = $("entriesFilter").value==="custom";
+    $("entriesFromWrap").style.display = isCustom ? "" : "none";
+    $("entriesToWrap").style.display = isCustom ? "" : "none";
+  }
+  $("entriesFilter").onchange=async()=>{ updateEntriesCustomVisibility(); await renderEntries(); };
+  $("entriesSearch").oninput=async()=>{ await renderEntries(); };
+  $("entriesFrom").onchange=async()=>{ await renderEntries(); };
+  $("entriesTo").onchange=async()=>{ await renderEntries(); };
 
-  // Overlay actions
+  // Refresh wiring
+  $("btnRefresh").onclick=async()=>{ await renderAll(); };
+  $("mode").onchange=async()=>{ await renderAll(); };
+  $("weeklyTarget").onchange=async()=>{ await renderAll(); };
+  $("refDate").onchange=async()=>{ await loadYear(getRefYear()); await renderAll(); };
+
+  // PIN overlay actions
   $("btnUnlock").onclick=async()=>{
     try{
       if(!hasVault()){ $("pinMsg").textContent="⚠️ Bitte PIN setzen."; return; }
@@ -1305,33 +1164,7 @@ th{text-align:left;color:#64748b}
     }catch{ $("pinMsg").textContent="❌ Fehler"; }
   };
 
-  // Entries controls
-  function updateEntriesCustomVisibility(){
-    const isCustom = $("entriesFilter").value==="custom";
-    $("entriesFromWrap").style.display = isCustom ? "" : "none";
-    $("entriesToWrap").style.display = isCustom ? "" : "none";
-  }
-  $("entriesFilter").onchange=async()=>{ updateEntriesCustomVisibility(); await renderEntries(); };
-  $("entriesSearch").oninput=async()=>{ await renderEntries(); };
-  $("entriesFrom").onchange=async()=>{ await renderEntries(); };
-  $("entriesTo").onchange=async()=>{ await renderEntries(); };
-
-  // Refresh wiring
-  $("btnRefresh").onclick=async()=>{ await renderAll(); };
-  $("mode").onchange=async()=>{ await renderAll(); };
-  $("weeklyTarget").onchange=async()=>{ await renderAll(); };
-  $("refDate").onchange=async()=>{ await loadYear(getRefYear()); await renderAll(); };
-
-  // Abs list
-  function renderAbsList(){
-    if(!S.A.length){ $("absList").innerHTML=`<div class="muted">🤷 Keine Abwesenheiten im Jahr ${Y}.</div>`; return; }
-    const arr=S.A.slice().sort((a,b)=>a.d.localeCompare(b.d));
-    let html=`<table><thead><tr><th>📅 Datum</th><th>🏷️ Typ</th></tr></thead><tbody>`;
-    for(const a of arr) html+=`<tr><td class="mono">${a.d}</td><td>${absBadge(a.t)}</td></tr>`;
-    html+=`</tbody></table>`;
-    $("absList").innerHTML=html;
-  }
-
+  // Render all
   async function renderAll(){
     $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
     $("pdfEmpName").textContent = S.emp || "—";
@@ -1355,12 +1188,6 @@ th{text-align:left;color:#64748b}
   updateEntriesCustomVisibility();
 
   // Boot
-  $("emojiMode").value = getEmojiMode();
-  $("headerMode").value = getHeaderMode();
-  applyEmojiMode();
-  applyHeaderMode();
-  initHomeIcon();
-
   (async()=>{
     if(!await getSessionMaster()){
       showOverlay(hasVault()
