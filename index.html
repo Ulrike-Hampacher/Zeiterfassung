@@ -962,8 +962,30 @@ th{text-align:left;color:#64748b}
   };
 
   /* ---------- Abwesenheit ---------- */
-  $("aEnd").addEventListener("change",()=>{aEndTouched=true});
-  $("aStart").addEventListener("change",()=>{ if(!aEndTouched) $("aEnd").value=$("aStart").value; });
+let aEndTouched = false;
+
+// Ende gilt nur als "manuell", wenn User wirklich eintippt/ändert
+$("aEnd").addEventListener("input", () => { aEndTouched = true; });
+
+// Start ändert -> Ende automatisch mitziehen (solange Ende nicht manuell geändert wurde)
+$("aStart").addEventListener("input", () => {
+  if (!aEndTouched) $("aEnd").value = $("aStart").value;
+});
+
+// Sicherheit: wenn Ende leer oder kleiner als Start -> korrigieren und wieder koppeln
+$("aStart").addEventListener("change", () => {
+  const s = $("aStart").value;
+  const e = $("aEnd").value;
+  if (!e || e < s) {
+    $("aEnd").value = s;
+    aEndTouched = false;
+  }
+});
+
+// Wenn Ende wieder gleich Start -> wieder koppeln
+$("aEnd").addEventListener("change", () => {
+  if ($("aEnd").value === $("aStart").value) aEndTouched = false;
+});
 
   function renderAbsList(){
     if(!S.A.length){
