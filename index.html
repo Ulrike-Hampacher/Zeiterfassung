@@ -1251,11 +1251,31 @@ th{text-align:left;color:#64748b}
     alert("📤 Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
   };
 
-  $("btnPDF").onclick=async()=>{
-    await renderOverview();
+  $("btnPDF").onclick = async () => {
+  try {
+    // 1) sicher auf Übersicht wechseln
     tab("overview");
-    setTimeout(()=>window.print(), 200);
-  };
+
+    // 2) Daten neu rendern
+    await renderOverview();
+
+    // 3) iOS/Safari braucht manchmal einen Tick länger
+    setTimeout(() => {
+      window.print();
+    }, 350);
+
+    // 4) Hinweis für iPhone Nutzer (nur kurz)
+    const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isiOS) {
+      setTimeout(() => {
+        alert("🖨️ PDF-Tipp (iPhone): Im Druckdialog auf ‘Teilen’ → ‘In Dateien sichern’ (oder ‘In Books’).");
+      }, 800);
+    }
+  } catch (e) {
+    alert("❌ PDF konnte nicht gestartet werden. Bitte erneut versuchen.");
+    console.error(e);
+  }
+};
 
   // Settings
   $("btnLock").onclick=()=>{
