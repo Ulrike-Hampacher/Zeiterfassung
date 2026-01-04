@@ -213,7 +213,7 @@
     </div>
 
     <div class="muted" style="margin-top:10px">
-      🟢 bis ±5:00/Woche · 🟡 bis ±10:00/Woche · 🔴 darüber · Urlaub/Krank/Feiertag wird als Tages-Soll angerechnet (reduziert Wochenzeit nicht).
+      🟢 bis ±5:00/Woche · 🟡 bis ±10:00/Woche · 🔴 darüber · Abwesenheit (Urlaub/Krank/Feiertag/Ausgleichstag) wird als Tages-Soll angerechnet.
     </div>
 
     <div id="managerBlock" style="margin-top:14px">
@@ -360,6 +360,16 @@
         </div>
       </div>
 
+      <!-- ✅ NEU: Ausgleichstag -->
+      <div style="min-width:150px">
+        <div class="muted">Ausgleichstag</div>
+        <div class="row" style="gap:6px">
+          <button class="btn-ghost btn-sm" id="compMinus">➖</button>
+          <select id="compPick"></select>
+          <button class="btn-ghost btn-sm" id="compPlus">➕</button>
+        </div>
+      </div>
+
       <button class="btn-ghost" id="saveEmoji">💾 Speichern</button>
       <button class="btn-ghost" id="resetEmoji">↩️ Standard</button>
     </div>
@@ -425,12 +435,13 @@
   const SESSION_MASTER = NS+"::session_master_raw";
   const YEAR_KEY = (y)=> NS+"::year::"+y;
 
-  const DEFAULT_EMOJI = { we:"🧑‍💻", vac:"🏖️", sick:"🤒", hol:"🎉" };
+  const DEFAULT_EMOJI = { we:"🧑‍💻", vac:"🏖️", sick:"🤒", hol:"🎉", comp:"⚖️" };
   const PICKS = {
     we:   ["(aus)","🧑‍💻","💼","⚡️","🛠️","🕒"],
     vac:  ["(aus)","🏖️","🌴","✈️","⛱️","🌞"],
     sick: ["(aus)","🤒","🩺","😷","💊","🛌"],
-    hol:  ["(aus)","🎉","📅","🎊","⭐️","🏛️"]
+    hol:  ["(aus)","🎉","📅","🎊","⭐️","🏛️"],
+    comp: ["(aus)","⚖️","🔁","🧘","✅","🕊️"]
   };
 
   /* =======================
@@ -660,12 +671,14 @@
     i = (i + dir + arr.length) % arr.length;
     sel.value = arr[i];
   }
+
   function refreshAbsenceDropdown(){
     const saved = (S.emojis || {});
     const em = {
       vac:  emojiDisplay(saved.vac,  DEFAULT_EMOJI.vac),
       sick: emojiDisplay(saved.sick, DEFAULT_EMOJI.sick),
       hol:  emojiDisplay(saved.hol,  DEFAULT_EMOJI.hol),
+      comp: emojiDisplay(saved.comp, DEFAULT_EMOJI.comp),
     };
     const s=$("aType");
     const cur=s.value || "vac";
@@ -674,6 +687,7 @@
       {v:"vac",  t:`${em.vac  ? em.vac+" "  : ""}Urlaub`},
       {v:"sick", t:`${em.sick ? em.sick+" " : ""}Krank`},
       {v:"hol",  t:`${em.hol  ? em.hol+" "  : ""}Feiertag`},
+      {v:"comp", t:`${em.comp ? em.comp+" " : ""}Ausgleichstag`},
     ];
     for(const o of opts){
       const op=document.createElement("option");
@@ -681,17 +695,22 @@
       op.textContent=o.t;
       s.appendChild(op);
     }
-    s.value = ["vac","sick","hol"].includes(cur) ? cur : "vac";
+    s.value = ["vac","sick","hol","comp"].includes(cur) ? cur : "vac";
   }
+
   function loadEmojiUI(){
     fillSelect($("wePick"), PICKS.we);
     fillSelect($("vacPick"), PICKS.vac);
     fillSelect($("sickPick"), PICKS.sick);
     fillSelect($("holPick"), PICKS.hol);
+    fillSelect($("compPick"), PICKS.comp);
+
     setPick($("wePick"), PICKS.we, S.emojis.we);
     setPick($("vacPick"), PICKS.vac, S.emojis.vac);
     setPick($("sickPick"), PICKS.sick, S.emojis.sick);
     setPick($("holPick"), PICKS.hol, S.emojis.hol);
+    setPick($("compPick"), PICKS.comp, S.emojis.comp);
+
     refreshAbsenceDropdown();
   }
 
@@ -703,13 +722,16 @@
   $("sickPlus").onclick =()=>cyclePick($("sickPick"), PICKS.sick, +1);
   $("holMinus").onclick=()=>cyclePick($("holPick"), PICKS.hol, -1);
   $("holPlus").onclick =()=>cyclePick($("holPick"), PICKS.hol, +1);
+  $("compMinus").onclick=()=>cyclePick($("compPick"), PICKS.comp, -1);
+  $("compPlus").onclick =()=>cyclePick($("compPick"), PICKS.comp, +1);
 
   $("saveEmoji").onclick = async ()=>{
     S.emojis = {
-      we:  emojiOrMarker($("wePick").value),
-      vac: emojiOrMarker($("vacPick").value),
-      sick:emojiOrMarker($("sickPick").value),
-      hol: emojiOrMarker($("holPick").value),
+      we:   emojiOrMarker($("wePick").value),
+      vac:  emojiOrMarker($("vacPick").value),
+      sick: emojiOrMarker($("sickPick").value),
+      hol:  emojiOrMarker($("holPick").value),
+      comp: emojiOrMarker($("compPick").value),
     };
     await saveYear();
     loadEmojiUI();
@@ -857,7 +879,7 @@
     S.E.push({
       id:(crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
       d, s:s.toISOString(), e:e.toISOString(),
-      p:(gross>=AUTO_BREAK?AUTO_BREAK:0),
+      p:0, // ✅ Rückwirkend ohne Auto-Pause
       n:($("eNote").value||"").trim()
     });
 
@@ -897,16 +919,18 @@
     }
     const saved=S.emojis||{};
     const em={
-      vac: emojiDisplay(saved.vac, DEFAULT_EMOJI.vac),
-      sick:emojiDisplay(saved.sick,DEFAULT_EMOJI.sick),
-      hol: emojiDisplay(saved.hol, DEFAULT_EMOJI.hol),
+      vac:  emojiDisplay(saved.vac,  DEFAULT_EMOJI.vac),
+      sick: emojiDisplay(saved.sick, DEFAULT_EMOJI.sick),
+      hol:  emojiDisplay(saved.hol,  DEFAULT_EMOJI.hol),
+      comp: emojiDisplay(saved.comp, DEFAULT_EMOJI.comp),
     };
     const arr=S.A.slice().sort((a,b)=>a.d.localeCompare(b.d));
     let html=`<div class="table-wrap"><table><thead><tr><th>📅 Datum</th><th>🏷️ Typ</th></tr></thead><tbody>`;
     for(const a of arr){
-      const t = a.t==="vac" ? smallBadge(em.vac,"Urlaub")
-              : a.t==="sick"? smallBadge(em.sick,"Krank")
-              :              smallBadge(em.hol,"Feiertag");
+      const t = a.t==="vac"  ? smallBadge(em.vac,"Urlaub")
+              : a.t==="sick" ? smallBadge(em.sick,"Krank")
+              : a.t==="comp" ? smallBadge(em.comp,"Ausgleichstag")
+              :               smallBadge(em.hol,"Feiertag");
       html+=`<tr><td class="mono">${a.d}</td><td>${t}</td></tr>`;
     }
     html+=`</tbody></table></div>`;
@@ -1040,6 +1064,7 @@
       vac:  emojiDisplay(saved.vac,  DEFAULT_EMOJI.vac),
       sick: emojiDisplay(saved.sick, DEFAULT_EMOJI.sick),
       hol:  emojiDisplay(saved.hol,  DEFAULT_EMOJI.hol),
+      comp: emojiDisplay(saved.comp, DEFAULT_EMOJI.comp),
     };
 
     // IST pro Tag
@@ -1057,7 +1082,7 @@
     for (const a of (merged.allA || [])) {
       if (!a || !a.d || !a.t) continue;
       if (a.d < startS || a.d > endS) continue;
-      const t = (a.t === "vac" || a.t === "sick" || a.t === "hol") ? a.t : null;
+      const t = (a.t === "vac" || a.t === "sick" || a.t === "hol" || a.t === "comp") ? a.t : null;
       if (!t) continue;
       if (!absBy[a.d]) absBy[a.d] = new Set();
       absBy[a.d].add(t);
@@ -1094,9 +1119,10 @@
 
       const abw = absTypes.length
         ? absTypes.map(t=>(
-            t==="vac" ? smallBadge(em.vac,"Urlaub") :
-            t==="sick"? smallBadge(em.sick,"Krank") :
-                        smallBadge(em.hol,"Feiertag")
+            t==="vac"  ? smallBadge(em.vac,"Urlaub") :
+            t==="sick" ? smallBadge(em.sick,"Krank") :
+            t==="comp" ? smallBadge(em.comp,"Ausgl.") :
+                         smallBadge(em.hol,"Feiertag")
           )).join(" ")
         : "";
 
@@ -1362,7 +1388,7 @@
       if(!master){ alert("🔐 Bitte zuerst entsperren."); return; }
       const rec = await rotateRecovery();
       alert("🧩 Neuer Recovery-Key:\n\n" + rec + "\n\nBitte sofort speichern!");
-    }catch{ alert("❌ Konnte Recovery-Key nicht erzeugen"); }
+    }catch{ alert("❌ Konnte Recovery-Key nicht erzeugt werden"); }
   };
 
   $("btnResetThisYear").onclick=async()=>{
