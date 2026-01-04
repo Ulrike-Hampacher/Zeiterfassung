@@ -1253,27 +1253,25 @@ th{text-align:left;color:#64748b}
 
   $("btnPDF").onclick = async () => {
   try {
-    // 1) sicher auf Übersicht wechseln
+    // 1) immer zuerst auf Übersicht
     tab("overview");
 
-    // 2) Daten neu rendern
+    // 2) Daten neu berechnen / rendern
     await renderOverview();
 
-    // 3) iOS/Safari braucht manchmal einen Tick länger
+    // 3) Safari/iOS: braucht oft 2 Frames + kleinen Delay
+    await new Promise(r => requestAnimationFrame(() => r()));
+    await new Promise(r => requestAnimationFrame(() => r()));
+
+    // 4) minimal warten, damit Tabellen fertig "stehen"
     setTimeout(() => {
+      // 5) Druckdialog -> dort "Teilen" -> "In Dateien sichern" = PDF
       window.print();
     }, 350);
 
-    // 4) Hinweis für iPhone Nutzer (nur kurz)
-    const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    if (isiOS) {
-      setTimeout(() => {
-        alert("🖨️ PDF-Tipp (iPhone): Im Druckdialog auf ‘Teilen’ → ‘In Dateien sichern’ (oder ‘In Books’).");
-      }, 800);
-    }
   } catch (e) {
-    alert("❌ PDF konnte nicht gestartet werden. Bitte erneut versuchen.");
     console.error(e);
+    alert("❌ PDF konnte nicht gestartet werden.");
   }
 };
 
