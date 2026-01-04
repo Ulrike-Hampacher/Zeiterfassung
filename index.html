@@ -11,7 +11,6 @@
 <meta name="theme-color" content="#0b1220" />
 <meta name="robots" content="noindex,nofollow" />
 
-<!-- Icon Links: werden per JS gesetzt (blau + Uhr + gelbes Z) -->
 <link id="appleIcon" rel="apple-touch-icon" href="">
 <link id="faviconIcon" rel="icon" href="">
 
@@ -69,23 +68,39 @@ table{width:100%;border-collapse:collapse}
 th,td{padding:8px;border-bottom:1px solid #eef2f7;font-size:14px;vertical-align:top}
 th{text-align:left;color:#64748b}
 
+/* ✅ table wrapper: nix ragt raus */
+.table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:14px}
+.table-wrap table{min-width:560px}
+
+/* kompakter auf Handy */
+@media(max-width:430px){
+  th,td{padding:6px;font-size:13px}
+  .table-wrap table{min-width:520px}
+}
+@media(max-width:360px){
+  th,td{padding:5px;font-size:12px}
+  .table-wrap table{min-width:500px}
+}
+
+/* Felder */
 .w-emp{width:220px;max-width:220px}
 .w-save{width:170px;max-width:170px}
-.w-note{width:160px;max-width:160px}
-.w-edit-note{width:210px;max-width:210px;height:44px}
+.w-note{width:150px;max-width:150px}
+.w-edit-note{width:200px;max-width:200px;height:44px}
 
-.w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
-.w-mgr-mail{width:360px;max-width:88vw;min-width:320px;margin-left:-11px}
+/* ✅ Manager weiter nach links */
+.w-mgr-name{width:180px;max-width:180px;margin-left:-10px}
+.w-mgr-mail{width:360px;max-width:88vw;min-width:320px;margin-left:-13px}
 
 @media(max-width:360px){
   .w-emp{width:210px;max-width:210px}
-  .w-note{width:150px;max-width:150px}
-  .w-edit-note{width:200px;max-width:200px}
-  .w-mgr-name{width:180px;max-width:180px;margin-left:-7px}
-  .w-mgr-mail{min-width:320px;margin-left:-11px}
+  .w-note{width:145px;max-width:145px}
+  .w-edit-note{width:190px;max-width:190px}
+  .w-mgr-name{width:170px;max-width:170px;margin-left:-10px}
+  .w-mgr-mail{min-width:320px;margin-left:-13px}
 }
 
-/* ✅ Übersicht Summe: zweizeilig / handyfreundlich */
+/* ✅ Übersicht Summe zweizeilig */
 #sumChip{
   white-space:normal !important;
   line-height:1.25;
@@ -94,31 +109,40 @@ th{text-align:left;color:#64748b}
 }
 #overviewControls{ row-gap:16px; }
 
-/* ✅ Abw/WE Badge (kompakt) */
+/* ✅ kompakte Badges (Abwesenheit, WE) */
 .small-badge{
   display:inline-flex;align-items:center;gap:4px;
-  margin-right:6px;
-  padding:2px 7px;
-  border-radius:999px;
-  font-size:11px;
-  font-weight:800;
+  padding:2px 7px;border-radius:999px;
+  font-size:11px;font-weight:800;
   line-height:1.2;
-  background:#eef2f7;
-  color:#111827;
+  background:#eef2f7;color:#111827;
   border:1px solid rgba(0,0,0,.10);
-  vertical-align:middle;
-  white-space:nowrap;
+  vertical-align:middle; white-space:nowrap;
 }
 .small-badge .e{font-size:12px;line-height:1}
 
-/* ✅ EINTRÄGE: Suche “ins Minus” + Badge darunter auch */
-.entries-search-wrap{ margin-left:auto; margin-right:-18px; }
-.entries-sum-wrap{ margin-left:auto; margin-right:-18px; }
+/* ✅ Einträge: Suche + Badge weiter nach links (weg vom Rand) */
+.entries-search-wrap{ margin-left:auto; margin-right:-6px; }
+.entries-sum-wrap{ margin-left:auto; margin-right:-6px; }
 @media(max-width:420px){
-  .entries-search-wrap{ margin-right:-22px; }
-  .entries-sum-wrap{ margin-right:-22px; }
+  .entries-search-wrap{ margin-right:-8px; }
+  .entries-sum-wrap{ margin-right:-8px; }
 }
 #entriesSearch{ width:min(340px, 78vw); }
+
+/* ✅ Notiz-Spalte: Badge + Text sauber in einer Zeile */
+.note-cell{
+  display:flex; align-items:center; gap:6px;
+  max-width:260px;
+}
+.note-text{
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  max-width:200px;
+}
+@media(max-width:430px){
+  .note-cell{max-width:220px}
+  .note-text{max-width:160px}
+}
 
 /* PIN overlay */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
@@ -135,7 +159,6 @@ th{text-align:left;color:#64748b}
   #overviewControls, #btnRefresh, #btnCSV, #btnShare, #btnPDF {display:none !important;}
   #managerBlock {display:none !important;} /* ✅ Manager NICHT im PDF */
   #topHint{display:none !important;}
-  a[href]:after{content:""}
 }
 </style>
 </head>
@@ -194,16 +217,9 @@ th{text-align:left;color:#64748b}
 <div class="card" id="overview" style="display:none">
   <h2>📊 Übersicht</h2>
 
-  <!-- PDF Kopf -->
-  <div class="muted" style="margin-top:6px;">
-    👤 Mitarbeiter: <span id="pdfEmpName">—</span>
-  </div>
-  <div class="muted" style="margin-top:4px;">
-    📅 Zeitraum: <span id="pdfRangeText">—</span>
-  </div>
-  <div class="muted" style="margin-top:4px;">
-    ⏱️ IST/SOLL/Δ: <span id="pdfSumText">—</span>
-  </div>
+  <div class="muted" style="margin-top:6px;">👤 Mitarbeiter: <span id="pdfEmpName">—</span></div>
+  <div class="muted" style="margin-top:4px;">📅 Zeitraum: <span id="pdfRangeText">—</span></div>
+  <div class="muted" style="margin-top:4px;">⏱️ IST/SOLL/Δ: <span id="pdfSumText">—</span></div>
 
   <div class="row" id="overviewControls" style="margin-top:12px">
     <div>
@@ -235,12 +251,10 @@ th{text-align:left;color:#64748b}
 
   <div class="row" style="margin-top:12px">
     <span class="badge" id="sumChip">—</span>
-    <!-- ✅ (2) WE Badge oben -->
     <span class="badge" id="weChip" style="display:none">—</span>
     <span class="badge right" id="avgChip" style="display:none">—</span>
   </div>
 
-  <!-- Manager: in App sichtbar, im PDF verborgen -->
   <div id="managerBlock" style="margin-top:14px">
     <h2>👔 Manager</h2>
     <div class="row">
@@ -281,11 +295,7 @@ th{text-align:left;color:#64748b}
     <div><div class="muted">Ende</div><input type="date" id="aEnd" /></div>
     <div>
       <div class="muted">Typ</div>
-      <select id="aType">
-        <option value="vac">Urlaub</option>
-        <option value="sick">Krank</option>
-        <option value="hol">Feiertag</option>
-      </select>
+      <select id="aType"></select>
     </div>
     <button class="btn-ghost" id="addAbs">💾 Speichern</button>
   </div>
@@ -324,7 +334,6 @@ th{text-align:left;color:#64748b}
       <input type="date" id="entriesTo" />
     </div>
 
-    <!-- ✅ Suche weiter “ins Minus” -->
     <div class="entries-search-wrap">
       <div class="muted">🔎 Suche (Notiz)</div>
       <input id="entriesSearch" placeholder="z.B. Urlaub / Workshop" />
@@ -332,7 +341,6 @@ th{text-align:left;color:#64748b}
   </div>
 
   <div class="row" style="margin-top:10px">
-    <!-- ✅ Badge darunter ebenfalls an Rand -->
     <div class="entries-sum-wrap">
       <span class="badge" id="entriesSum">—</span>
     </div>
@@ -349,1135 +357,4 @@ th{text-align:left;color:#64748b}
 
   <div class="row" style="margin-top:12px">
     <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
-    <button class="btn-ghost" id="btnChangePin">🔁 PIN ändern</button>
-    <button class="btn-ghost" id="btnNewRecovery">🧩 Recovery-Key</button>
-  </div>
-
-  <h2>😀 Emojis</h2>
-  <div class="muted">➖ / ➕ / AUS (wählbar, kein Tippen)</div>
-
-  <div class="row" style="margin-top:10px">
-    <div style="min-width:150px">
-      <div class="muted">Wochenende</div>
-      <div class="row" style="gap:6px">
-        <button class="btn-ghost btn-sm" id="weMinus">➖</button>
-        <select id="wePick"></select>
-        <button class="btn-ghost btn-sm" id="wePlus">➕</button>
-      </div>
-    </div>
-
-    <div style="min-width:150px">
-      <div class="muted">Urlaub</div>
-      <div class="row" style="gap:6px">
-        <button class="btn-ghost btn-sm" id="vacMinus">➖</button>
-        <select id="vacPick"></select>
-        <button class="btn-ghost btn-sm" id="vacPlus">➕</button>
-      </div>
-    </div>
-
-    <div style="min-width:150px">
-      <div class="muted">Krank</div>
-      <div class="row" style="gap:6px">
-        <button class="btn-ghost btn-sm" id="sickMinus">➖</button>
-        <select id="sickPick"></select>
-        <button class="btn-ghost btn-sm" id="sickPlus">➕</button>
-      </div>
-    </div>
-
-    <div style="min-width:150px">
-      <div class="muted">Feiertag</div>
-      <div class="row" style="gap:6px">
-        <button class="btn-ghost btn-sm" id="holMinus">➖</button>
-        <select id="holPick"></select>
-        <button class="btn-ghost btn-sm" id="holPlus">➕</button>
-      </div>
-    </div>
-
-    <button class="btn-ghost" id="saveEmoji">💾 Speichern</button>
-    <button class="btn-ghost" id="resetEmoji">↩️ Standard</button>
-  </div>
-
-  <div class="row" style="margin-top:12px">
-    <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
-    <button class="btn-ghost" id="btnResetAll">🧨 Alles löschen</button>
-  </div>
-</div>
-
-<!-- PIN Overlay -->
-<div class="overlay" id="ovl">
-  <div class="modal">
-    <h2>Zeiterfassung entsperren</h2>
-    <div class="muted" id="ovlText">Bitte PIN eingeben.</div>
-
-    <div style="margin-top:10px;display:flex;justify-content:center">
-      <input id="pinInput" class="pin" inputmode="text" maxlength="80" placeholder="PIN oder Recovery-Key" autocomplete="off" />
-    </div>
-
-    <div class="row" style="margin-top:8px">
-      <div>
-        <div class="muted">🔐 Entsperren mit</div>
-        <select id="authMode">
-          <option value="pin" selected>PIN</option>
-          <option value="recovery">Recovery-Key</option>
-        </select>
-      </div>
-      <span class="right muted mono" id="pinMsg"></span>
-    </div>
-
-    <div class="row" style="margin-top:10px">
-      <button class="btn-blue" id="btnUnlock">Entsperren</button>
-      <button class="btn-ghost" id="btnSetPin">PIN setzen</button>
-      <button class="btn-ghost" id="btnCopyRecovery" style="display:none">Recovery kopieren</button>
-    </div>
-
-    <div class="muted" style="margin-top:10px">
-      🧩 PIN vergessen? → Recovery-Key nutzen. Beides weg → nur Reset (Daten weg).
-    </div>
-
-    <div class="card" id="recoveryBox" style="display:none;margin-top:12px;background:#fbfbfb">
-      <h2>Dein Recovery-Key</h2>
-      <div class="muted">Bitte in Passwortmanager speichern.</div>
-      <div class="mono" id="recoveryText" style="margin-top:8px;font-size:16px;font-weight:900"></div>
-    </div>
-  </div>
-</div>
-
-<script>
-(() => {
-  // =========================================================
-  // (1) APP ICON: Blau + Uhr + gelbes Z (wie “vorhin”)
-  // =========================================================
-  function svgToDataURL(svg){ return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim()); }
-  async function svgToPngDataURL(svg, size=512){
-    const img = new Image();
-    img.decoding="async";
-    const url = svgToDataURL(svg);
-    await new Promise((res, rej)=>{ img.onload=res; img.onerror=()=>rej(new Error("ICON")); img.src=url; });
-    const canvas=document.createElement("canvas");
-    canvas.width=size; canvas.height=size;
-    const ctx=canvas.getContext("2d");
-    ctx.drawImage(img,0,0,size,size);
-    return canvas.toDataURL("image/png");
-  }
-  function appIconSVG(){
-    const blue1="#0ea5e9", blue2="#2563eb";
-    const yellow="#facc15";
-    return `
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${blue1}"/>
-      <stop offset="1" stop-color="${blue2}"/>
-    </linearGradient>
-    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
-      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000" flood-opacity=".22"/>
-    </filter>
-    <filter id="zglow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="6" result="b"/>
-      <feColorMatrix in="b" type="matrix"
-        values="1 0 0 0 0.98
-                0 1 0 0 0.82
-                0 0 1 0 0.12
-                0 0 0 0.75 0"/>
-      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-
-  <rect x="0" y="0" width="1024" height="1024" rx="220" fill="url(#bg)"/>
-
-  <!-- clock -->
-  <g filter="url(#shadow)">
-    <circle cx="560" cy="540" r="270" fill="rgba(255,255,255,.16)"/>
-    <circle cx="560" cy="540" r="230" fill="rgba(255,255,255,.20)"/>
-    <circle cx="560" cy="540" r="190" fill="rgba(255,255,255,.12)"/>
-  </g>
-
-  <!-- hands -->
-  <g stroke="rgba(255,255,255,.92)" stroke-linecap="round" filter="url(#shadow)">
-    <line x1="560" y1="540" x2="560" y2="420" stroke-width="22"/>
-    <line x1="560" y1="540" x2="645" y2="585" stroke-width="18"/>
-    <circle cx="560" cy="540" r="20" fill="rgba(255,255,255,.92)"/>
-  </g>
-
-  <!-- Z -->
-  <g filter="url(#zglow)">
-    <path d="M245 355 H470 L335 520 H470 V615 H245 L380 450 H245 Z"
-          fill="${yellow}" />
-  </g>
-</svg>`;
-  }
-  (async()=>{
-    try{
-      const png = await svgToPngDataURL(appIconSVG(), 512);
-      const apple = document.getElementById("appleIcon");
-      const fav = document.getElementById("faviconIcon");
-      if(apple) apple.href = png;
-      if(fav) fav.href = png;
-    }catch(e){}
-  })();
-
-  // =========================================================
-  // Core config
-  // =========================================================
-  const NS="ZEITERFASSUNG";
-  const AUTO_BREAK=55;       // Auto-Pause
-  const TOL_WEEK_MIN=600;    // ±10h/Woche ok
-  const VAULT_KEY = NS+"::vault_v1";
-  const SESSION_MASTER = NS+"::session_master_raw";
-  const YEAR_KEY = (y)=> NS+"::year::"+y;
-
-  const DEFAULT_EMOJI = { we:"🧑‍💻", vac:"🏖️", sick:"🤒", hol:"🎉" };
-
-  // (4) Emoji: wählbar mit ➖/➕/(aus)
-  const PICKS = {
-    we:   ["(aus)","🧑‍💻","💼","⚡️","🛠️","🕒"],
-    vac:  ["(aus)","🏖️","🌴","✈️","⛱️","🌞"],
-    sick: ["(aus)","🤒","🩺","😷","💊","🛌"],
-    hol:  ["(aus)","🎉","📅","🎊","⭐️","🏛️"]
-  };
-
-  const $=id=>document.getElementById(id);
-  const pad=n=>String(n).padStart(2,"0");
-  const b64 = (buf)=>btoa(String.fromCharCode(...new Uint8Array(buf)));
-  const ub64 = (s)=>Uint8Array.from(atob(s), c=>c.charCodeAt(0));
-  const rand = (n)=>crypto.getRandomValues(new Uint8Array(n));
-  const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const d0=(s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
-  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5;
-  const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6;
-
-  const hhmm=(m)=>{
-    if(!Number.isFinite(m)) return "--:--";
-    const s=m<0?"-":"";
-    m=Math.abs(Math.round(m));
-    return s + pad(Math.floor(m/60)) + ":" + pad(m%60);
-  };
-
-  function tab(name){
-    ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
-      $(id).style.display=(id===name)?"":"none";
-    });
-    document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
-  }
-  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
-
-  // =========================================================
-  // Security / Vault (PIN + Recovery)
-  // =========================================================
-  function hex(bytes){ return [...bytes].map(b=>b.toString(16).padStart(2,"0")).join(""); }
-  function chunk(s,n){ return (s.match(new RegExp(".{1,"+n+"}","g"))||[]).join("-"); }
-
-  async function pbkdf2KeyFromSecret(secret, saltBytes){
-    const enc=new TextEncoder();
-    const baseKey = await crypto.subtle.importKey("raw", enc.encode(secret), {name:"PBKDF2"}, false, ["deriveKey"]);
-    return crypto.subtle.deriveKey(
-      {name:"PBKDF2", salt:saltBytes, iterations:150000, hash:"SHA-256"},
-      baseKey, {name:"AES-GCM", length:256}, true, ["encrypt","decrypt"]
-    );
-  }
-  async function exportRawAes(key){ return b64(await crypto.subtle.exportKey("raw", key)); }
-  async function importRawAes(rawB64){
-    return crypto.subtle.importKey("raw", ub64(rawB64), {name:"AES-GCM"}, true, ["encrypt","decrypt"]);
-  }
-  async function aesEncrypt(key, obj){
-    const iv=rand(12);
-    const pt=new TextEncoder().encode(JSON.stringify(obj));
-    const ct=await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, pt);
-    return {iv:b64(iv), ct:b64(ct)};
-  }
-  async function aesDecrypt(key, blob){
-    const pt=await crypto.subtle.decrypt({name:"AES-GCM", iv:ub64(blob.iv)}, key, ub64(blob.ct));
-    return JSON.parse(new TextDecoder().decode(pt));
-  }
-
-  function hasVault(){ return !!localStorage.getItem(VAULT_KEY); }
-  async function getSessionMaster(){
-    const raw=sessionStorage.getItem(SESSION_MASTER);
-    if(!raw) return null;
-    try{ return await importRawAes(raw); }catch{ return null; }
-  }
-  async function setSessionMaster(masterKey){
-    sessionStorage.setItem(SESSION_MASTER, await exportRawAes(masterKey));
-  }
-  function clearSessionMaster(){ sessionStorage.removeItem(SESSION_MASTER); }
-
-  async function createVaultWithPin(pin){
-    const master = await crypto.subtle.generateKey({name:"AES-GCM", length:256}, true, ["encrypt","decrypt"]);
-    const recBytes=rand(16);
-    const recovery = chunk(hex(recBytes).toUpperCase(), 4);
-    const pinSalt=rand(16);
-    const recSalt=rand(16);
-    const pinKey=await pbkdf2KeyFromSecret(pin, pinSalt);
-    const recKey=await pbkdf2KeyFromSecret(recovery, recSalt);
-    const masterRaw=await exportRawAes(master);
-    const wrapPin=await aesEncrypt(pinKey, {master: masterRaw});
-    const wrapRec=await aesEncrypt(recKey, {master: masterRaw});
-    const verifier=await aesEncrypt(master, {ok:"ZEITERFASSUNG"});
-    const vault={ v:1, pinSalt:b64(pinSalt), recSalt:b64(recSalt), wrapPin, wrapRec, verifier };
-    localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
-    await setSessionMaster(master);
-    return recovery;
-  }
-  async function unlockWithSecret(secret, mode){
-    const raw=localStorage.getItem(VAULT_KEY);
-    if(!raw) throw new Error("NO_VAULT");
-    const vault=JSON.parse(raw);
-    const pinSalt=ub64(vault.pinSalt);
-    const recSalt=ub64(vault.recSalt);
-    const wrap = (mode==="recovery") ? vault.wrapRec : vault.wrapPin;
-    const salt = (mode==="recovery") ? recSalt : pinSalt;
-    const k=await pbkdf2KeyFromSecret(secret, salt);
-    const unwrapped = await aesDecrypt(k, wrap);
-    const master = await importRawAes(unwrapped.master);
-    const ok = await aesDecrypt(master, vault.verifier);
-    if(ok?.ok !== "ZEITERFASSUNG") throw new Error("BAD_SECRET");
-    await setSessionMaster(master);
-    return true;
-  }
-  async function changePin(newPin){
-    const master=await getSessionMaster();
-    if(!master) throw new Error("LOCKED");
-    const raw=localStorage.getItem(VAULT_KEY);
-    if(!raw) throw new Error("NO_VAULT");
-    const vault=JSON.parse(raw);
-    const pinSalt=rand(16);
-    const pinKey=await pbkdf2KeyFromSecret(newPin, pinSalt);
-    const masterRaw=await exportRawAes(master);
-    vault.pinSalt=b64(pinSalt);
-    vault.wrapPin=await aesEncrypt(pinKey, {master: masterRaw});
-    localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
-  }
-  async function rotateRecovery(){
-    const master=await getSessionMaster();
-    if(!master) throw new Error("LOCKED");
-    const raw=localStorage.getItem(VAULT_KEY);
-    if(!raw) throw new Error("NO_VAULT");
-    const vault=JSON.parse(raw);
-    const recBytes=rand(16);
-    const recovery = chunk(hex(recBytes).toUpperCase(), 4);
-    const recSalt=rand(16);
-    const recKey=await pbkdf2KeyFromSecret(recovery, recSalt);
-    const masterRaw=await exportRawAes(master);
-    vault.recSalt=b64(recSalt);
-    vault.wrapRec=await aesEncrypt(recKey, {master: masterRaw});
-    localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
-    return recovery;
-  }
-
-  async function encryptJson(obj){
-    const master=await getSessionMaster();
-    if(!master) throw new Error("LOCKED");
-    return await aesEncrypt(master, obj);
-  }
-  async function decryptJson(blob){
-    const master=await getSessionMaster();
-    if(!master) throw new Error("LOCKED");
-    return await aesDecrypt(master, blob);
-  }
-
-  async function readYearState(y){
-    const raw=localStorage.getItem(YEAR_KEY(y));
-    if(!raw) return {emp:"", mgrName:"", mgrMail:"", emojis:{...DEFAULT_EMOJI}, E:[], A:[]};
-    const obj=await decryptJson(JSON.parse(raw));
-    return {
-      emp: obj.emp || "",
-      mgrName: obj.mgrName || "",
-      mgrMail: obj.mgrMail || "",
-      emojis: {...DEFAULT_EMOJI, ...(obj.emojis||{})},
-      E: Array.isArray(obj.E)?obj.E:[],
-      A: Array.isArray(obj.A)?obj.A:[]
-    };
-  }
-  async function writeYearState(y, state){
-    localStorage.setItem(YEAR_KEY(y), JSON.stringify(await encryptJson(state)));
-  }
-
-  function showOverlay(msg){
-    $("ovl").style.display="flex";
-    $("pinMsg").textContent="";
-    $("pinInput").value="";
-    $("recoveryBox").style.display="none";
-    $("btnCopyRecovery").style.display="none";
-    $("ovlText").textContent=msg||"Bitte PIN eingeben.";
-    $("btnSetPin").style.display = hasVault() ? "none" : "";
-    $("authMode").value="pin";
-    setTimeout(()=>$("pinInput").focus(), 50);
-  }
-  function hideOverlay(){ $("ovl").style.display="none"; }
-
-  // =========================================================
-  // App State
-  // =========================================================
-  let Y=new Date().getFullYear();
-  let S={emp:"", mgrName:"", mgrMail:"", emojis:{...DEFAULT_EMOJI}, E:[], A:[]};
-  let run=null;
-  let editingId=null;
-  let aEndTouched=false;
-
-  function parseISO(s){ const d=new Date(s); return isNaN(d.getTime())?null:d; }
-  function fmtTimeHM(d){ if(!d) return "--:--"; return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
-
-  function netMinutes(entry){
-    const s=parseISO(entry.s), e=parseISO(entry.e);
-    if(!s||!e) return null;
-    const gross=(e-s)/60000;
-    if(!Number.isFinite(gross)||gross<=0) return null;
-    const p=Number(entry.p||0);
-    return Math.round(gross-p);
-  }
-
-  // =========================================================
-  // (4) Emoji UI: ➖ / ➕ / AUS
-  // =========================================================
-  function emojiOrEmpty(v){ return (v==="(aus)") ? "" : v; }
-  function fillSelect(sel, arr){
-    sel.innerHTML="";
-    arr.forEach(v=>{
-      const o=document.createElement("option");
-      o.value=v; o.textContent=v;
-      sel.appendChild(o);
-    });
-  }
-  function idxPick(arr, emoji){
-    const v = emoji ? emoji : "(aus)";
-    const i = arr.indexOf(v);
-    return (i>=0) ? i : 0;
-  }
-  function setPick(sel, arr, emoji){ sel.value = arr[idxPick(arr, emoji)]; }
-  function cyclePick(sel, arr, dir){
-    let i = arr.indexOf(sel.value);
-    if(i<0) i=0;
-    i = (i + dir + arr.length) % arr.length;
-    sel.value = arr[i];
-  }
-  function loadEmojiUI(){
-    fillSelect($("wePick"), PICKS.we);
-    fillSelect($("vacPick"), PICKS.vac);
-    fillSelect($("sickPick"), PICKS.sick);
-    fillSelect($("holPick"), PICKS.hol);
-    setPick($("wePick"), PICKS.we, S.emojis.we);
-    setPick($("vacPick"), PICKS.vac, S.emojis.vac);
-    setPick($("sickPick"), PICKS.sick, S.emojis.sick);
-    setPick($("holPick"), PICKS.hol, S.emojis.hol);
-  }
-  $("weMinus").onclick=()=>cyclePick($("wePick"), PICKS.we, -1);
-  $("wePlus").onclick =()=>cyclePick($("wePick"), PICKS.we, +1);
-  $("vacMinus").onclick=()=>cyclePick($("vacPick"), PICKS.vac, -1);
-  $("vacPlus").onclick =()=>cyclePick($("vacPick"), PICKS.vac, +1);
-  $("sickMinus").onclick=()=>cyclePick($("sickPick"), PICKS.sick, -1);
-  $("sickPlus").onclick =()=>cyclePick($("sickPick"), PICKS.sick, +1);
-  $("holMinus").onclick=()=>cyclePick($("holPick"), PICKS.hol, -1);
-  $("holPlus").onclick =()=>cyclePick($("holPick"), PICKS.hol, +1);
-
-  $("saveEmoji").onclick = async ()=>{
-    S.emojis = {
-      we: emojiOrEmpty($("wePick").value),
-      vac: emojiOrEmpty($("vacPick").value),
-      sick: emojiOrEmpty($("sickPick").value),
-      hol: emojiOrEmpty($("holPick").value),
-    };
-    await writeYearState(Y, S);
-    await renderAll();
-    alert("😀 Emojis gespeichert");
-  };
-  $("resetEmoji").onclick = async ()=>{
-    S.emojis = {...DEFAULT_EMOJI};
-    loadEmojiUI();
-    await writeYearState(Y, S);
-    await renderAll();
-    alert("↩️ Standard Emojis gesetzt");
-  };
-
-  async function loadYear(y){
-    Y=y;
-    S=await readYearState(Y);
-    $("empName").value=S.emp||"";
-    $("mgrName").value=S.mgrName||"";
-    $("mgrMail").value=S.mgrMail||"";
-    $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
-    $("nameMsg").textContent=S.emp ? "✅ gespeichert" : "";
-    $("pdfEmpName").textContent=S.emp || "—";
-    loadEmojiUI();
-  }
-  async function saveYear(){ await writeYearState(Y, S); }
-
-  function setTimerStatus(txt, cls){
-    $("timerStatus").textContent=txt;
-    $("timerStatus").className="badge"+(cls?(" "+cls):"");
-  }
-
-  // =========================================================
-  // Timer: Start / Pause / Stop
-  // =========================================================
-  $("btnStart").onclick=async()=>{
-    if(run) return alert("⛔ Timer läuft schon.");
-    if(!S.emp) return alert("👤 Bitte Name speichern.");
-    if(!$("timerDate").value) return alert("📅 Bitte Datum wählen.");
-
-    const entryYear=d0($("timerDate").value).getFullYear();
-    if(entryYear!==Y) await loadYear(entryYear);
-
-    const now=new Date(); now.setSeconds(0,0);
-    const d=d0($("timerDate").value);
-    const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),now.getHours(),now.getMinutes(),0,0);
-
-    run={date:$("timerDate").value,start,pauseMin:0,pauseStart:null,note:($("timerNote").value||"").trim()};
-    $("btnPause").disabled=false;
-    setTimerStatus("🟢 läuft", "chip-ok");
-    $("timerInfo").textContent=`Start ${fmtTimeHM(start)}`;
-  };
-
-  $("btnPause").onclick=()=>{
-    if(!run) return;
-    const now=new Date(); now.setSeconds(0,0);
-    if(!run.pauseStart){
-      run.pauseStart=now;
-      $("btnPause").textContent="▶️ Weiter";
-      setTimerStatus("⏸️ Pause", "chip-warn");
-    }else{
-      run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
-      run.pauseStart=null;
-      $("btnPause").textContent="⏸️ Pause";
-      setTimerStatus("🟢 läuft", "chip-ok");
-    }
-  };
-
-  $("btnStop").onclick=async()=>{
-    if(!run) return alert("⚪ Kein Timer läuft.");
-    const end=new Date(); end.setSeconds(0,0);
-
-    if(run.pauseStart){
-      run.pauseMin += Math.max(0, Math.round((end-run.pauseStart)/60000));
-      run.pauseStart=null;
-    }
-
-    const gross=Math.round((end-run.start)/60000);
-    if(!Number.isFinite(gross)||gross<=0){ run=null; return; }
-
-    const auto=(gross>=AUTO_BREAK)?AUTO_BREAK:0;
-    const pause=auto+run.pauseMin;
-
-    S.E.push({
-      id:(crypto.randomUUID?crypto.randomUUID():"id_"+Date.now()),
-      d:run.date,
-      s:run.start.toISOString(),
-      e:end.toISOString(),
-      p:pause,
-      n:run.note||""
-    });
-
-    run=null;
-    $("btnPause").disabled=true;
-    $("btnPause").textContent="⏸️ Pause";
-    $("timerInfo").textContent="";
-    setTimerStatus("✅ gespeichert", "chip-ok");
-    await saveYear();
-    await renderAll();
-  };
-
-  // Name & Manager speichern
-  $("saveName").onclick=async()=>{
-    S.emp=($("empName").value||"").trim();
-    await saveYear();
-    $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
-    $("nameMsg").textContent=S.emp ? "✅ gespeichert" : "";
-    $("pdfEmpName").textContent=S.emp || "—";
-  };
-  $("saveMgr").onclick=async()=>{
-    S.mgrName=($("mgrName").value||"").trim();
-    S.mgrMail=($("mgrMail").value||"").trim();
-    await saveYear();
-    alert("✅ Manager gespeichert");
-  };
-
-  // =========================================================
-  // Rückwirkend speichern
-  // =========================================================
-  $("newManual").onclick=()=>{
-    editingId=null;
-    $("eStart").value=""; $("eEnd").value=""; $("eNote").value="";
-    $("editMsg").textContent="";
-  };
-  $("saveManual").onclick=async()=>{
-    $("editMsg").textContent="";
-    if(!$("eDate").value||!$("eStart").value||!$("eEnd").value){
-      $("editMsg").textContent="⚠️ Bitte Datum/Start/Ende setzen";
-      return;
-    }
-    const d=$("eDate").value;
-    const [sh,sm]=$("eStart").value.split(":").map(Number);
-    const [eh,em]=$("eEnd").value.split(":").map(Number);
-    const s=new Date(d0(d).setHours(sh,sm,0,0));
-    const e=new Date(d0(d).setHours(eh,em,0,0));
-    const gross=Math.round((e-s)/60000);
-    if(!Number.isFinite(gross)||gross<=0){ $("editMsg").textContent="⛔ Ende muss nach Start"; return; }
-
-    const yr=d0(d).getFullYear();
-    if(yr!==Y) await loadYear(yr);
-
-    const obj={
-      id:editingId||(crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
-      d, s:s.toISOString(), e:e.toISOString(),
-      p:(gross>=AUTO_BREAK?AUTO_BREAK:0),
-      n:($("eNote").value||"").trim()
-    };
-
-    if(editingId){
-      const idx=S.E.findIndex(x=>x.id===editingId);
-      if(idx>=0) S.E[idx]=obj; else S.E.push(obj);
-      $("editMsg").textContent="✅ aktualisiert";
-    }else{
-      S.E.push(obj);
-      editingId=obj.id;
-      $("editMsg").textContent="✅ gespeichert";
-    }
-
-    await saveYear();
-    await renderAll();
-  };
-
-  // =========================================================
-  // Abwesenheit Zeitraum: Ende default = Start
-  // =========================================================
-  $("aEnd").addEventListener("change",()=>{aEndTouched=true});
-  $("aStart").addEventListener("change",()=>{ if(!aEndTouched) $("aEnd").value=$("aStart").value; });
-
-  function smallBadge(emoji, txt){
-    const e = emoji ? `<span class="e">${emoji}</span>` : "";
-    return `<span class="small-badge">${e}${txt}</span>`;
-  }
-
-  function absBadge(t){
-    const em=S.emojis||DEFAULT_EMOJI;
-    if(t==="vac") return smallBadge(em.vac,"Urlaub");
-    if(t==="sick") return smallBadge(em.sick,"Krank");
-    if(t==="hol") return smallBadge(em.hol,"Feiertag");
-    return smallBadge("",t);
-  }
-
-  $("addAbs").onclick=async()=>{
-    $("absMsg").textContent="";
-    const startV=$("aStart").value, endV=$("aEnd").value;
-    if(!startV||!endV) return alert("⚠️ Start und Ende wählen.");
-    const t=$("aType").value;
-    const start=d0(startV), end=d0(endV);
-    if(end<start) return alert("⛔ Ende muss nach Start sein.");
-
-    let added=0, replaced=0;
-    const perYear=new Map();
-
-    for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-      if(!wd(d)) continue; // nur Mo–Fr
-      const ds=toDateStr(d);
-      const y=d.getFullYear();
-
-      if(!perYear.has(y)) perYear.set(y, await readYearState(y));
-      const st=perYear.get(y);
-
-      const before=st.A.length;
-      st.A = st.A.filter(a=>a.d!==ds); // max 1 pro Tag
-      replaced += (before - st.A.length);
-
-      st.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()+Math.random()), d:ds, t});
-      added++;
-    }
-
-    for(const [y,st] of perYear.entries()) await writeYearState(y, st);
-
-    await loadYear(getRefYear());
-    await renderAll();
-    $("absMsg").textContent = `✅ ${added} Tage gespeichert` + (replaced?` (♻️ ${replaced} ersetzt)`:"");
-  };
-
-  $("delAbsDay").onclick=async()=>{
-    $("absMsg").textContent="";
-    const ds=$("aDelDate").value;
-    if(!ds) return;
-    const y=d0(ds).getFullYear();
-    const st=await readYearState(y);
-    const before=st.A.length;
-    st.A=st.A.filter(a=>a.d!==ds);
-    await writeYearState(y, st);
-    await loadYear(getRefYear());
-    await renderAll();
-    const removed=before-st.A.length;
-    $("absMsg").textContent = removed ? `🗑️ ${removed} gelöscht` : "🤷 nichts gefunden";
-  };
-
-  function renderAbsList(){
-    if(!S.A.length){ $("absList").innerHTML=`<div class="muted">🤷 Keine Abwesenheiten im Jahr ${Y}.</div>`; return; }
-    const arr=S.A.slice().sort((a,b)=>a.d.localeCompare(b.d));
-    let html=`<table><thead><tr><th>📅 Datum</th><th>🏷️ Typ</th></tr></thead><tbody>`;
-    for(const a of arr) html+=`<tr><td class="mono">${a.d}</td><td>${absBadge(a.t)}</td></tr>`;
-    html+=`</tbody></table>`;
-    $("absList").innerHTML=html;
-  }
-
-  // =========================================================
-  // Übersicht: Zeitraum & Summen
-  // =========================================================
-  function weekRangeISO(ref){
-    const d=new Date(ref); d.setHours(0,0,0,0);
-    const monIndex=(d.getDay()+6)%7;     // Mo=0..So=6
-    const start=new Date(d); start.setDate(d.getDate()-monIndex);
-    const end=new Date(start); end.setDate(start.getDate()+6);
-    start.setHours(0,0,0,0); end.setHours(0,0,0,0);
-    return [start,end];
-  }
-  function monthRange(ref){
-    const d=new Date(ref);
-    const start=new Date(d.getFullYear(),d.getMonth(),1);
-    const end=new Date(d.getFullYear(),d.getMonth()+1,0);
-    start.setHours(0,0,0,0); end.setHours(0,0,0,0);
-    return [start,end];
-  }
-  function yearRange(y){
-    const start=new Date(y,0,1); start.setHours(0,0,0,0);
-    const end=new Date(y,11,31); end.setHours(0,0,0,0);
-    return [start,end];
-  }
-  function getWeeklyTargetMinutes(){
-    const v=Number($("weeklyTarget").value);
-    return (Number.isFinite(v) && v>0) ? v : 2400;
-  }
-  function getPeriodRange(){
-    const v=$("refDate").value;
-    const ref=v?d0(v):new Date();
-    const yr=ref.getFullYear();
-    if($("mode").value==="year") return yearRange(yr);
-    if($("mode").value==="month") return monthRange(ref);
-    return weekRangeISO(ref);
-  }
-  function getRefYear(){
-    const v=$("refDate").value;
-    return v ? d0(v).getFullYear() : new Date().getFullYear();
-  }
-  function chipClassByWeeklyTolerance(deltaMin, weeksEquivalent){
-    const tol = TOL_WEEK_MIN * Math.max(1, weeksEquivalent);
-    return (Math.abs(deltaMin) <= tol) ? "chip-ok" : "chip-warn";
-  }
-
-  async function getMergedForRange(start,end){
-    const years=new Set([start.getFullYear(), end.getFullYear()]);
-    const allE=[], allA=[];
-    let emp=S.emp||"", mgrName=S.mgrName||"", mgrMail=S.mgrMail||"", emojis={...DEFAULT_EMOJI, ...(S.emojis||{})};
-
-    for(const y of years){
-      const st=await readYearState(y);
-      if(!emp && st.emp) emp=st.emp;
-      if(!mgrName && st.mgrName) mgrName=st.mgrName;
-      if(!mgrMail && st.mgrMail) mgrMail=st.mgrMail;
-      emojis = {...emojis, ...(st.emojis||{})};
-      allE.push(...(st.E||[]));
-      allA.push(...(st.A||[]));
-    }
-    return {allE,allA,emp,mgrName,mgrMail,emojis};
-  }
-
-  async function renderOverview(){
-    const [start,end]=getPeriodRange();
-    const W=getWeeklyTargetMinutes();
-    const DAY=W/5;
-    const startS=toDateStr(start), endS=toDateStr(end);
-
-    $("rangeHint").textContent = `${startS} → ${endS}`;
-    $("pdfRangeText").textContent = `${startS} → ${endS}`;
-
-    const merged=await getMergedForRange(start,end);
-    $("pdfEmpName").textContent = merged.emp || S.emp || "—";
-
-    const E=merged.allE, A=merged.allA;
-    const em = merged.emojis || DEFAULT_EMOJI;
-
-    const istBy={};
-    const weBy={}; // ✅ Wochenend-Minuten pro Tag
-    for(const e of E){
-      if(e.d<startS||e.d>endS) continue;
-      const nm=netMinutes(e);
-      if(!Number.isFinite(nm)) continue;
-      istBy[e.d]=(istBy[e.d]||0)+nm;
-
-      const day=d0(e.d);
-      if(isWeekend(day)){
-        weBy[e.d]=(weBy[e.d]||0)+nm;
-      }
-    }
-
-    const dayNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
-    let istSum=0, sollSum=0, workdays=0;
-
-    // ✅ (2) WE oben: total
-    let weMin=0, weDays=0;
-
-    let html=`<table><thead><tr>
-      <th>📅 Datum</th><th>📌 Tag</th><th>✅ IST</th><th>🎯 SOLL</th><th>🏷️ Abw.</th><th>Δ</th>
-    </tr></thead><tbody>`;
-
-    for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-      const ds=toDateStr(d);
-      const ist=Number.isFinite(istBy[ds]) ? istBy[ds] : 0;
-
-      // Abwesenheitstypen
-      const absTypes=A.filter(a=>a.d===ds).map(a=>a.t);
-
-      // SOLL (Mo–Fr, außer Abwesenheit)
-      const isW=wd(d);
-      const soll = Math.round(isW ? (absTypes.length>0 ? 0 : DAY) : 0);
-      const delta=ist-soll;
-
-      istSum += ist; sollSum += soll;
-      if(isW) workdays++;
-
-      // ✅ (3) WE NICHT bei IST/SOLL, sondern NUR in Abw.
-      let abw = absTypes.length ? absTypes.map(t=>(
-        t==="vac" ? smallBadge(em.vac,"Urlaub") :
-        t==="sick"? smallBadge(em.sick,"Krank") :
-        t==="hol" ? smallBadge(em.hol,"Feiertag") :
-                    smallBadge("",t)
-      )).join(" ") : "";
-
-      // Wochenendarbeit markieren (nur wenn wirklich gearbeitet wurde)
-      if(isWeekend(d) && ist>0){
-        const weEmoji = em.we || "";
-        const weTag = smallBadge(weEmoji, "WE");
-        abw = abw ? (abw+" "+weTag) : weTag;
-        weMin += ist;
-        weDays += 1;
-      }
-
-      html+=`<tr>
-        <td class="mono">${ds}</td>
-        <td>${dayNames[d.getDay()]}</td>
-        <td class="mono">${hhmm(ist)}</td>
-        <td class="mono">${hhmm(soll)}</td>
-        <td>${abw}</td>
-        <td class="mono">${hhmm(delta)}</td>
-      </tr>`;
-    }
-    html+=`</tbody></table>`;
-    $("overviewTable").innerHTML=html;
-
-    const delta=istSum-sollSum;
-    const weeksEq = workdays ? (workdays/5) : 1;
-    const cls = chipClassByWeeklyTolerance(delta, weeksEq);
-
-    $("sumChip").className="badge "+cls;
-    $("sumChip").innerHTML =
-      `<div><b>${cls==="chip-ok"?"✅":"⚠️"} IST ${hhmm(istSum)}</b> · SOLL ${hhmm(sollSum)}</div>` +
-      `<div>Δ ${hhmm(delta)} <span class="muted">(±10:00/Woche ok)</span></div>`;
-
-    $("pdfSumText").textContent = `IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)}`;
-
-    // ✅ (2) WE Badge oben in Übersicht
-    if(weMin>0){
-      const weEmoji = em.we || "🧑‍💻";
-      $("weChip").style.display="";
-      $("weChip").textContent = `${weEmoji} WE-Arbeit: ${hhmm(weMin)} (${weDays} Tag${weDays===1?"":"e"})`;
-    }else{
-      $("weChip").style.display="none";
-    }
-
-    $("avgChip").style.display = ($("mode").value==="month") ? "" : "none";
-    if($("mode").value==="month"){
-      $("avgChip").className="badge "+cls;
-      $("avgChip").textContent = `${cls==="chip-ok"?"✅":"⚠️"} Monats-Check`;
-    }
-  }
-
-  // =========================================================
-  // Einträge: Filter + Suche + Löschen + WE Badge in Liste
-  // =========================================================
-  function weekRangeEntries(ref){ return weekRangeISO(ref); }
-  function rangeForEntries(filter){
-    const ref = $("refDate").value ? d0($("refDate").value) : new Date();
-    if(filter==="week") return weekRangeEntries(ref);
-    if(filter==="month") return monthRange(ref);
-    if(filter==="year") return yearRange(ref.getFullYear());
-    const f=$("entriesFrom").value, t=$("entriesTo").value;
-    if(f && t){
-      const s=d0(f), e=d0(t);
-      return s<=e ? [s,e] : [e,s];
-    }
-    return monthRange(ref);
-  }
-  function norm(s){ return (s||"").trim().toLowerCase(); }
-  function safeText(s){ return (s??"").toString(); }
-
-  function entryRowHTML(e, emojis){
-    const s=parseISO(e.s);
-    const en=parseISO(e.e);
-    const net=netMinutes(e);
-    const pause=Number(e.p||0);
-    const day=d0(e.d);
-    const we = (isWeekend(day) && Number.isFinite(net) && net>0)
-      ? smallBadge(emojis.we||"🧑‍💻","WE")
-      : "";
-    return `
-<tr>
-  <td class="mono">${e.d}</td>
-  <td class="mono">${fmtTimeHM(s)}</td>
-  <td class="mono">${fmtTimeHM(en)}</td>
-  <td class="mono">${hhmm(pause)}</td>
-  <td class="mono">${hhmm(net)}</td>
-  <td>${we} ${safeText(e.n||"")}</td>
-  <td><button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button></td>
-</tr>`;
-  }
-
-  async function renderEntries(){
-    const filter=$("entriesFilter").value;
-    const [start,end]=rangeForEntries(filter);
-    const startS=toDateStr(start), endS=toDateStr(end);
-    const merged=await getMergedForRange(start,end);
-
-    const query = norm($("entriesSearch").value);
-    const entries = merged.allE
-      .filter(e=>e.d>=startS && e.d<=endS)
-      .filter(e=> !query || norm(e.n).includes(query))
-      .sort((a,b)=> (b.d+b.s).localeCompare(a.d+a.s));
-
-    let sum=0;
-    for(const e of entries){
-      const nm=netMinutes(e);
-      if(Number.isFinite(nm)) sum += nm;
-    }
-    $("entriesSum").textContent = `🧾 ${startS} → ${endS} · ${entries.length} Einträge · Σ ${hhmm(sum)}`;
-
-    if(!entries.length){
-      $("entryList").innerHTML = `<div class="muted">🤷 Keine Einträge im Zeitraum.</div>`;
-      return;
-    }
-
-    let html = `<table><thead><tr>
-      <th>📅 Datum</th><th>⏱️ Start</th><th>⏹️ Ende</th><th>⏸️ Pause</th><th>✅ Netto</th><th>📝 Notiz</th><th>⚙️</th>
-    </tr></thead><tbody>`;
-    for(const e of entries) html += entryRowHTML(e, merged.emojis||DEFAULT_EMOJI);
-    html += `</tbody></table>`;
-    $("entryList").innerHTML = html;
-
-    document.querySelectorAll("[data-del]").forEach(b=>{
-      b.onclick=async()=>{
-        const id=b.getAttribute("data-del");
-        const years=[start.getFullYear(), end.getFullYear(), Y];
-        for(const y of [...new Set(years)]){
-          const st=await readYearState(y);
-          const before=st.E.length;
-          st.E=st.E.filter(x=>x.id!==id);
-          if(st.E.length!==before){
-            await writeYearState(y, st);
-            break;
-          }
-        }
-        await loadYear(getRefYear());
-        await renderAll();
-      };
-    });
-  }
-
-  // =========================================================
-  // CSV / Share / PDF
-  // =========================================================
-  function csvSafe(s){
-    s=safeText(s);
-    const t=s.trimStart();
-    if(t.startsWith("=")||t.startsWith("+")||t.startsWith("-")||t.startsWith("@")) return "'"+s;
-    return s;
-  }
-  async function buildCSV(){
-    const [start,end]=getPeriodRange();
-    const merged=await getMergedForRange(start,end);
-    const W=getWeeklyTargetMinutes();
-    const startS=toDateStr(start), endS=toDateStr(end);
-    const sep=";";
-
-    const rows=[];
-    rows.push(["Mitarbeiter","Von","Bis","WochenSoll_min","Datum","StartISO","EndeISO","Pause_min","Netto_min","Netto_hhmm","Notiz","ManagerName","ManagerMail"].join(sep));
-
-    const entries=merged.allE.filter(e=>e.d>=startS && e.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
-    for(const e of entries){
-      const nm=netMinutes(e);
-      rows.push([
-        csvSafe(merged.emp||S.emp||""), startS, endS, String(W),
-        e.d, e.s, e.e, String(e.p||0),
-        Number.isFinite(nm)?String(Math.round(nm)):"",
-        hhmm(nm),
-        csvSafe(e.n||""),
-        csvSafe(merged.mgrName||S.mgrName||""),
-        csvSafe(merged.mgrMail||S.mgrMail||"")
-      ].join(sep));
-    }
-    return rows.join("\n");
-  }
-
-  $("btnCSV").onclick=async()=>{
-    if(!S.emp) return alert("👤 Bitte Name speichern.");
-    const csv=await buildCSV();
-    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download=`Zeiterfassung_${$("mode").value}_${$("refDate").value}.csv`;
-    document.body.appendChild(a); a.click(); a.remove();
-  };
-  $("entriesExportCSV").onclick=async()=>{ $("btnCSV").click(); };
-
-  $("btnShare").onclick=async()=>{
-    if(!S.emp) return alert("👤 Bitte Name speichern.");
-    const csv=await buildCSV();
-    const file=new File([new Blob([csv],{type:"text/csv"})], "Zeiterfassung.csv", {type:"text/csv"});
-    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({title:`Zeiterfassung – ${S.emp}`, files:[file]});
-      return;
-    }
-    alert("📤 Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
-  };
-
-  $("btnPDF").onclick=async()=>{
-    await renderOverview();
-    tab("overview");
-    setTimeout(()=>window.print(), 200);
-  };
-
-  // =========================================================
-  // Settings actions
-  // =========================================================
-  $("btnLock").onclick=()=>{
-    clearSessionMaster();
-    showOverlay("🔒 Gesperrt. Entsperre mit PIN oder Recovery-Key.");
-  };
-  $("btnChangePin").onclick=async()=>{
-    try{
-      const master=await getSessionMaster();
-      if(!master){ alert("🔐 Bitte zuerst entsperren."); return; }
-      const newPin = prompt("Neue PIN (mind. 6 Zeichen):");
-      if(!newPin || newPin.trim().length<6) return;
-      await changePin(newPin.trim());
-      alert("✅ PIN geändert");
-    }catch{ alert("❌ Konnte PIN nicht ändern"); }
-  };
-  $("btnNewRecovery").onclick=async()=>{
-    try{
-      const master=await getSessionMaster();
-      if(!master){ alert("🔐 Bitte zuerst entsperren."); return; }
-      const rec = await rotateRecovery();
-      alert("🧩 Neuer Recovery-Key:\n\n" + rec + "\n\nBitte sofort speichern!");
-    }catch{ alert("❌ Konnte Recovery-Key nicht erzeugen"); }
-  };
-
-  $("btnResetThisYear").onclick=async()=>{
-    const yr=getRefYear();
-    if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
-      localStorage.removeItem(YEAR_KEY(yr));
-      await loadYear(getRefYear());
-      await renderAll();
-      alert("✅ Jahr gelöscht");
-    }
-  };
-  $("btnResetAll").onclick=async()=>{
-    if(confirm("Wirklich ALLES löschen (inkl. PIN/Recovery)?")){
-      const del=[];
-      for(let i=0;i<localStorage.length;i++){
-        const k=localStorage.key(i);
-        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY)) del.push(k);
-      }
-      del.forEach(k=>localStorage.removeItem(k));
-      clearSessionMaster();
-      alert("✅ Alles gelöscht. Seite lädt neu.");
-      location.reload();
-    }
-  };
-
-  // =========================================================
-  // Entries controls
-  // =========================================================
-  function updateEntriesCustomVisibility(){
-    const isCustom = $("entriesFilter").value==="custom";
-    $("entriesFromWrap").style.display = isCustom ? "" : "none";
-    $("entriesToWrap").style.display = isCustom ? "" : "none";
-  }
-  $("entriesFilter").onchange=async()=>{ updateEntriesCustomVisibility(); await renderEntries(); };
-  $("entriesSearch").oninput=async()=>{ await renderEntries(); };
-  $("entriesFrom").onchange=async()=>{ await renderEntries(); };
-  $("entriesTo").onchange=async()=>{ await renderEntries(); };
-
-  // Refresh wiring
-  $("btnRefresh").onclick=async()=>{ await renderAll(); };
-  $("mode").onchange=async()=>{ await renderAll(); };
-  $("weeklyTarget").onchange=async()=>{ await renderAll(); };
-  $("refDate").onchange=async()=>{ await loadYear(getRefYear()); await renderAll(); };
-
-  // =========================================================
-  // PIN overlay actions
-  // =========================================================
-  $("btnUnlock").onclick=async()=>{
-    try{
-      if(!hasVault()){ $("pinMsg").textContent="⚠️ Bitte PIN setzen."; return; }
-      const secret=($("pinInput").value||"").trim();
-      if(!secret) { $("pinMsg").textContent="⚠️ Bitte eingeben."; return; }
-      const mode=$("authMode").value;
-      await unlockWithSecret(secret, mode);
-      hideOverlay();
-      await loadYear(getRefYear());
-      await renderAll();
-      tab("timer");
-    }catch{ $("pinMsg").textContent="❌ falsch"; }
-  };
-  $("btnSetPin").onclick=async()=>{
-    try{
-      if(hasVault()){ $("pinMsg").textContent="⚠️ PIN existiert schon."; return; }
-      const pin=($("pinInput").value||"").trim();
-      if(pin.length<6){ $("pinMsg").textContent="⚠️ PIN min. 6 Zeichen."; return; }
-      const recovery = await createVaultWithPin(pin);
-      $("recoveryText").textContent = recovery;
-      $("recoveryBox").style.display="";
-      $("btnCopyRecovery").style.display="";
-      $("btnCopyRecovery").onclick=async()=>{
-        try{ await navigator.clipboard.writeText(recovery); $("pinMsg").textContent="✅ kopiert"; }
-        catch{ $("pinMsg").textContent="⚠️ Bitte manuell speichern."; }
-      };
-      $("ovlText").textContent="✅ PIN gesetzt. Recovery-Key speichern!";
-      $("btnSetPin").style.display="none";
-    }catch{ $("pinMsg").textContent="❌ Fehler"; }
-  };
-
-  // =========================================================
-  // Render All
-  // =========================================================
-  async function renderAll(){
-    $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
-    $("pdfEmpName").textContent = S.emp || "—";
-    renderAbsList();
-    await renderOverview();
-    await renderEntries();
-  }
-
-  // Defaults
-  const today=new Date().toISOString().slice(0,10);
-  $("timerDate").value=today;
-  $("refDate").value=today;
-  $("eDate").value=today;
-  $("aStart").value=today;
-  $("aEnd").value=today;
-  $("aDelDate").value=today;
-  $("entriesFrom").value=today;
-  $("entriesTo").value=today;
-  $("entriesSearch").value="";
-  $("entriesFilter").value="month";
-  updateEntriesCustomVisibility();
-
-  // Boot
-  (async()=>{
-    if(!await getSessionMaster()){
-      showOverlay(hasVault()
-        ? "🔐 Bitte PIN oder Recovery-Key eingeben."
-        : "🧷 Bitte PIN setzen (Recovery-Key wird angezeigt).");
-      return;
-    }
-    await loadYear(getRefYear());
-    await renderAll();
-    tab("timer");
-  })();
-})();
-</script>
-
-</body>
-</html>
+    <button class="btn-ghost" id="btnChangePin">
