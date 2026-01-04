@@ -1,41 +1,39 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Zeiterfassung</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Zeiterfassung">
-<meta name="theme-color" content="#111">
-<meta name="robots" content="noindex,nofollow">
 
-<!-- FIXES Home Icon: Corporate (C) (PNG wird beim ersten Laden erzeugt und bleibt fest) -->
-<link id="appleIcon" rel="apple-touch-icon" href="">
-<link id="faviconIcon" rel="icon" href="">
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Zeiterfassung" />
+<meta name="theme-color" content="#0b1220" />
+<meta name="robots" content="noindex,nofollow" />
+
+<link id="appleIcon" rel="apple-touch-icon" href="" />
+<link id="faviconIcon" rel="icon" href="" />
 
 <style>
 :root{
   --bg:#f4f6f8; --card:#fff; --text:#0f172a; --muted:#64748b;
   --line:#e5e7eb;
-
   --ok:#166534; --okbg:#dcfce7;
   --warn:#9a3412; --warnbg:#fff7ed;
-  --err:#991b1b; --errbg:#fee2e2;
-
   --primary:#2563eb;
-  --green:#16a34a; --red:#dc2626; --dark:#0f172a;
+  --dark:#0b1220;
   --chip:#eef2ff;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
 }
 *{box-sizing:border-box}
 body{margin:0;padding:14px;font-family:-apple-system,system-ui;background:var(--bg);color:var(--text)}
-.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
-h1{margin:0 0 6px 0;font-size:20px;display:flex;gap:10px;align-items:center}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+h1{margin:0 0 6px 0;font-size:20px}
 h2{margin:6px 0 10px 0;font-size:16px}
 .muted{color:var(--muted);font-size:13px}
+.mono{font-family:ui-monospace,Menlo,monospace}
 
-.row{display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:10px;row-gap:12px;margin-bottom:-12px}
-.row>*{margin-bottom:12px}
+.row{display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:10px;row-gap:12px}
 .right{margin-left:auto}
 
 input,select,button,textarea{
@@ -43,9 +41,11 @@ input,select,button,textarea{
 }
 textarea{resize:none}
 button{border:none;font-weight:800;cursor:pointer}
-.btn-start{background:var(--green);color:#fff}
-.btn-pause{background:var(--dark);color:#fff}
-.btn-stop{background:var(--red);color:#fff}
+button:disabled{opacity:.55;cursor:not-allowed}
+
+.btn-start{background:#16a34a;color:#fff}
+.btn-pause{background:#111827;color:#fff}
+.btn-stop{background:#dc2626;color:#fff}
 .btn-blue{background:var(--primary);color:#fff}
 .btn-ghost{background:#eef2f7;color:#0f172a}
 .btn-sm{padding:8px 10px;font-size:14px;border-radius:10px}
@@ -54,105 +54,113 @@ button{border:none;font-weight:800;cursor:pointer}
 .tab{padding:10px 14px;border-radius:12px;background:#eef2f7;cursor:pointer}
 .tab.active{background:#111;color:#fff}
 
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #eef2f7;font-size:14px;vertical-align:top}
-th{text-align:left;color:#64748b}
-.mono{font-family:ui-monospace,Menlo,monospace}
-
 .badge{
   display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;
   font-size:12px;font-weight:900;background:var(--chip);border:1px solid rgba(0,0,0,.06);white-space:nowrap
 }
-.badge.weekend{color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe}
-.badge.vac{color:#2563eb}
-.badge.sick{color:#f97316}
-.badge.hol{color:#16a34a}
 .chip-ok{background:var(--okbg);color:var(--ok)}
 .chip-warn{background:var(--warnbg);color:var(--warn)}
-.chip-error{background:var(--errbg);color:var(--err)}
 
-.summarybar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
-.summarybar .right{margin-left:auto}
-
-.header-icon{width:26px;height:26px;border-radius:7px;background-size:cover;background-position:center;border:1px solid rgba(0,0,0,.06)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #eef2f7;font-size:14px;vertical-align:top}
+th{text-align:left;color:#64748b}
 
 .w-emp{width:220px;max-width:220px}
 .w-note{width:160px;max-width:160px}
 .w-save{width:170px;max-width:170px}
-.w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
-.w-mgr-mail{width:360px;max-width:88vw;min-width:290px;margin-left:-9px}
 .w-edit-note{width:220px;max-width:220px;height:44px}
+
+.w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
+.w-mgr-mail{width:360px;max-width:88vw;min-width:310px;margin-left:-9px}
 
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
 .modal{width:min(560px,100%);background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .modal h2{margin-top:0}
 .pin{width:min(360px,86vw);max-width:86vw;letter-spacing:.08em;font-weight:900;text-align:center;font-size:18px;padding:10px 12px}
-
 .smallhint{font-size:12px;color:var(--muted)}
 
 @media(max-width:340px){
   .w-emp{width:210px;max-width:210px}
   .w-note{width:150px;max-width:150px}
-  .w-mgr-name{width:180px;max-width:180px;margin-left:-7px}
   .w-edit-note{width:200px;max-width:200px}
+  .w-mgr-name{width:180px;max-width:180px;margin-left:-7px}
+  .w-mgr-mail{min-width:300px}
+}
+
+/* ===== PRINT/PDF ===== */
+@media print{
+  body{background:#fff;padding:0}
+  .card{box-shadow:none;border-radius:0;margin:0 0 12px 0}
+  #tabsCard, #timer, #edit, #absence, #entries, #settings, #ovl {display:none !important;}
+  #overview{display:block !important;}
+  #overviewControls, #mgrControls, #btnRefresh, #btnCSV, #btnShare, #btnPDF {display:none !important;}
+  #appHeader{display:block !important;}
+  #topHint{display:none !important;}
+  a[href]:after{content:""}
+  table{page-break-inside:auto}
+  tr{page-break-inside:avoid;page-break-after:auto}
 }
 </style>
 </head>
 
 <body>
 
-<div class="card">
-  <h1>
-    <span id="headerIcon" class="header-icon"></span>
-    Zeiterfassung
-  </h1>
-  <div class="muted">Offline · 🔐 PIN + Recovery-Key · Auto-Pause <b>55 min</b> · CSV & Teilen · Home-Icon: <b>Corporate (C)</b></div>
+<!-- HEADER (wählbar) -->
+<div class="card" id="appHeader">
+  <h1 id="appTitle">Zeiterfassung</h1>
+  <div class="muted" id="topHint"></div>
 </div>
 
-<div class="card">
-  <div class="tabs">
-    <div class="tab active" data-tab="timer">⏱️ Timer</div>
-    <div class="tab" data-tab="overview">📊 Übersicht</div>
-    <div class="tab" data-tab="edit">✍️ Rückwirkend</div>
-    <div class="tab" data-tab="absence">🏖️ Abwesenheit</div>
-    <div class="tab" data-tab="entries">🧾 Einträge</div>
-    <div class="tab" data-tab="settings">⚙️ Settings</div>
+<div class="card" id="tabsCard">
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="timer">Timer</div>
+    <div class="tab" data-tab="overview">Übersicht</div>
+    <div class="tab" data-tab="edit">Rückwirkend</div>
+    <div class="tab" data-tab="absence">Abwesenheit</div>
+    <div class="tab" data-tab="entries">Einträge</div>
+    <div class="tab" data-tab="settings">Settings</div>
   </div>
 </div>
 
 <!-- TIMER -->
 <div class="card" id="timer">
-  <h2>⏱️ Timer</h2>
+  <h2 id="hTimer">Timer</h2>
 
-  <div class="row">
-    <div class="muted" style="width:100%">👤 Mitarbeiter</div>
-    <input id="empName" class="w-emp" placeholder="Vorname Nachname">
-    <button class="btn-ghost w-save" id="saveName">💾 Speichern</button>
+  <div class="row" style="margin-bottom:10px">
+    <div class="muted" style="width:100%" id="lblEmp">Mitarbeiter</div>
+    <input id="empName" class="w-emp" placeholder="Vorname Nachname" />
+    <button class="btn-ghost w-save" id="saveName">Speichern</button>
     <span class="right muted mono" id="timerMini"></span>
   </div>
   <div class="muted" id="nameMsg"></div>
 
-  <div class="row" style="margin-top:10px">
-    <div><div class="muted">📅 Datum</div><input type="date" id="timerDate"></div>
-    <div><div class="muted">📝 Notiz</div><input id="timerNote" class="w-note" placeholder="kurz"></div>
+  <div class="row" style="margin-top:12px">
+    <div>
+      <div class="muted" id="lblDate">Datum</div>
+      <input type="date" id="timerDate" />
+    </div>
+    <div>
+      <div class="muted" id="lblNote">Notiz</div>
+      <input id="timerNote" class="w-note" placeholder="kurz" />
+    </div>
     <span class="right muted mono" id="timerInfo"></span>
   </div>
 
   <div class="row" style="margin-top:12px">
-    <button class="btn-start" id="btnStart">▶️ Start</button>
-    <button class="btn-pause" id="btnPause" disabled>⏸️ Pause</button>
-    <button class="btn-stop" id="btnStop">■ Stop</button>
-    <span class="badge" id="timerStatus">⚪ bereit</span>
+    <button class="btn-start" id="btnStart">Start</button>
+    <button class="btn-pause" id="btnPause" disabled>Pause</button>
+    <button class="btn-stop" id="btnStop">Stop</button>
+    <span class="badge" id="timerStatus">bereit</span>
   </div>
 </div>
 
 <!-- OVERVIEW -->
 <div class="card" id="overview" style="display:none">
-  <h2>📊 Übersicht</h2>
+  <h2 id="hOverview">Übersicht</h2>
 
-  <div class="row">
+  <div class="row" id="overviewControls">
     <div>
-      <div class="muted">🧭 Modus</div>
+      <div class="muted" id="lblMode">Modus</div>
       <select id="mode">
         <option value="week">Woche</option>
         <option value="month">Monat</option>
@@ -160,11 +168,11 @@ th{text-align:left;color:#64748b}
       </select>
     </div>
     <div>
-      <div class="muted">📌 Datum</div>
-      <input type="date" id="refDate">
+      <div class="muted" id="lblRef">Datum</div>
+      <input type="date" id="refDate" />
     </div>
     <div>
-      <div class="muted">🎯 Wochen-Soll</div>
+      <div class="muted" id="lblTarget">Wochen-Soll</div>
       <select id="weeklyTarget">
         <option value="2400">40:00 🇩🇪</option>
         <option value="2310">38:30 🇦🇹</option>
@@ -172,26 +180,25 @@ th{text-align:left;color:#64748b}
     </div>
 
     <button class="btn-ghost" id="btnRefresh">↻</button>
-    <button class="btn-blue" id="btnCSV">⬇️ CSV</button>
-    <button class="btn-ghost" id="btnShare">📤 Teilen</button>
-
-    <span class="right muted mono" id="yearHint"></span>
+    <button class="btn-blue" id="btnCSV">CSV</button>
+    <button class="btn-ghost" id="btnShare">Teilen</button>
+    <button class="btn-ghost" id="btnPDF">PDF</button>
+    <span class="right muted mono" id="rangeHint"></span>
   </div>
 
-  <div class="summarybar" id="summaryBar" style="display:none">
+  <div class="row" style="margin-top:12px">
     <span class="badge" id="sumChip">—</span>
-    <span class="badge weekend right" id="weekendChip" style="display:none">🟦 Wochenende: 00:00</span>
-    <span class="badge" id="avgChip" style="display:none">—</span>
+    <span class="badge right" id="avgChip" style="display:none">—</span>
   </div>
 
-  <div style="margin-top:12px">
-    <h2>👔 Manager</h2>
-    <div class="row">
-      <div class="muted" style="width:100%">Name</div>
-      <input id="mgrName" class="w-mgr-name" placeholder="Name">
-      <div class="muted" style="width:100%">E-Mail</div>
-      <input id="mgrMail" class="w-mgr-mail" placeholder="vorname.nachname@firma.de">
-      <button class="btn-ghost w-save" id="saveMgr">💾 Speichern</button>
+  <div style="margin-top:14px">
+    <h2 id="hMgr">Manager</h2>
+    <div class="row" id="mgrControls">
+      <div class="muted" style="width:100%" id="lblMgrName">Name</div>
+      <input id="mgrName" class="w-mgr-name" placeholder="Name" />
+      <div class="muted" style="width:100%" id="lblMgrMail">E-Mail</div>
+      <input id="mgrMail" class="w-mgr-mail" placeholder="vorname.nachname@firma.de" />
+      <button class="btn-ghost w-save" id="saveMgr">Speichern</button>
     </div>
   </div>
 
@@ -200,42 +207,42 @@ th{text-align:left;color:#64748b}
 
 <!-- EDIT -->
 <div class="card" id="edit" style="display:none">
-  <h2>✍️ Rückwirkend</h2>
+  <h2 id="hEdit">Rückwirkend</h2>
   <div class="row">
-    <div><div class="muted">📅 Datum</div><input type="date" id="eDate"></div>
-    <div><div class="muted">🟢 Start</div><input type="time" id="eStart"></div>
-    <div><div class="muted">🔴 Ende</div><input type="time" id="eEnd"></div>
-    <div><div class="muted">📝 Notiz</div><input id="eNote" class="w-edit-note" placeholder="optional"></div>
+    <div><div class="muted" id="lblEDate">Datum</div><input type="date" id="eDate" /></div>
+    <div><div class="muted" id="lblEStart">Start</div><input type="time" id="eStart" /></div>
+    <div><div class="muted" id="lblEEnd">Ende</div><input type="time" id="eEnd" /></div>
+    <div><div class="muted" id="lblENote">Notiz</div><input id="eNote" class="w-edit-note" placeholder="optional" /></div>
   </div>
   <div class="row" style="margin-top:10px">
-    <button class="btn-ghost" id="saveManual">💾 Speichern</button>
-    <button class="btn-ghost" id="newManual">🧽 Neu</button>
+    <button class="btn-ghost" id="saveManual">Speichern</button>
+    <button class="btn-ghost" id="newManual">Neu</button>
     <span class="right muted mono" id="editMsg"></span>
   </div>
 </div>
 
 <!-- ABSENCE -->
 <div class="card" id="absence" style="display:none">
-  <h2>🏖️ Abwesenheit</h2>
-  <div class="muted">Zeitraum: nur <b>Mo–Fr</b>. ✅ Pro Tag <b>max. 1</b> (überschreibt automatisch).</div>
+  <h2 id="hAbs">Abwesenheit</h2>
+  <div class="muted" id="absHint"></div>
 
-  <div class="row" style="margin-top:10px">
-    <div><div class="muted">📅 Start</div><input type="date" id="aStart"></div>
-    <div><div class="muted">📅 Ende</div><input type="date" id="aEnd"></div>
+  <div class="row" style="margin-top:10px" id="absRow1">
+    <div><div class="muted" id="lblAStart">Start</div><input type="date" id="aStart" /></div>
+    <div><div class="muted" id="lblAEnd">Ende</div><input type="date" id="aEnd" /></div>
     <div>
-      <div class="muted">🏷️ Typ</div>
+      <div class="muted" id="lblAType">Typ</div>
       <select id="aType">
-        <option value="vac">🏖️ Urlaub</option>
-        <option value="sick">🤒 Krank</option>
-        <option value="hol">🎉 Feiertag</option>
+        <option value="vac">Urlaub</option>
+        <option value="sick">Krank</option>
+        <option value="hol">Feiertag</option>
       </select>
     </div>
-    <button class="btn-ghost" id="addAbs">➕ Speichern</button>
+    <button class="btn-ghost" id="addAbs">Speichern</button>
   </div>
 
-  <div class="row" style="margin-top:10px">
-    <div><div class="muted">🗓️ Einzeltag löschen</div><input type="date" id="aDelDate"></div>
-    <button class="btn-ghost" id="delAbsDay">🗑️ Löschen</button>
+  <div class="row" style="margin-top:12px" id="absRow2">
+    <div><div class="muted" id="lblADel">Einzeltag löschen</div><input type="date" id="aDelDate" /></div>
+    <button class="btn-ghost" id="delAbsDay">Löschen</button>
     <span class="right muted mono" id="absMsg"></span>
   </div>
 
@@ -244,63 +251,60 @@ th{text-align:left;color:#64748b}
 
 <!-- ENTRIES -->
 <div class="card" id="entries" style="display:none">
-  <h2>🧾 Einträge</h2>
-  <div class="muted">✍️ bearbeiten · 🗑️ löschen</div>
+  <h2 id="hEntries">Einträge</h2>
+  <div class="muted" id="entriesHint"></div>
   <div id="entryList" style="margin-top:10px"></div>
 </div>
 
 <!-- SETTINGS -->
 <div class="card" id="settings" style="display:none">
-  <h2>⚙️ Settings</h2>
-  <div class="muted">🔐 Daten lokal verschlüsselt. Entsperrt bleibt bis Safari geschlossen wird.</div>
+  <h2 id="hSettings">Settings</h2>
+  <div class="muted" id="secHint"></div>
 
-  <div class="row" style="margin-top:10px">
-    <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
-    <button class="btn-ghost" id="btnChangePin">🔁 PIN ändern</button>
-    <button class="btn-ghost" id="btnNewRecovery">🔑 Neuer Recovery-Key</button>
+  <div class="row" style="margin-top:12px">
+    <button class="btn-ghost" id="btnLock">Sperren</button>
+    <button class="btn-ghost" id="btnChangePin">PIN ändern</button>
+    <button class="btn-ghost" id="btnNewRecovery">Recovery-Key</button>
   </div>
 
-  <div class="row" style="margin-top:10px">
-    <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
-    <button class="btn-ghost" id="btnResetAll">🧨 Alles löschen</button>
-  </div>
-
-  <div class="card" style="margin-top:12px;background:#fbfbfb">
-    <h2>🎨 App-Design (A/B/C)</h2>
-    <div class="muted">Nur In-App Look (Header/Akzent). Home-Icon bleibt fest: Corporate (C).</div>
-
-    <div class="row" style="margin-top:10px">
-      <div>
-        <div class="muted">Design</div>
-        <select id="themeStyle">
-          <option value="A">A · Minimal</option>
-          <option value="B" selected>B · Friendly</option>
-          <option value="C">C · Corporate</option>
-        </select>
-      </div>
-      <div>
-        <div class="muted">Akzent</div>
-        <input id="themeColor" type="color" value="#2563eb">
-      </div>
-      <button class="btn-blue" id="btnApplyTheme">✨ Anwenden</button>
-      <span class="right muted mono" id="themeMsg"></span>
+  <div class="row" style="margin-top:12px">
+    <div>
+      <div class="muted" id="lblEmoji">Emojis</div>
+      <select id="emojiMode">
+        <option value="fun">Mehr</option>
+        <option value="pro" selected>Weniger</option>
+        <option value="off">Aus</option>
+      </select>
     </div>
+    <div>
+      <div class="muted" id="lblHeaderMode">Header</div>
+      <select id="headerMode">
+        <option value="full" selected>Groß</option>
+        <option value="compact">Kompakt</option>
+        <option value="off">Aus</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:12px">
+    <button class="btn-stop" id="btnResetThisYear">Jahr löschen</button>
+    <button class="btn-ghost" id="btnResetAll">Alles löschen</button>
   </div>
 </div>
 
 <!-- PIN Overlay -->
 <div class="overlay" id="ovl">
   <div class="modal">
-    <h2>🔐 Zeiterfassung entsperren</h2>
+    <h2 id="pinTitle">Zeiterfassung entsperren</h2>
     <div class="muted" id="ovlText">Bitte PIN eingeben.</div>
 
     <div style="margin-top:10px;display:flex;justify-content:center">
-      <input id="pinInput" class="pin" inputmode="text" maxlength="80" placeholder="PIN oder Recovery-Key" autocomplete="off">
+      <input id="pinInput" class="pin" inputmode="text" maxlength="80" placeholder="PIN oder Recovery-Key" autocomplete="off" />
     </div>
 
     <div class="row" style="margin-top:8px">
       <div>
-        <div class="muted">🔑 Entsperren mit</div>
+        <div class="muted" id="lblAuthMode">Entsperren mit</div>
         <select id="authMode">
           <option value="pin" selected>PIN</option>
           <option value="recovery">Recovery-Key</option>
@@ -310,19 +314,16 @@ th{text-align:left;color:#64748b}
     </div>
 
     <div class="row" style="margin-top:10px">
-      <button class="btn-blue" id="btnUnlock">✅ Entsperren</button>
-      <button class="btn-ghost" id="btnSetPin">🆕 PIN setzen</button>
-      <button class="btn-ghost" id="btnCopyRecovery" style="display:none">📋 Recovery kopieren</button>
+      <button class="btn-blue" id="btnUnlock">Entsperren</button>
+      <button class="btn-ghost" id="btnSetPin">PIN setzen</button>
+      <button class="btn-ghost" id="btnCopyRecovery" style="display:none">Recovery kopieren</button>
     </div>
 
-    <div class="muted" style="margin-top:10px">
-      PIN vergessen? → mit Recovery-Key entsperren. <br>
-      PIN + Recovery vergessen? → nur Reset möglich (Daten weg).
-    </div>
+    <div class="muted" style="margin-top:10px" id="pinFooter"></div>
 
     <div class="card" id="recoveryBox" style="display:none;margin-top:12px;background:#fbfbfb">
-      <h2>🔑 Dein Recovery-Key</h2>
-      <div class="muted">Bitte in Passwort-Manager speichern.</div>
+      <h2 id="recTitle">Dein Recovery-Key</h2>
+      <div class="muted" id="recHint">Bitte in Passwortmanager speichern.</div>
       <div class="mono" id="recoveryText" style="margin-top:8px;font-size:16px;font-weight:900"></div>
     </div>
   </div>
@@ -335,21 +336,26 @@ th{text-align:left;color:#64748b}
   const AUTO_BREAK=55;
   const TOL_WEEK_MIN = 10*60;
 
-  // Vault (MasterKey wrapped by PIN + Recovery)
+  // Prefs
+  const EMOJI_PREF = NS+"::emoji_mode";   // fun|pro|off
+  const HEADER_PREF= NS+"::header_mode";  // full|compact|off
+
+  // Vault
   const VAULT_KEY = NS+"::vault_v1";
   const SESSION_MASTER = NS+"::session_master_raw";
 
-  // Fixed Home Icon (Corporate C) cache
-  const HOME_ICON_PNG_KEY = NS+"::home_icon_c_png";
-
-  // Theme prefs (in-app only)
-  const THEME_PREF = NS+"::theme_pref";
+  // Home Icon (gelbes Z) stable
+  const HOME_ICON_PNG_KEY = NS+"::home_icon_yellowz_png";
 
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
   const b64 = (buf)=>btoa(String.fromCharCode(...new Uint8Array(buf)));
   const ub64 = (s)=>Uint8Array.from(atob(s), c=>c.charCodeAt(0));
   const rand = (n)=>crypto.getRandomValues(new Uint8Array(n));
+  const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const d0=(s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
+  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5;
+  const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6;
 
   const hhmm=(m)=>{
     if(!Number.isFinite(m)) return "--:--";
@@ -357,23 +363,98 @@ th{text-align:left;color:#64748b}
     m=Math.abs(Math.round(m));
     return s + pad(Math.floor(m/60)) + ":" + pad(m%60);
   };
-  const d0=(s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
-  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5;
-  const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6;
-  const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
-  function absLabel(t){ return t==="vac"?"Urlaub":t==="sick"?"Krank":t==="hol"?"Feiertag":t; }
-  function absBadge(t){
-    if(t==="vac")  return `<span class="badge vac">🏖️ Urlaub</span>`;
-    if(t==="sick") return `<span class="badge sick">🤒 Krank</span>`;
-    if(t==="hol")  return `<span class="badge hol">🎉 Feiertag</span>`;
-    return `<span class="badge">${t}</span>`;
+  // ===== Emoji text map =====
+  const UI = {
+    tabs: {
+      timer:    { fun:"⏱️ Timer",        pro:"Timer",        off:"Timer" },
+      overview: { fun:"📊 Übersicht",     pro:"Übersicht",    off:"Übersicht" },
+      edit:     { fun:"✍️ Rückwirkend",   pro:"Rückwirkend",  off:"Rückwirkend" },
+      absence:  { fun:"🏖️ Abwesenheit",  pro:"Abwesenheit",  off:"Abwesenheit" },
+      entries:  { fun:"🧾 Einträge",      pro:"Einträge",     off:"Einträge" },
+      settings: { fun:"⚙️ Settings",      pro:"Settings",     off:"Settings" },
+    },
+    btn: {
+      start:  { fun:"▶️ Start", pro:"Start", off:"Start" },
+      pause:  { fun:"⏸️ Pause", pro:"Pause", off:"Pause" },
+      resume: { fun:"▶️ Weiter",pro:"Weiter",off:"Weiter" },
+      stop:   { fun:"■ Stop",   pro:"Stop",  off:"Stop" },
+
+      save:   { fun:"💾 Speichern", pro:"Speichern", off:"Speichern" },
+      refresh:{ fun:"↻",            pro:"↻",         off:"↻" },
+      csv:    { fun:"⬇️ CSV",       pro:"CSV",       off:"CSV" },
+      share:  { fun:"📤 Teilen",    pro:"Teilen",    off:"Teilen" },
+      pdf:    { fun:"🧾 PDF",       pro:"PDF",       off:"PDF" },
+
+      lock:   { fun:"🔒 Sperren",   pro:"Sperren",   off:"Sperren" },
+      pinchg: { fun:"🔁 PIN ändern",pro:"PIN ändern",off:"PIN ändern" },
+      rec:    { fun:"🔑 Recovery-Key",pro:"Recovery-Key",off:"Recovery-Key" },
+      year:   { fun:"🧹 Jahr löschen",pro:"Jahr löschen",off:"Jahr löschen" },
+      all:    { fun:"🧨 Alles löschen",pro:"Alles löschen",off:"Alles löschen" },
+    },
+    status: {
+      ready:  { fun:"⚪ bereit",     pro:"bereit",      off:"bereit" },
+      running:{ fun:"🟢 läuft",      pro:"läuft",       off:"läuft" },
+      paused: { fun:"⏸️ Pause",      pro:"Pause",       off:"Pause" },
+      saved:  { fun:"✅ gespeichert",pro:"gespeichert", off:"gespeichert" },
+    },
+    labels: {
+      employee:{ fun:"👤 Mitarbeiter", pro:"Mitarbeiter", off:"Mitarbeiter" },
+      date:    { fun:"📅 Datum",       pro:"Datum",       off:"Datum" },
+      note:    { fun:"📝 Notiz",       pro:"Notiz",       off:"Notiz" },
+      mgr:     { fun:"👔 Manager",     pro:"Manager",     off:"Manager" },
+      absHint: { fun:"Zeitraum · Mo–Fr · pro Tag max. 1 (überschreibt)", pro:"Zeitraum · Mo–Fr · pro Tag max. 1 (überschreibt)", off:"Zeitraum · Mo–Fr · pro Tag max. 1 (überschreibt)" },
+      sec:     { fun:"🔐 Daten sind lokal verschlüsselt. Entsperrt bleibt bis Safari geschlossen wird.", pro:"Daten sind lokal verschlüsselt. Entsperrt bleibt bis Safari geschlossen wird.", off:"Daten sind lokal verschlüsselt. Entsperrt bleibt bis Safari geschlossen wird." },
+    }
+  };
+
+  function getEmojiMode(){ return localStorage.getItem(EMOJI_PREF) || "pro"; }
+  function txt(obj){ return obj[getEmojiMode()] || obj.pro || ""; }
+
+  function applyEmojiMode(){
+    document.querySelectorAll(".tab").forEach(el=>{
+      const k=el.dataset.tab;
+      if(UI.tabs[k]) el.textContent = txt(UI.tabs[k]);
+    });
+    $("btnStart").textContent = txt(UI.btn.start);
+    $("btnPause").textContent = txt(UI.btn.pause);
+    $("btnStop").textContent  = txt(UI.btn.stop);
+    $("saveName").textContent = txt(UI.btn.save);
+    $("saveMgr").textContent  = txt(UI.btn.save);
+    $("btnRefresh").textContent = txt(UI.btn.refresh);
+    $("btnCSV").textContent   = txt(UI.btn.csv);
+    $("btnShare").textContent = txt(UI.btn.share);
+    $("btnPDF").textContent   = txt(UI.btn.pdf);
+    $("btnLock").textContent  = txt(UI.btn.lock);
+    $("btnChangePin").textContent = txt(UI.btn.pinchg);
+    $("btnNewRecovery").textContent = txt(UI.btn.rec);
+    $("btnResetThisYear").textContent = txt(UI.btn.year);
+    $("btnResetAll").textContent = txt(UI.btn.all);
+
+    $("lblEmp").textContent = txt(UI.labels.employee);
+    $("lblDate").textContent = txt(UI.labels.date);
+    $("lblNote").textContent = txt(UI.labels.note);
+    $("hMgr").textContent = txt(UI.labels.mgr);
+    $("absHint").textContent = txt(UI.labels.absHint);
+    $("secHint").textContent = txt(UI.labels.sec);
+
+    $("topHint").textContent = "Offline · PIN + Recovery · Auto-Pause 55 min · PDF per Druckdialog";
   }
-  const weekendBadge=()=>`<span class="badge weekend">🟦 Wochenende</span>`;
 
-  function getWeeklyTargetMinutes(){
-    const v=Number($("weeklyTarget").value);
-    return (Number.isFinite(v) && v>0) ? v : 2400;
+  // ===== Header Mode =====
+  function getHeaderMode(){ return localStorage.getItem(HEADER_PREF) || "full"; }
+  function applyHeaderMode(){
+    const mode=getHeaderMode();
+    const header=$("appHeader");
+    if(mode==="off"){ header.style.display="none"; return; }
+    header.style.display="";
+    if(mode==="compact"){
+      header.style.padding="10px 12px";
+      $("topHint").style.display="none";
+    }else{
+      header.style.padding="";
+      $("topHint").style.display="";
+    }
   }
 
   // ===== Tabs =====
@@ -385,122 +466,55 @@ th{text-align:left;color:#64748b}
   }
   document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
 
-  // ===== SVG Icon generator (A/B/C) =====
-  function iconSVG(style, color){
-    const c = color || "#2563eb";
-    const stroke = "#0f172a";
-    const white = "#ffffff";
-
-    if(style==="A"){
-      return `
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#111827"/>
-      <stop offset="1" stop-color="#0b1220"/>
-    </linearGradient>
-  </defs>
-  <rect width="1024" height="1024" rx="220" fill="url(#g)"/>
-  <circle cx="512" cy="512" r="300" fill="none" stroke="${c}" stroke-width="44"/>
-  <path d="M512 320v210l150 86" fill="none" stroke="${white}" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="512" cy="512" r="18" fill="${white}"/>
-</svg>`;
-    }
-
-    if(style==="B"){
-      return `
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${c}"/>
-      <stop offset="1" stop-color="#1d4ed8"/>
-    </linearGradient>
-  </defs>
-  <rect width="1024" height="1024" rx="220" fill="#f8fafc"/>
-  <rect x="160" y="180" width="704" height="664" rx="160" fill="white"/>
-  <circle cx="512" cy="490" r="210" fill="none" stroke="url(#g)" stroke-width="44"/>
-  <path d="M512 350v160l120 72" fill="none" stroke="${stroke}" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="512" cy="490" r="16" fill="${stroke}"/>
-  <rect x="300" y="690" width="424" height="92" rx="46" fill="url(#g)"/>
-  <path d="M412 736l46 46 138-150" fill="none" stroke="white" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`;
-    }
-
-    // C = Corporate
+  // ===== Home Icon (gelbes Z) =====
+  function svgToDataURL(svg){
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
+  }
+  async function svgToPngDataURL(svg, size=1024){
+    const img = new Image();
+    img.decoding="async";
+    const url = svgToDataURL(svg);
+    await new Promise((res, rej)=>{ img.onload=res; img.onerror=()=>rej(new Error("ICON")); img.src=url; });
+    const canvas=document.createElement("canvas");
+    canvas.width=size; canvas.height=size;
+    const ctx=canvas.getContext("2d");
+    ctx.drawImage(img,0,0,size,size);
+    return canvas.toDataURL("image/png");
+  }
+  function homeIconSVG_YellowZ(){
+    const yellow="#facc15";
+    const bg1="#0b1220";
+    const bg2="#050a12";
     return `
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0b1220"/>
-      <stop offset="1" stop-color="#111827"/>
+      <stop offset="0" stop-color="${bg1}"/>
+      <stop offset="1" stop-color="${bg2}"/>
     </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="22" stdDeviation="18" flood-color="#000" flood-opacity=".30"/>
+    </filter>
   </defs>
   <rect width="1024" height="1024" rx="220" fill="url(#g)"/>
-  <path d="M230 360h564l-380 304h380v80H230l380-304H230z" fill="${c}" opacity=".95"/>
-  <circle cx="512" cy="512" r="260" fill="none" stroke="white" stroke-opacity=".18" stroke-width="24"/>
-  <path d="M512 370v170l120 84" fill="none" stroke="white" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="512" cy="512" r="16" fill="white"/>
+  <path d="M280 320H744V404L424 694H744V780H280V696L600 406H280V320Z"
+        fill="${yellow}" filter="url(#s)"/>
+  <circle cx="780" cy="252" r="22" fill="${yellow}" opacity=".95"/>
 </svg>`;
   }
-
-  function svgToDataURL(svg){
-    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
-  }
-
-  async function svgToPngDataURL(svg, size=1024){
-    const img = new Image();
-    img.decoding = "async";
-    const url = svgToDataURL(svg);
-    await new Promise((res, rej)=>{ img.onload=res; img.onerror=()=>rej(new Error("Icon Render")); img.src=url; });
-    const canvas=document.createElement("canvas");
-    canvas.width=size; canvas.height=size;
-    const ctx=canvas.getContext("2d");
-    ctx.clearRect(0,0,size,size);
-    ctx.drawImage(img,0,0,size,size);
-    return canvas.toDataURL("image/png");
-  }
-
-  async function initFixedHomeIcon(){
-    // Fixes Home icon to C (Corporate) permanently
-    let png = localStorage.getItem(HOME_ICON_PNG_KEY);
+  async function initHomeIcon(){
+    const ICON_VERSION="Z1";
+    const KEY = HOME_ICON_PNG_KEY + "::" + ICON_VERSION;
+    let png = localStorage.getItem(KEY);
     if(!png){
-      // choose a conservative corporate accent for home icon
-      const homeColor = "#2563eb";
-      const svg = iconSVG("C", homeColor);
-      png = await svgToPngDataURL(svg, 1024);
-      localStorage.setItem(HOME_ICON_PNG_KEY, png);
+      png = await svgToPngDataURL(homeIconSVG_YellowZ(), 1024);
+      localStorage.setItem(KEY, png);
     }
     $("appleIcon").href = png;
-    $("faviconIcon").href = png; // ok as fallback favicon too
+    $("faviconIcon").href = png;
   }
 
-  // ===== Theme (in-app only) =====
-  function loadThemePref(){
-    try{
-      const raw = localStorage.getItem(THEME_PREF);
-      if(!raw) return {style:"B", color:"#2563eb"};
-      const p = JSON.parse(raw);
-      return {style:p.style||"B", color:p.color||"#2563eb"};
-    }catch{ return {style:"B", color:"#2563eb"}; }
-  }
-  function saveThemePref(p){
-    localStorage.setItem(THEME_PREF, JSON.stringify(p));
-  }
-  function applyTheme(style, color){
-    document.documentElement.style.setProperty("--primary", color || "#2563eb");
-    const svgURL = svgToDataURL(iconSVG(style, color));
-    $("headerIcon").style.backgroundImage = `url("${svgURL}")`;
-  }
-
-  $("btnApplyTheme").onclick=()=>{
-    const p={style:$("themeStyle").value, color:$("themeColor").value};
-    saveThemePref(p);
-    applyTheme(p.style, p.color);
-    $("themeMsg").textContent="✅";
-    setTimeout(()=>$("themeMsg").textContent="",1200);
-  };
-
-  // ===== Vault / Crypto (MasterKey wrapped by PIN + Recovery) =====
+  // ===== Vault / Crypto =====
   function hex(bytes){ return [...bytes].map(b=>b.toString(16).padStart(2,"0")).join(""); }
   function chunk(s,n){ return (s.match(new RegExp(".{1,"+n+"}","g"))||[]).join("-"); }
 
@@ -554,7 +568,6 @@ th{text-align:left;color:#64748b}
     const masterRaw=await exportRawAes(master);
     const wrapPin=await aesEncrypt(pinKey, {master: masterRaw});
     const wrapRec=await aesEncrypt(recKey, {master: masterRaw});
-
     const verifier=await aesEncrypt(master, {ok:"ZEITERFASSUNG"});
 
     const vault={ v:1, pinSalt:b64(pinSalt), recSalt:b64(recSalt), wrapPin, wrapRec, verifier };
@@ -666,9 +679,14 @@ th{text-align:left;color:#64748b}
   }
   function hideOverlay(){ $("ovl").style.display="none"; }
 
-  function setTimerStatus(txt, cls){
-    $("timerStatus").textContent = txt;
+  function setTimerStatus(stateKey, cls){
+    $("timerStatus").textContent = txt(UI.status[stateKey] || UI.status.ready);
     $("timerStatus").className = "badge" + (cls ? (" "+cls) : "");
+  }
+
+  function getWeeklyTargetMinutes(){
+    const v=Number($("weeklyTarget").value);
+    return (Number.isFinite(v) && v>0) ? v : 2400;
   }
 
   function getRefYear(){
@@ -678,13 +696,10 @@ th{text-align:left;color:#64748b}
 
   async function loadYear(y){
     Y=y;
-    $("yearHint").textContent=`Jahr: ${Y}`;
     S=await readYearState(Y);
     applyStateToUI();
-    return true;
   }
-
-  async function saveYear(){ await writeYearState(Y, S); return true; }
+  async function saveYear(){ await writeYearState(Y, S); }
 
   function applyStateToUI(){
     $("empName").value=S.emp||"";
@@ -694,11 +709,11 @@ th{text-align:left;color:#64748b}
     $("nameMsg").textContent=S.emp?"✅ gespeichert":"";
   }
 
-  // ===== Overlay actions =====
+  // Overlay actions
   $("btnUnlock").onclick=async()=>{
     try{
       if(!hasVault()){
-        $("pinMsg").textContent="Noch keine PIN gesetzt → bitte PIN setzen.";
+        $("pinMsg").textContent="Bitte PIN setzen.";
         return;
       }
       const secret=($("pinInput").value||"").trim();
@@ -717,14 +732,13 @@ th{text-align:left;color:#64748b}
   $("btnSetPin").onclick=async()=>{
     try{
       if(hasVault()){
-        $("pinMsg").textContent="PIN ist bereits gesetzt.";
+        $("pinMsg").textContent="PIN existiert schon.";
         return;
       }
       const pin=($("pinInput").value||"").trim();
       if(pin.length<6){ $("pinMsg").textContent="PIN min. 6 Zeichen."; return; }
 
       const recovery = await createVaultWithPin(pin);
-
       $("recoveryText").textContent = recovery;
       $("recoveryBox").style.display="";
       $("btnCopyRecovery").style.display="";
@@ -734,23 +748,22 @@ th{text-align:left;color:#64748b}
           await navigator.clipboard.writeText(recovery);
           $("pinMsg").textContent="✅ kopiert";
         }catch{
-          $("pinMsg").textContent="Kopieren nicht möglich – bitte manuell speichern.";
+          $("pinMsg").textContent="Bitte manuell speichern.";
         }
       };
 
-      $("ovlText").textContent="✅ PIN gesetzt. Bitte Recovery-Key speichern!";
+      $("ovlText").textContent="✅ PIN gesetzt. Recovery-Key speichern!";
       $("btnSetPin").style.display="none";
     }catch{
       $("pinMsg").textContent="❌ Fehler";
     }
   };
 
-  // ===== Settings security actions =====
+  // Settings security actions
   $("btnLock").onclick=()=>{
     clearSessionMaster();
     showOverlay("🔒 Gesperrt. Entsperre mit PIN oder Recovery-Key.");
   };
-
   $("btnChangePin").onclick=async()=>{
     try{
       const master=await getSessionMaster();
@@ -763,7 +776,6 @@ th{text-align:left;color:#64748b}
       alert("❌ Konnte PIN nicht ändern");
     }
   };
-
   $("btnNewRecovery").onclick=async()=>{
     try{
       const master=await getSessionMaster();
@@ -775,15 +787,24 @@ th{text-align:left;color:#64748b}
     }
   };
 
-  // ===== Name / Manager =====
-  $("saveName").onclick=async()=>{ S.emp=($("empName").value||"").trim(); await saveYear(); applyStateToUI(); };
-  $("saveMgr").onclick=async()=>{ S.mgr={name:($("mgrName").value||"").trim(), mail:($("mgrMail").value||"").trim()}; await saveYear(); alert("✅ Manager gespeichert"); };
+  // Name/Manager
+  $("saveName").onclick=async()=>{
+    S.emp=($("empName").value||"").trim();
+    await saveYear();
+    applyStateToUI();
+  };
+  $("saveMgr").onclick=async()=>{
+    S.mgr={name:($("mgrName").value||"").trim(), mail:($("mgrMail").value||"").trim()};
+    await saveYear();
+    alert("✅ Manager gespeichert");
+  };
 
-  // ===== Timer =====
+  // Timer
   $("btnStart").onclick=async()=>{
     if(run) return alert("Timer läuft schon.");
     if(!S.emp) return alert("Bitte Name speichern.");
     if(!$("timerDate").value) return alert("Bitte Datum wählen.");
+
     const entryYear=d0($("timerDate").value).getFullYear();
     if(entryYear!==Y) await loadYear(entryYear);
 
@@ -792,8 +813,8 @@ th{text-align:left;color:#64748b}
     const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),now.getHours(),now.getMinutes(),0,0);
     run={date:$("timerDate").value,start,pauseMin:0,pauseStart:null,note:($("timerNote").value||"").trim()};
     $("btnPause").disabled=false;
-    $("btnPause").textContent="⏸️ Pause";
-    setTimerStatus("🟢 läuft","chip-ok");
+    $("btnPause").textContent=txt(UI.btn.pause);
+    setTimerStatus("running","chip-ok");
     $("timerInfo").textContent=`Start ${pad(start.getHours())}:${pad(start.getMinutes())}`;
   };
 
@@ -801,12 +822,14 @@ th{text-align:left;color:#64748b}
     if(!run) return;
     const now=new Date(); now.setSeconds(0,0);
     if(!run.pauseStart){
-      run.pauseStart=now; $("btnPause").textContent="▶️ Weiter";
-      setTimerStatus("⏸️ Pause","chip-warn");
+      run.pauseStart=now;
+      $("btnPause").textContent=txt(UI.btn.resume);
+      setTimerStatus("paused","chip-warn");
     }else{
       run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
-      run.pauseStart=null; $("btnPause").textContent="⏸️ Pause";
-      setTimerStatus("🟢 läuft","chip-ok");
+      run.pauseStart=null;
+      $("btnPause").textContent=txt(UI.btn.pause);
+      setTimerStatus("running","chip-ok");
     }
   };
 
@@ -818,54 +841,89 @@ th{text-align:left;color:#64748b}
       run.pauseStart=null;
     }
     const gross=Math.round((end-run.start)/60000);
-    if(gross<=0){ setTimerStatus("❌ Zeit ungültig","chip-error"); return; }
+    if(gross<=0){ setTimerStatus("ready",""); return; }
     const auto=(gross>=AUTO_BREAK)?AUTO_BREAK:0;
     const pause=auto+run.pauseMin;
 
-    S.E.push({id:(crypto.randomUUID?crypto.randomUUID():"id_"+Date.now()), d:run.date, s:run.start.toISOString(), e:end.toISOString(), p:pause, n:run.note||""});
+    S.E.push({
+      id:(crypto.randomUUID?crypto.randomUUID():"id_"+Date.now()),
+      d:run.date, s:run.start.toISOString(), e:end.toISOString(),
+      p:pause, n:run.note||""
+    });
     run=null;
-
-    $("btnPause").disabled=true; $("btnPause").textContent="⏸️ Pause";
-    setTimerStatus("✅ gespeichert","chip-ok");
+    $("btnPause").disabled=true;
+    $("btnPause").textContent=txt(UI.btn.pause);
+    setTimerStatus("saved","chip-ok");
     $("timerInfo").textContent="";
     await saveYear();
     await renderAll();
   };
 
-  // ===== Rückwirkend =====
+  // Rückwirkend
   $("newManual").onclick=()=>{
-    editingId=null; $("eStart").value=""; $("eEnd").value=""; $("eNote").value=""; $("editMsg").textContent="";
+    editingId=null;
+    $("eStart").value=""; $("eEnd").value=""; $("eNote").value="";
+    $("editMsg").textContent="";
   };
 
   $("saveManual").onclick=async()=>{
-    if(!$("eDate").value||!$("eStart").value||!$("eEnd").value) { $("editMsg").textContent="Bitte Datum/Start/Ende setzen"; return; }
+    if(!$("eDate").value||!$("eStart").value||!$("eEnd").value){
+      $("editMsg").textContent="Bitte Datum/Start/Ende setzen";
+      return;
+    }
     const d=$("eDate").value;
     const [sh,sm]=$("eStart").value.split(":").map(Number);
     const [eh,em]=$("eEnd").value.split(":").map(Number);
     const s=new Date(d0(d).setHours(sh,sm,0,0));
     const e=new Date(d0(d).setHours(eh,em,0,0));
     const gross=Math.round((e-s)/60000);
-    if(gross<=0){ $("editMsg").textContent="❌ Ende muss nach Start"; return; }
+    if(gross<=0){ $("editMsg").textContent="Ende muss nach Start"; return; }
 
     const yr=d0(d).getFullYear();
     if(yr!==Y) await loadYear(yr);
 
-    const obj={id:editingId||(crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()), d, s:s.toISOString(), e:e.toISOString(), p:(gross>=AUTO_BREAK?AUTO_BREAK:0), n:($("eNote").value||"").trim()};
+    const obj={
+      id:editingId||(crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
+      d, s:s.toISOString(), e:e.toISOString(),
+      p:(gross>=AUTO_BREAK?AUTO_BREAK:0),
+      n:($("eNote").value||"").trim()
+    };
+
     if(editingId){
       const idx=S.E.findIndex(x=>x.id===editingId);
       if(idx>=0) S.E[idx]=obj; else S.E.push(obj);
       $("editMsg").textContent="✅ aktualisiert";
     }else{
-      S.E.push(obj); editingId=obj.id; $("editMsg").textContent="✅ gespeichert";
+      S.E.push(obj); editingId=obj.id;
+      $("editMsg").textContent="✅ gespeichert";
     }
     await saveYear();
     await renderAll();
   };
 
-  // ===== Abwesenheit =====
+  // Abwesenheit: Start->End default
   let aEndTouched=false;
   $("aEnd").addEventListener("change",()=>{aEndTouched=true});
   $("aStart").addEventListener("change",()=>{ if(!aEndTouched) $("aEnd").value=$("aStart").value; });
+
+  function absEmoji(t){
+    const m=getEmojiMode();
+    if(m==="off") return "";
+    if(t==="vac") return "🏖️ ";
+    if(t==="sick")return "🤒 ";
+    if(t==="hol") return "🎉 ";
+    return "";
+  }
+  function absLabel(t){
+    if(t==="vac") return "Urlaub";
+    if(t==="sick") return "Krank";
+    if(t==="hol") return "Feiertag";
+    return t;
+  }
+  function absBadge(t){
+    const e=absEmoji(t);
+    return `<span class="badge">${e}${absLabel(t)}</span>`;
+  }
 
   $("addAbs").onclick=async()=>{
     $("absMsg").textContent="";
@@ -883,9 +941,7 @@ th{text-align:left;color:#64748b}
       const ds=toDateStr(d);
       const y=d.getFullYear();
 
-      if(!perYear.has(y)){
-        perYear.set(y, await readYearState(y));
-      }
+      if(!perYear.has(y)) perYear.set(y, await readYearState(y));
       const st=perYear.get(y);
 
       const before=st.A.length;
@@ -899,7 +955,7 @@ th{text-align:left;color:#64748b}
 
     await loadYear(getRefYear());
     await renderAll();
-    $("absMsg").textContent=`✅ ${added} Tage gespeichert` + (replaced?` · ♻️ ${replaced} überschrieben`:"");
+    $("absMsg").textContent = `✅ ${added} Tage` + (replaced?` (♻️ ${replaced} ersetzt)`:"");
   };
 
   $("delAbsDay").onclick=async()=>{
@@ -914,33 +970,10 @@ th{text-align:left;color:#64748b}
     await loadYear(getRefYear());
     await renderAll();
     const removed=before-st.A.length;
-    $("absMsg").textContent = removed ? `🗑️ ${removed} gelöscht` : "ℹ️ nichts gefunden";
+    $("absMsg").textContent = removed ? `🗑️ ${removed} gelöscht` : "nichts gefunden";
   };
 
-  // ===== Reset =====
-  $("btnResetThisYear").onclick=async()=>{
-    const yr=getRefYear();
-    if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
-      localStorage.removeItem(yearKey(yr));
-      if(yr===Y) S={emp:"",mgr:{name:"",mail:""},E:[],A:[]};
-      await renderAll(); alert("✅ Jahr gelöscht");
-    }
-  };
-  $("btnResetAll").onclick=async()=>{
-    if(confirm("Wirklich ALLES löschen (inkl. PIN/Recovery)?")){
-      const del=[];
-      for(let i=0;i<localStorage.length;i++){
-        const k=localStorage.key(i);
-        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY || k===HOME_ICON_PNG_KEY || k===THEME_PREF)) del.push(k);
-      }
-      del.forEach(k=>localStorage.removeItem(k));
-      clearSessionMaster();
-      alert("✅ Alles gelöscht. Bitte Seite neu laden.");
-      location.reload();
-    }
-  };
-
-  // ===== Overview helpers =====
+  // Overview ranges
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
     const monIndex=(d.getDay()+6)%7;
@@ -997,16 +1030,16 @@ th{text-align:left;color:#64748b}
     return {allE,allA,emp,mgr};
   }
 
-  async function renderOverviewTable(){
+  async function renderOverview(){
     const [start,end]=getPeriodRange();
-    $("yearHint").textContent = `Bereich: ${start.getFullYear()}–${end.getFullYear()}`;
-
     const W=getWeeklyTargetMinutes();
     const DAY=W/5;
 
     const startS=toDateStr(start), endS=toDateStr(end);
     const merged=await getMergedForRange(start,end);
     const E=merged.allE, A=merged.allA;
+
+    $("rangeHint").textContent = `${startS} → ${endS}`;
 
     const istBy={};
     for(const e of E){
@@ -1017,7 +1050,7 @@ th{text-align:left;color:#64748b}
     }
 
     const dayNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
-    let istSum=0, sollSum=0, workdays=0, weekendMin=0;
+    let istSum=0, sollSum=0, workdays=0;
 
     let html=`<table><thead><tr>
       <th>Datum</th><th>Tag</th><th>IST</th><th>SOLL</th><th>Abw.</th><th>Δ</th>
@@ -1026,7 +1059,6 @@ th{text-align:left;color:#64748b}
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
       const ds=toDateStr(d);
       const ist=Number.isFinite(istBy[ds]) ? istBy[ds] : 0;
-      if(isWeekend(d) && ist>0) weekendMin += ist;
 
       const absTypes=A.filter(a=>a.d===ds).map(a=>a.t);
       const isW=wd(d);
@@ -1037,7 +1069,10 @@ th{text-align:left;color:#64748b}
       if(isW) workdays++;
 
       let abw = absTypes.length ? absTypes.map(absBadge).join(" ") : "";
-      if(isWeekend(d) && ist>0) abw = (abw ? (abw+" ") : "") + weekendBadge();
+      if(isWeekend(d) && ist>0){
+        const em = (getEmojiMode()==="off") ? "" : "🟦 ";
+        abw = (abw ? (abw+" ") : "") + `<span class="badge">${em}Wochenende</span>`;
+      }
 
       html+=`<tr>
         <td class="mono">${ds}</td>
@@ -1053,18 +1088,9 @@ th{text-align:left;color:#64748b}
 
     const delta=istSum-sollSum;
     const weeksEq = workdays ? (workdays/5) : 1;
-
-    $("summaryBar").style.display="";
-    const sumCls = chipClassByWeeklyTolerance(delta, weeksEq);
-    $("sumChip").className = "badge " + sumCls;
+    const cls = chipClassByWeeklyTolerance(delta, weeksEq);
+    $("sumChip").className="badge "+cls;
     $("sumChip").textContent = `IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)} (±10:00/Woche ok)`;
-
-    if($("mode").value==="week"){
-      $("weekendChip").style.display="";
-      $("weekendChip").textContent = `🟦 Wochenende: ${hhmm(weekendMin)}`;
-    }else{
-      $("weekendChip").style.display="none";
-    }
 
     if($("mode").value==="month"){
       const weeks=new Map();
@@ -1084,16 +1110,15 @@ th{text-align:left;color:#64748b}
       const avgSoll= active.length ? active.map(w=>W - (w.absDays*(W/5))).reduce((s,v)=>s+v,0)/active.length : W;
       const dAvg=avgIst-avgSoll;
 
-      const avgCls = chipClassByWeeklyTolerance(dAvg, 1);
+      const cls2 = chipClassByWeeklyTolerance(dAvg, 1);
       $("avgChip").style.display="";
-      $("avgChip").className = "badge " + avgCls;
+      $("avgChip").className="badge "+cls2;
       $("avgChip").textContent = `Ø/Woche ${hhmm(avgIst)} (Soll ${hhmm(avgSoll)}) · Δ ${hhmm(dAvg)}`;
     }else{
       $("avgChip").style.display="none";
     }
   }
 
-  // ===== Lists =====
   function renderAbsList(){
     if(!S.A.length){ $("absList").innerHTML=`<div class="muted">Keine Abwesenheiten im Jahr ${Y}.</div>`; return; }
     const arr=S.A.slice().sort((a,b)=>a.d.localeCompare(b.d));
@@ -1130,7 +1155,6 @@ th{text-align:left;color:#64748b}
         await saveYear(); await renderAll();
       };
     });
-
     document.querySelectorAll("[data-edit]").forEach(b=>{
       b.onclick=()=>{
         const id=b.getAttribute("data-edit");
@@ -1148,21 +1172,6 @@ th{text-align:left;color:#64748b}
     });
   }
 
-  async function renderAll(){
-    applyStateToUI();
-    await renderOverviewTable();
-    renderAbsList();
-    renderEntryList();
-  }
-
-  // ===== CSV / Share =====
-  function csvSafeCell(s){
-    s=(s??"").toString();
-    const t=s.trimStart();
-    if(t.startsWith("=")||t.startsWith("+")||t.startsWith("-")||t.startsWith("@")) return "'"+s;
-    return s;
-  }
-
   async function buildCSV(){
     const [start,end]=getPeriodRange();
     const merged=await getMergedForRange(start,end);
@@ -1170,37 +1179,41 @@ th{text-align:left;color:#64748b}
     const startS=toDateStr(start), endS=toDateStr(end);
     const sep=";";
 
+    const safe=(s)=>{
+      s=(s??"").toString();
+      const t=s.trimStart();
+      if(t.startsWith("=")||t.startsWith("+")||t.startsWith("-")||t.startsWith("@")) return "'"+s;
+      return s;
+    };
+
     const rows=[];
     rows.push(["Mitarbeiter","Von","Bis","WochenSoll_min","Datum","Start","Ende","Pause_min","Netto_min","Netto_hhmm","Notiz","ManagerName","ManagerMail"].join(sep));
 
     const entries=merged.allE.filter(e=>e.d>=startS && e.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
     for(const e of entries){
       const net=((new Date(e.e)-new Date(e.s))/60000)-(e.p||0);
-      const d=d0(e.d);
-      const wkHint=isWeekend(d)?"Wochenende":"";
-      const note=[wkHint,(e.n||"")].filter(Boolean).join(" · ");
-
       rows.push([
-        csvSafeCell(merged.emp||S.emp||""), startS, endS, String(W),
+        safe(merged.emp||S.emp||""), startS, endS, String(W),
         e.d, e.s, e.e, String(e.p||0),
         Number.isFinite(net)?String(Math.round(net)):"",
         hhmm(net),
-        csvSafeCell(note),
-        csvSafeCell(merged.mgr?.name||""),
-        csvSafeCell(merged.mgr?.mail||"")
+        safe(e.n||""),
+        safe(merged.mgr?.name||""),
+        safe(merged.mgr?.mail||"")
       ].join(sep));
     }
 
     const abs=merged.allA.filter(a=>a.d>=startS && a.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
     for(const a of abs){
       rows.push([
-        csvSafeCell(merged.emp||S.emp||""), startS, endS, String(W),
+        safe(merged.emp||S.emp||""), startS, endS, String(W),
         a.d, "", "", "0", "0", "00:00",
-        csvSafeCell("Abwesenheit: "+absLabel(a.t)),
-        csvSafeCell(merged.mgr?.name||""),
-        csvSafeCell(merged.mgr?.mail||"")
+        safe("Abwesenheit: "+absLabel(a.t)),
+        safe(merged.mgr?.name||""),
+        safe(merged.mgr?.mail||"")
       ].join(sep));
     }
+
     return rows.join("\n");
   }
 
@@ -1225,12 +1238,64 @@ th{text-align:left;color:#64748b}
     alert("Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
   };
 
+  // ✅ PDF Button (Druckdialog → als PDF speichern)
+  $("btnPDF").onclick=async()=>{
+    await renderOverview();       // sicherstellen, dass alles aktuell ist
+    tab("overview");
+    setTimeout(()=>window.print(), 180); // iOS braucht einen kleinen Moment
+  };
+
   $("btnRefresh").onclick=renderAll;
   $("mode").onchange=renderAll;
   $("weeklyTarget").onchange=renderAll;
   $("refDate").onchange=async()=>{ await loadYear(getRefYear()); await renderAll(); };
 
-  // ===== Defaults =====
+  // Reset
+  $("btnResetThisYear").onclick=async()=>{
+    const yr=getRefYear();
+    if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
+      localStorage.removeItem(yearKey(yr));
+      if(yr===Y) S={emp:"",mgr:{name:"",mail:""},E:[],A:[]};
+      await renderAll();
+      alert("✅ Jahr gelöscht");
+    }
+  };
+  $("btnResetAll").onclick=async()=>{
+    if(confirm("Wirklich ALLES löschen (inkl. PIN/Recovery)?")){
+      const del=[];
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY || k.startsWith(HOME_ICON_PNG_KEY) || k===EMOJI_PREF || k===HEADER_PREF)) del.push(k);
+      }
+      del.forEach(k=>localStorage.removeItem(k));
+      clearSessionMaster();
+      alert("✅ Alles gelöscht. Seite lädt neu.");
+      location.reload();
+    }
+  };
+
+  // Settings dropdown wiring
+  $("emojiMode").onchange=()=>{
+    localStorage.setItem(EMOJI_PREF, $("emojiMode").value);
+    applyEmojiMode();
+    renderAll();
+  };
+  $("headerMode").onchange=()=>{
+    localStorage.setItem(HEADER_PREF, $("headerMode").value);
+    applyHeaderMode();
+  };
+
+  // Render all
+  async function renderAll(){
+    applyStateToUI();
+    applyEmojiMode();
+    applyHeaderMode();
+    await renderOverview();
+    renderAbsList();
+    renderEntryList();
+  }
+
+  // Boot defaults
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
@@ -1238,21 +1303,20 @@ th{text-align:left;color:#64748b}
   $("aStart").value=today;
   $("aEnd").value=today;
   $("aDelDate").value=today;
+  setTimerStatus("ready","");
 
-  setTimerStatus("⚪ bereit","");
+  $("secHint").textContent = txt(UI.labels.sec);
+  $("pinFooter").textContent = "PIN vergessen? → Recovery-Key nutzen. PIN+Recovery vergessen → nur Reset (Daten weg).";
 
   // ===== Boot =====
   (async()=>{
-    // fixed home icon C
-    await initFixedHomeIcon();
+    await initHomeIcon();
 
-    // apply in-app theme
-    const theme=loadThemePref();
-    $("themeStyle").value=theme.style;
-    $("themeColor").value=theme.color;
-    applyTheme(theme.style, theme.color);
+    $("emojiMode").value = getEmojiMode();
+    $("headerMode").value = getHeaderMode();
+    applyEmojiMode();
+    applyHeaderMode();
 
-    // unlock flow
     if(!await getSessionMaster()){
       showOverlay(hasVault() ? "Bitte PIN oder Recovery-Key eingeben." : "Bitte PIN setzen (Recovery-Key wird angezeigt).");
       return;
