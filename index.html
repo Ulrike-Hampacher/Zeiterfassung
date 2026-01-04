@@ -1,440 +1,426 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Zeiterfassung</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Zeiterfassung</title>
 
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Zeiterfassung" />
-<meta name="theme-color" content="#0b1220" />
-<meta name="robots" content="noindex,nofollow" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Zeiterfassung" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="robots" content="noindex,nofollow" />
 
-<!-- ✅ SICHERES ICON: statisch aus icon.png (kein JS, kein Crash) -->
-<link rel="apple-touch-icon" href="icon.png?v=7">
-<link rel="icon" href="icon.png?v=7">
+  <link rel="apple-touch-icon" href="icon.png?v=9">
+  <link rel="icon" href="icon.png?v=9">
 
-<style>
-:root{
-  --bg:#f4f6f8; --card:#fff; --text:#0f172a; --muted:#64748b;
-  --line:#e5e7eb;
-  --ok:#166534; --okbg:#dcfce7;
-  --warn:#9a3412; --warnbg:#fff7ed;
-  --primary:#2563eb;
-  --shadow:0 2px 12px rgba(0,0,0,.08);
-  --chip:#eef2ff;
-}
-*{box-sizing:border-box}
-body{margin:0;padding:14px;font-family:-apple-system,system-ui;background:var(--bg);color:var(--text)}
-.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
-h1{margin:0 0 6px 0;font-size:20px}
-h2{margin:10px 0 10px 0;font-size:16px}
-.muted{color:var(--muted);font-size:13px}
-.mono{font-family:ui-monospace,Menlo,monospace}
-.row{display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:10px;row-gap:12px}
-.right{margin-left:auto}
+  <style>
+    :root{
+      --bg:#f4f6f8; --card:#fff; --text:#0f172a; --muted:#64748b;
+      --line:#e5e7eb; --shadow:0 2px 12px rgba(0,0,0,.08);
+      --primary:#2563eb;
 
-input,select,button,textarea{
-  font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff
-}
-textarea{resize:none}
-button{border:none;font-weight:800;cursor:pointer}
-button:disabled{opacity:.55;cursor:not-allowed}
+      /* Ampel */
+      --ok:#166534;   --okbg:#dcfce7;
+      --mid:#92400e;  --midbg:#fef3c7;
+      --bad:#9a3412;  --badbg:#fff7ed;
 
-.btn-start{background:#16a34a;color:#fff}
-.btn-pause{background:#111827;color:#fff}
-.btn-stop{background:#dc2626;color:#fff}
-.btn-blue{background:var(--primary);color:#fff}
-.btn-ghost{background:#eef2f7;color:#0f172a}
-.btn-sm{padding:8px 10px;font-size:14px;border-radius:10px}
+      --chip:#eef2ff;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;padding:14px;font-family:-apple-system,system-ui;background:var(--bg);color:var(--text)}
+    .card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+    h1{margin:0 0 6px 0;font-size:20px}
+    h2{margin:10px 0 10px 0;font-size:16px}
+    .muted{color:var(--muted);font-size:13px}
+    .mono{font-family:ui-monospace,Menlo,monospace}
+    .row{display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:10px;row-gap:12px}
+    .right{margin-left:auto}
 
-.tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tab{padding:10px 14px;border-radius:12px;background:#eef2f7;cursor:pointer}
-.tab.active{background:#111;color:#fff}
+    input,select,button,textarea{
+      font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff
+    }
+    button{border:none;font-weight:800;cursor:pointer}
+    button:disabled{opacity:.55;cursor:not-allowed}
 
-.badge{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:8px 12px;border-radius:999px;
-  font-size:12px;font-weight:900;
-  background:var(--chip);
-  border:1px solid rgba(0,0,0,.06);
-  white-space:nowrap;
-}
-.chip-ok{background:var(--okbg);color:var(--ok)}
-.chip-warn{background:var(--warnbg);color:var(--warn)}
+    .btn-start{background:#16a34a;color:#fff}
+    .btn-pause{background:#111827;color:#fff}
+    .btn-stop{background:#dc2626;color:#fff}
+    .btn-blue{background:var(--primary);color:#fff}
+    .btn-ghost{background:#eef2f7;color:#0f172a}
+    .btn-sm{padding:8px 10px;font-size:14px;border-radius:10px}
 
-.table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:14px}
-.table-wrap table{min-width:560px}
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #eef2f7;font-size:14px;vertical-align:top}
-th{text-align:left;color:#64748b}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{padding:10px 14px;border-radius:12px;background:#eef2f7;cursor:pointer}
+    .tab.active{background:#111;color:#fff}
 
-@media(max-width:430px){
-  th,td{padding:6px;font-size:13px}
-  .table-wrap table{min-width:520px}
-}
-@media(max-width:360px){
-  th,td{padding:5px;font-size:12px}
-  .table-wrap table{min-width:500px}
-}
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:8px 12px;border-radius:999px;
+      font-size:12px;font-weight:900;
+      background:var(--chip);
+      border:1px solid rgba(0,0,0,.06);
+      white-space:nowrap;
+    }
+    .badge.block{white-space:normal !important;line-height:1.25;max-width:100%;display:block}
+    .chip-ok{background:var(--okbg);color:var(--ok)}
+    .chip-mid{background:var(--midbg);color:var(--mid)}
+    .chip-warn{background:var(--badbg);color:var(--bad)}
 
-/* 👤 Name */
-.w-emp{width:210px;max-width:210px}
-.w-save{width:170px;max-width:170px}
-.w-note{width:150px;max-width:150px}
-.w-edit-note{width:190px;max-width:190px;height:44px}
+    .table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:14px}
+    .table-wrap table{min-width:560px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid #eef2f7;font-size:14px;vertical-align:top}
+    th{text-align:left;color:#64748b}
 
-/* 👔 Manager */
-.w-mgr-name{width:170px;max-width:170px;margin-left:-10px}
-.w-mgr-mail{width:370px;max-width:88vw;min-width:320px;margin-left:-17px}
+    @media(max-width:430px){
+      th,td{padding:6px;font-size:13px}
+      .table-wrap table{min-width:520px}
+    }
 
-/* Übersicht: Chip zweizeilig */
-#sumChip{white-space:normal !important;line-height:1.25;max-width:100%;display:block}
-#overviewControls{row-gap:16px}
+    /* small badges */
+    .small-badge{
+      display:inline-flex;align-items:center;gap:4px;
+      padding:2px 7px;border-radius:999px;
+      font-size:11px;font-weight:900;line-height:1.2;
+      background:#eef2f7;color:#111827;
+      border:1px solid rgba(0,0,0,.10);
+      vertical-align:middle; white-space:nowrap;
+    }
+    .small-badge .e{font-size:12px;line-height:1}
 
-/* kleine Badges */
-.small-badge{
-  display:inline-flex;align-items:center;gap:4px;
-  padding:2px 7px;border-radius:999px;
-  font-size:11px;font-weight:900;line-height:1.2;
-  background:#eef2f7;color:#111827;
-  border:1px solid rgba(0,0,0,.10);
-  vertical-align:middle; white-space:nowrap;
-}
-.small-badge .e{font-size:12px;line-height:1}
+    /* widths */
+    .w-emp{width:210px;max-width:210px}
+    .w-save{width:170px;max-width:170px}
+    .w-note{width:150px;max-width:150px}
+    .w-edit-note{width:190px;max-width:190px;height:44px}
+    .w-mgr-name{width:170px;max-width:170px;margin-left:-10px}
+    .w-mgr-mail{width:370px;max-width:88vw;min-width:320px;margin-left:-17px}
 
-/* Einträge Controls */
-.entries-search-wrap{margin-left:0;margin-right:0;width:100%}
-#entriesSearch{width:min(340px, 92vw)}
-.entries-sum-wrap{
-  margin-left:0;margin-right:0;width:100%;
-  display:flex;justify-content:flex-start
-}
-#entriesSum{margin-left:0}
-#entriesExportCSV{margin-left:0}
+    /* entries */
+    .entries-search-wrap{width:100%}
+    #entriesSearch{width:min(340px, 92vw)}
+    .note-cell{display:flex; align-items:center; gap:6px; max-width:260px}
+    .note-text{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px}
 
-/* Notiz */
-.note-cell{display:flex; align-items:center; gap:6px; max-width:260px}
-.note-text{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px}
-@media(max-width:430px){
-  .note-cell{max-width:220px}
-  .note-text{max-width:160px}
-}
+    /* overlay */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
+    .modal{width:min(560px,100%);background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+    .modal h2{margin-top:0}
+    .pin{width:min(320px,86vw);max-width:86vw;letter-spacing:.08em;font-weight:900;text-align:center;font-size:18px;padding:10px 12px}
 
-/* PIN Overlay */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
-.modal{width:min(560px,100%);background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
-.modal h2{margin-top:0}
-.pin{width:min(320px,86vw);max-width:86vw;letter-spacing:.08em;font-weight:900;text-align:center;font-size:18px;padding:10px 12px}
-
-/* PRINT/PDF: Manager NICHT im PDF */
-@media print{
-  body{background:#fff;padding:0}
-  .card{box-shadow:none;border-radius:0;margin:0 0 12px 0}
-  #tabsCard, #timer, #edit, #absence, #entries, #settings, #ovl {display:none !important;}
-  #overview{display:block !important;}
-  #overviewControls, #btnRefresh, #btnCSV, #btnShare, #btnPDF {display:none !important;}
-  #managerBlock {display:none !important;}
-  #topHint{display:none !important;}
-}
-</style>
+    /* PRINT: Manager NICHT im PDF */
+    @media print{
+      body{background:#fff;padding:0}
+      .card{box-shadow:none;border-radius:0;margin:0 0 12px 0}
+      #tabsCard, #timer, #edit, #absence, #entries, #settings, #ovl {display:none !important;}
+      #overview{display:block !important;}
+      #overviewControls, #btnRefresh, #btnCSV, #btnShare, #btnPDF {display:none !important;}
+      #managerBlock {display:none !important;}
+      #topHint{display:none !important;}
+    }
+  </style>
 </head>
 
 <body>
-
-<div class="card" id="appHeader">
-  <h1>Zeiterfassung</h1>
-  <div class="muted" id="topHint">🔐 PIN+Recovery · Offline · Auto-Pause 55 min · 📊 Übersicht · 🖨️ PDF · ⬇️ CSV</div>
-</div>
-
-<div class="card" id="tabsCard">
-  <div class="tabs">
-    <div class="tab active" data-tab="timer">⏱️ Timer</div>
-    <div class="tab" data-tab="overview">📊 Übersicht</div>
-    <div class="tab" data-tab="edit">🗓️ Rückwirkend</div>
-    <div class="tab" data-tab="absence">🏖️ Abwesenheit</div>
-    <div class="tab" data-tab="entries">🧾 Einträge</div>
-    <div class="tab" data-tab="settings">⚙️ Settings</div>
-  </div>
-</div>
-
-<!-- TIMER -->
-<div class="card" id="timer">
-  <h2>⏱️ Timer</h2>
-
-  <div class="row" style="margin-bottom:10px">
-    <div class="muted" style="width:100%">👤 Mitarbeiter</div>
-    <input id="empName" class="w-emp" placeholder="Vorname Nachname" />
-    <button class="btn-ghost w-save" id="saveName">💾 Speichern</button>
-    <span class="right muted mono" id="timerMini"></span>
-  </div>
-  <div class="muted" id="nameMsg"></div>
-
-  <div class="row" style="margin-top:12px">
-    <div>
-      <div class="muted">📅 Datum</div>
-      <input type="date" id="timerDate" />
-    </div>
-    <div>
-      <div class="muted">📝 Notiz (optional)</div>
-      <input id="timerNote" class="w-note" placeholder="kurz (optional)" />
-    </div>
-    <span class="right muted mono" id="timerInfo"></span>
+  <div class="card">
+    <h1>Zeiterfassung</h1>
+    <div class="muted" id="topHint">🔐 PIN+Recovery · Offline · Auto-Pause 55 min · 📊 Ampel · 🖨️ PDF · ⬇️ CSV</div>
   </div>
 
-  <div class="row" style="margin-top:12px">
-    <button class="btn-start" id="btnStart">▶️ Start</button>
-    <button class="btn-pause" id="btnPause" disabled>⏸️ Pause</button>
-    <button class="btn-stop" id="btnStop">⏹️ Stop</button>
-    <span class="badge" id="timerStatus">⚪ bereit</span>
-  </div>
-</div>
-
-<!-- OVERVIEW -->
-<div class="card" id="overview" style="display:none">
-  <h2>📊 Übersicht</h2>
-
-  <div class="muted" style="margin-top:6px;">👤 Mitarbeiter: <span id="pdfEmpName">—</span></div>
-  <div class="muted" style="margin-top:4px;">📅 Zeitraum: <span id="pdfRangeText">—</span></div>
-  <div class="muted" style="margin-top:4px;">⏱️ IST/SOLL/Δ: <span id="pdfSumText">—</span></div>
-
-  <div class="row" id="overviewControls" style="margin-top:12px">
-    <div>
-      <div class="muted">🧭 Modus</div>
-      <select id="mode">
-        <option value="week">📆 Woche</option>
-        <option value="month">🗓️ Monat</option>
-        <option value="year">📅 Jahr</option>
-      </select>
-    </div>
-    <div>
-      <div class="muted">📅 Datum</div>
-      <input type="date" id="refDate" />
-    </div>
-    <div>
-      <div class="muted">🎯 Wochen-Soll</div>
-      <select id="weeklyTarget">
-        <option value="2400">40:00 🇩🇪</option>
-        <option value="2310">38:30 🇦🇹</option>
-      </select>
-    </div>
-
-    <button class="btn-ghost" id="btnRefresh">🔄</button>
-    <button class="btn-blue" id="btnCSV">⬇️ CSV</button>
-    <button class="btn-ghost" id="btnShare">📤 Teilen</button>
-    <button class="btn-ghost" id="btnPDF">🖨️ PDF</button>
-    <span class="right muted mono" id="rangeHint"></span>
-  </div>
-
-  <div class="row" style="margin-top:12px">
-    <span class="badge" id="sumChip">—</span>
-    <span class="badge" id="weChip" style="display:none">—</span>
-  </div>
-
-  <div id="managerBlock" style="margin-top:14px">
-    <h2>👔 Manager</h2>
-    <div class="row">
-      <div class="muted" style="width:100%">Name</div>
-      <input id="mgrName" class="w-mgr-name" placeholder="Name" />
-      <div class="muted" style="width:100%">E-Mail</div>
-      <input id="mgrMail" class="w-mgr-mail" placeholder="vorname.nachname@firma.de" />
-      <button class="btn-ghost w-save" id="saveMgr">💾 Speichern</button>
+  <div class="card" id="tabsCard">
+    <div class="tabs">
+      <div class="tab active" data-tab="timer">⏱️ Timer</div>
+      <div class="tab" data-tab="overview">📊 Übersicht</div>
+      <div class="tab" data-tab="edit">🗓️ Rückwirkend</div>
+      <div class="tab" data-tab="absence">🏖️ Abwesenheit</div>
+      <div class="tab" data-tab="entries">🧾 Einträge</div>
+      <div class="tab" data-tab="settings">⚙️ Settings</div>
     </div>
   </div>
 
-  <div id="overviewTable" style="margin-top:12px"></div>
-</div>
+  <!-- TIMER -->
+  <div class="card" id="timer">
+    <h2>⏱️ Timer</h2>
 
-<!-- EDIT -->
-<div class="card" id="edit" style="display:none">
-  <h2>🗓️ Rückwirkend</h2>
-  <div class="row">
-    <div><div class="muted">📅 Datum</div><input type="date" id="eDate" /></div>
-    <div><div class="muted">⏱️ Start</div><input type="time" id="eStart" /></div>
-    <div><div class="muted">⏹️ Ende</div><input type="time" id="eEnd" /></div>
-    <div><div class="muted">📝 Notiz</div><input id="eNote" class="w-edit-note" placeholder="optional" /></div>
-  </div>
-  <div class="row" style="margin-top:10px">
-    <button class="btn-ghost" id="saveManual">💾 Speichern</button>
-    <button class="btn-ghost" id="newManual">🆕 Neu</button>
-    <span class="right muted mono" id="editMsg"></span>
-  </div>
-</div>
-
-<!-- ABSENCE -->
-<div class="card" id="absence" style="display:none">
-  <h2>🏖️ Abwesenheit</h2>
-  <div class="muted">📆 Zeitraum · Mo–Fr · pro Tag max. 1 (ersetzt doppelte automatisch)</div>
-
-  <div class="row" style="margin-top:10px">
-    <div><div class="muted">Start</div><input type="date" id="aStart" /></div>
-    <div><div class="muted">Ende</div><input type="date" id="aEnd" /></div>
-    <div>
-      <div class="muted">Typ</div>
-      <select id="aType"></select>
+    <div class="row" style="margin-bottom:10px">
+      <div class="muted" style="width:100%">👤 Mitarbeiter</div>
+      <input id="empName" class="w-emp" placeholder="Vorname Nachname" />
+      <button class="btn-ghost w-save" id="saveName">💾 Speichern</button>
+      <span class="right muted mono" id="timerMini"></span>
     </div>
-    <button class="btn-ghost" id="addAbs">💾 Speichern</button>
-  </div>
+    <div class="muted" id="nameMsg"></div>
 
-  <div class="row" style="margin-top:12px">
-    <div><div class="muted">Einzeltag löschen</div><input type="date" id="aDelDate" /></div>
-    <button class="btn-ghost" id="delAbsDay">🗑️ Löschen</button>
-    <span class="right muted mono" id="absMsg"></span>
-  </div>
-
-  <div id="absList" style="margin-top:12px"></div>
-</div>
-
-<!-- ENTRIES -->
-<div class="card" id="entries" style="display:none">
-  <h2>🧾 Einträge</h2>
-
-  <div class="row">
-    <div>
-      <div class="muted">🧩 Filter</div>
-      <select id="entriesFilter">
-        <option value="week">📆 Woche</option>
-        <option value="month" selected>🗓️ Monat</option>
-        <option value="year">📅 Jahr</option>
-        <option value="custom">🧷 Zeitraum</option>
-      </select>
-    </div>
-
-    <div id="entriesFromWrap" style="display:none">
-      <div class="muted">Von</div>
-      <input type="date" id="entriesFrom" />
-    </div>
-
-    <div id="entriesToWrap" style="display:none">
-      <div class="muted">Bis</div>
-      <input type="date" id="entriesTo" />
-    </div>
-
-    <div class="entries-search-wrap">
-      <div class="muted">🔎 Suche (Notiz)</div>
-      <input id="entriesSearch" placeholder="z.B. Urlaub / Workshop" />
-    </div>
-  </div>
-
-  <div class="row" style="margin-top:10px">
-    <div class="entries-sum-wrap">
-      <span class="badge" id="entriesSum">—</span>
-    </div>
-    <button class="btn-ghost right" id="entriesExportCSV">⬇️ CSV</button>
-  </div>
-
-  <div id="entryList" style="margin-top:12px"></div>
-</div>
-
-<!-- SETTINGS -->
-<div class="card" id="settings" style="display:none">
-  <h2>⚙️ Settings</h2>
-  <div class="muted">🔐 Entsperrt bleibt bis Safari geschlossen wird (Session). PIN kann nicht “einfach neu gesetzt” werden – nur ändern / Recovery.</div>
-
-  <div class="row" style="margin-top:12px">
-    <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
-    <button class="btn-ghost" id="btnChangePin">🔁 PIN ändern</button>
-    <button class="btn-ghost" id="btnNewRecovery">🧩 Recovery-Key</button>
-  </div>
-
-  <h2>😀 Emojis</h2>
-  <div class="muted">➖ / ➕ / AUS (wählbar)</div>
-
-  <div class="row" style="margin-top:10px">
-    <div style="min-width:150px">
-      <div class="muted">Wochenende (Badge)</div>
-      <div class="row" style="gap:6px">
-        <button class="btn-ghost btn-sm" id="weMinus">➖</button>
-        <select id="wePick"></select>
-        <button class="btn-ghost btn-sm" id="wePlus">➕</button>
-      </div>
-    </div>
-
-    <div style="min-width:150px">
-      <div class="muted">Urlaub</div>
-      <div class="row" style="gap:6px">
-        <button class="btn-ghost btn-sm" id="vacMinus">➖</button>
-        <select id="vacPick"></select>
-        <button class="btn-ghost btn-sm" id="vacPlus">➕</button>
-      </div>
-    </div>
-
-    <div style="min-width:150px">
-      <div class="muted">Krank</div>
-      <div class="row" style="gap:6px">
-        <button class="btn-ghost btn-sm" id="sickMinus">➖</button>
-        <select id="sickPick"></select>
-        <button class="btn-ghost btn-sm" id="sickPlus">➕</button>
-      </div>
-    </div>
-
-    <div style="min-width:150px">
-      <div class="muted">Feiertag</div>
-      <div class="row" style="gap:6px">
-        <button class="btn-ghost btn-sm" id="holMinus">➖</button>
-        <select id="holPick"></select>
-        <button class="btn-ghost btn-sm" id="holPlus">➕</button>
-      </div>
-    </div>
-
-    <button class="btn-ghost" id="saveEmoji">💾 Speichern</button>
-    <button class="btn-ghost" id="resetEmoji">↩️ Standard</button>
-  </div>
-
-  <div class="row" style="margin-top:12px">
-    <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
-    <button class="btn-ghost" id="btnResetAll">🧨 Alles löschen</button>
-  </div>
-</div>
-
-<!-- PIN Overlay -->
-<div class="overlay" id="ovl">
-  <div class="modal">
-    <h2>Zeiterfassung entsperren</h2>
-    <div class="muted" id="ovlText">Bitte PIN eingeben.</div>
-
-    <div style="margin-top:10px;display:flex;justify-content:center">
-      <input id="pinInput" class="pin" inputmode="text" maxlength="80" placeholder="PIN oder Recovery-Key" autocomplete="off" />
-    </div>
-
-    <div class="row" style="margin-top:8px">
+    <div class="row" style="margin-top:12px">
       <div>
-        <div class="muted">🔐 Entsperren mit</div>
-        <select id="authMode">
-          <option value="pin" selected>PIN</option>
-          <option value="recovery">Recovery-Key</option>
+        <div class="muted">📅 Datum</div>
+        <input type="date" id="timerDate" />
+      </div>
+      <div>
+        <div class="muted">📝 Notiz (optional)</div>
+        <input id="timerNote" class="w-note" placeholder="kurz (optional)" />
+      </div>
+      <span class="right muted mono" id="timerInfo"></span>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn-start" id="btnStart">▶️ Start</button>
+      <button class="btn-pause" id="btnPause" disabled>⏸️ Pause</button>
+      <button class="btn-stop" id="btnStop">⏹️ Stop</button>
+      <span class="badge" id="timerStatus">⚪ bereit</span>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="card" id="overview" style="display:none">
+    <h2>📊 Übersicht</h2>
+
+    <div class="muted" style="margin-top:6px;">👤 Mitarbeiter: <span id="pdfEmpName">—</span></div>
+    <div class="muted" style="margin-top:4px;">📅 Zeitraum: <span id="pdfRangeText">—</span></div>
+    <div class="muted" style="margin-top:4px;">⏱️ IST/SOLL/Δ: <span id="pdfSumText">—</span></div>
+
+    <div class="row" id="overviewControls" style="margin-top:12px">
+      <div>
+        <div class="muted">🧭 Modus</div>
+        <select id="mode">
+          <option value="week">📆 Woche</option>
+          <option value="month">🗓️ Monat</option>
+          <option value="year">📅 Jahr</option>
         </select>
       </div>
-      <span class="right muted mono" id="pinMsg"></span>
+      <div>
+        <div class="muted">📅 Datum</div>
+        <input type="date" id="refDate" />
+      </div>
+      <div>
+        <div class="muted">🎯 Wochen-Soll</div>
+        <select id="weeklyTarget">
+          <option value="2400">40:00 🇩🇪</option>
+          <option value="2310">38:30 🇦🇹</option>
+        </select>
+      </div>
+
+      <button class="btn-ghost" id="btnRefresh">🔄</button>
+      <button class="btn-blue" id="btnCSV">⬇️ CSV</button>
+      <button class="btn-ghost" id="btnShare">📤 Teilen</button>
+      <button class="btn-ghost" id="btnPDF">🖨️ PDF</button>
+      <span class="right muted mono" id="rangeHint"></span>
     </div>
 
-    <div class="row" style="margin-top:10px">
-      <button class="btn-blue" id="btnUnlock">Entsperren</button>
-      <button class="btn-ghost" id="btnSetPin">PIN setzen</button>
-      <button class="btn-ghost" id="btnCopyRecovery" style="display:none">Recovery kopieren</button>
+    <div class="row" style="margin-top:12px">
+      <span class="badge block" id="sumChip">—</span>
+      <span class="badge" id="weChip" style="display:none">—</span>
     </div>
 
     <div class="muted" style="margin-top:10px">
-      🧩 PIN vergessen? → Recovery-Key nutzen. Beides weg → nur Reset (Daten weg).
+      🟢 bis ±5:00/Woche · 🟡 bis ±10:00/Woche · 🔴 darüber · Urlaub/Krank/Feiertag wird als Tages-Soll angerechnet (reduziert Wochenzeit nicht).
     </div>
 
-    <div class="card" id="recoveryBox" style="display:none;margin-top:12px;background:#fbfbfb">
-      <h2>Dein Recovery-Key</h2>
-      <div class="muted">Bitte in Passwortmanager speichern.</div>
-      <div class="mono" id="recoveryText" style="margin-top:8px;font-size:16px;font-weight:900"></div>
+    <div id="managerBlock" style="margin-top:14px">
+      <h2>👔 Manager</h2>
+      <div class="row">
+        <div class="muted" style="width:100%">Name</div>
+        <input id="mgrName" class="w-mgr-name" placeholder="Name" />
+        <div class="muted" style="width:100%">E-Mail</div>
+        <input id="mgrMail" class="w-mgr-mail" placeholder="vorname.nachname@firma.de" />
+        <button class="btn-ghost w-save" id="saveMgr">💾 Speichern</button>
+      </div>
+    </div>
+
+    <div id="overviewTable" style="margin-top:12px"></div>
+  </div>
+
+  <!-- EDIT -->
+  <div class="card" id="edit" style="display:none">
+    <h2>🗓️ Rückwirkend</h2>
+    <div class="row">
+      <div><div class="muted">📅 Datum</div><input type="date" id="eDate" /></div>
+      <div><div class="muted">⏱️ Start</div><input type="time" id="eStart" /></div>
+      <div><div class="muted">⏹️ Ende</div><input type="time" id="eEnd" /></div>
+      <div><div class="muted">📝 Notiz</div><input id="eNote" class="w-edit-note" placeholder="optional" /></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn-ghost" id="saveManual">💾 Speichern</button>
+      <button class="btn-ghost" id="newManual">🆕 Neu</button>
+      <span class="right muted mono" id="editMsg"></span>
     </div>
   </div>
-</div>
+
+  <!-- ABSENCE -->
+  <div class="card" id="absence" style="display:none">
+    <h2>🏖️ Abwesenheit</h2>
+    <div class="muted">📆 Zeitraum · Mo–Fr · pro Tag max. 1 (ersetzt doppelte automatisch) · wird als Tages-Soll angerechnet</div>
+
+    <div class="row" style="margin-top:10px">
+      <div><div class="muted">Start</div><input type="date" id="aStart" /></div>
+      <div><div class="muted">Ende</div><input type="date" id="aEnd" /></div>
+      <div>
+        <div class="muted">Typ</div>
+        <select id="aType"></select>
+      </div>
+      <button class="btn-ghost" id="addAbs">💾 Speichern</button>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <div><div class="muted">Einzeltag löschen</div><input type="date" id="aDelDate" /></div>
+      <button class="btn-ghost" id="delAbsDay">🗑️ Löschen</button>
+      <span class="right muted mono" id="absMsg"></span>
+    </div>
+
+    <div id="absList" style="margin-top:12px"></div>
+  </div>
+
+  <!-- ENTRIES -->
+  <div class="card" id="entries" style="display:none">
+    <h2>🧾 Einträge</h2>
+
+    <div class="row">
+      <div>
+        <div class="muted">🧩 Filter</div>
+        <select id="entriesFilter">
+          <option value="week">📆 Woche</option>
+          <option value="month" selected>🗓️ Monat</option>
+          <option value="year">📅 Jahr</option>
+          <option value="custom">🧷 Zeitraum</option>
+        </select>
+      </div>
+
+      <div id="entriesFromWrap" style="display:none">
+        <div class="muted">Von</div>
+        <input type="date" id="entriesFrom" />
+      </div>
+
+      <div id="entriesToWrap" style="display:none">
+        <div class="muted">Bis</div>
+        <input type="date" id="entriesTo" />
+      </div>
+
+      <div class="entries-search-wrap">
+        <div class="muted">🔎 Suche (Notiz)</div>
+        <input id="entriesSearch" placeholder="z.B. Urlaub / Workshop" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <span class="badge" id="entriesSum">—</span>
+      <button class="btn-ghost right" id="entriesExportCSV">⬇️ CSV</button>
+    </div>
+
+    <div id="entryList" style="margin-top:12px"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="card" id="settings" style="display:none">
+    <h2>⚙️ Settings</h2>
+    <div class="muted">🔐 Entsperrt bleibt bis Safari geschlossen wird (Session). PIN kann nur geändert / Recovery neu erzeugt werden.</div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
+      <button class="btn-ghost" id="btnChangePin">🔁 PIN ändern</button>
+      <button class="btn-ghost" id="btnNewRecovery">🧩 Recovery-Key</button>
+    </div>
+
+    <h2>😀 Emojis</h2>
+    <div class="muted">➖ / ➕ / AUS</div>
+
+    <div class="row" style="margin-top:10px">
+      <div style="min-width:150px">
+        <div class="muted">Wochenende</div>
+        <div class="row" style="gap:6px">
+          <button class="btn-ghost btn-sm" id="weMinus">➖</button>
+          <select id="wePick"></select>
+          <button class="btn-ghost btn-sm" id="wePlus">➕</button>
+        </div>
+      </div>
+
+      <div style="min-width:150px">
+        <div class="muted">Urlaub</div>
+        <div class="row" style="gap:6px">
+          <button class="btn-ghost btn-sm" id="vacMinus">➖</button>
+          <select id="vacPick"></select>
+          <button class="btn-ghost btn-sm" id="vacPlus">➕</button>
+        </div>
+      </div>
+
+      <div style="min-width:150px">
+        <div class="muted">Krank</div>
+        <div class="row" style="gap:6px">
+          <button class="btn-ghost btn-sm" id="sickMinus">➖</button>
+          <select id="sickPick"></select>
+          <button class="btn-ghost btn-sm" id="sickPlus">➕</button>
+        </div>
+      </div>
+
+      <div style="min-width:150px">
+        <div class="muted">Feiertag</div>
+        <div class="row" style="gap:6px">
+          <button class="btn-ghost btn-sm" id="holMinus">➖</button>
+          <select id="holPick"></select>
+          <button class="btn-ghost btn-sm" id="holPlus">➕</button>
+        </div>
+      </div>
+
+      <button class="btn-ghost" id="saveEmoji">💾 Speichern</button>
+      <button class="btn-ghost" id="resetEmoji">↩️ Standard</button>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
+      <button class="btn-ghost" id="btnResetAll">🧨 Alles löschen</button>
+    </div>
+  </div>
+
+  <!-- PIN Overlay -->
+  <div class="overlay" id="ovl">
+    <div class="modal">
+      <h2>Zeiterfassung entsperren</h2>
+      <div class="muted" id="ovlText">Bitte PIN eingeben.</div>
+
+      <div style="margin-top:10px;display:flex;justify-content:center">
+        <input id="pinInput" class="pin" inputmode="text" maxlength="80" placeholder="PIN oder Recovery-Key" autocomplete="off" />
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <div>
+          <div class="muted">🔐 Entsperren mit</div>
+          <select id="authMode">
+            <option value="pin" selected>PIN</option>
+            <option value="recovery">Recovery-Key</option>
+          </select>
+        </div>
+        <span class="right muted mono" id="pinMsg"></span>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn-blue" id="btnUnlock">Entsperren</button>
+        <button class="btn-ghost" id="btnSetPin">PIN setzen</button>
+        <button class="btn-ghost" id="btnCopyRecovery" style="display:none">Recovery kopieren</button>
+      </div>
+
+      <div class="muted" style="margin-top:10px">
+        🧩 PIN vergessen? → Recovery-Key nutzen. Beides weg → nur Reset (Daten weg).
+      </div>
+
+      <div class="card" id="recoveryBox" style="display:none;margin-top:12px;background:#fbfbfb">
+        <h2>Dein Recovery-Key</h2>
+        <div class="muted">Bitte in Passwortmanager speichern.</div>
+        <div class="mono" id="recoveryText" style="margin-top:8px;font-size:16px;font-weight:900"></div>
+      </div>
+    </div>
+  </div>
 
 <script>
 (() => {
   "use strict";
 
-  /* ---------- Constants ---------- */
-  const NS="ZEITERFASSUNG";
-  const AUTO_BREAK=55;                 // Auto-Pause 55 min
-  const TOL_WEEK_MIN=600;              // ±10h pro Woche
+  /* =======================
+     Konfiguration
+  ======================== */
+  const NS = "ZEITERFASSUNG";
+  const AUTO_BREAK = 55;                 // Auto-Pause 55 min
+  const TOL_Y_WEEK = 300;                // ±5:00 pro Woche (gelb)
+  const TOL_R_WEEK = 600;                // ±10:00 pro Woche (rot)
+
   const VAULT_KEY = NS+"::vault_v1";
   const SESSION_MASTER = NS+"::session_master_raw";
   const YEAR_KEY = (y)=> NS+"::year::"+y;
@@ -447,25 +433,24 @@ th{text-align:left;color:#64748b}
     hol:  ["(aus)","🎉","📅","🎊","⭐️","🏛️"]
   };
 
-  const $=id=>document.getElementById(id);
-  const pad=n=>String(n).padStart(2,"0");
-  const b64 = (buf)=>btoa(String.fromCharCode(...new Uint8Array(buf)));
-  const ub64 = (s)=>Uint8Array.from(atob(s), c=>c.charCodeAt(0));
-  const rand = (n)=>crypto.getRandomValues(new Uint8Array(n));
-  const toDateStr=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const d0=(s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
-  const wd=(d)=> d.getDay()>=1 && d.getDay()<=5;
-  const isWeekend=(d)=> d.getDay()===0 || d.getDay()===6;
-  const hhmm=(m)=>{
+  /* =======================
+     Helpers
+  ======================== */
+  const $ = (id)=>document.getElementById(id);
+  const pad = (n)=>String(n).padStart(2,"0");
+  const toDateStr = (d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const d0 = (s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
+  const wd = (d)=> d.getDay()>=1 && d.getDay()<=5;
+  const isWeekend = (d)=> d.getDay()===0 || d.getDay()===6;
+  const norm = (s)=>(s||"").toString().trim().toLowerCase();
+  const parseISO = (s)=>{ const d=new Date(s); return isNaN(d.getTime())?null:d; };
+  const fmtTimeHM = (d)=> d?`${pad(d.getHours())}:${pad(d.getMinutes())}`:"--:--";
+  const hhmm = (m)=>{
     if(!Number.isFinite(m)) return "--:--";
     const s=m<0?"-":"";
     m=Math.abs(Math.round(m));
     return s + pad(Math.floor(m/60)) + ":" + pad(m%60);
   };
-  const norm=s=>(s||"").toString().trim().toLowerCase();
-
-  function parseISO(s){ const d=new Date(s); return isNaN(d.getTime())?null:d; }
-  function fmtTimeHM(d){ if(!d) return "--:--"; return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 
   function smallBadge(emoji, text){
     const e = emoji ? `<span class="e">${emoji}</span>` : "";
@@ -473,7 +458,6 @@ th{text-align:left;color:#64748b}
     return `<span class="small-badge">${e}${t}</span>`;
   }
 
-  /* ---------- Tabs ---------- */
   function tab(name){
     ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
       $(id).style.display=(id===name)?"":"none";
@@ -482,9 +466,14 @@ th{text-align:left;color:#64748b}
   }
   document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
 
-  /* ---------- Security (PIN + Recovery) ---------- */
-  function hex(bytes){ return [...bytes].map(b=>b.toString(16).padStart(2,"0")).join(""); }
-  function chunk(s,n){ return (s.match(new RegExp(".{1,"+n+"}","g"))||[]).join("-"); }
+  /* =======================
+     Security (PIN + Recovery)
+  ======================== */
+  const b64 = (buf)=>btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const ub64 = (s)=>Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+  const rand = (n)=>crypto.getRandomValues(new Uint8Array(n));
+  const hex  = (bytes)=>[...bytes].map(b=>b.toString(16).padStart(2,"0")).join("");
+  const chunk=(s,n)=>(s.match(new RegExp(".{1,"+n+"}","g"))||[]).join("-");
 
   async function pbkdf2KeyFromSecret(secret, saltBytes){
     const enc=new TextEncoder();
@@ -608,6 +597,13 @@ th{text-align:left;color:#64748b}
     return await aesDecrypt(master, blob);
   }
 
+  /* =======================
+     Datenmodell
+  ======================== */
+  let Y = new Date().getFullYear();
+  let S = { emp:"", mgrName:"", mgrMail:"", emojis:{...DEFAULT_EMOJI}, E:[], A:[] };
+  let run = null;
+
   async function readYearState(y){
     const raw=localStorage.getItem(YEAR_KEY(y));
     if(!raw) return {emp:"", mgrName:"", mgrMail:"", emojis:{...DEFAULT_EMOJI}, E:[], A:[]};
@@ -624,26 +620,22 @@ th{text-align:left;color:#64748b}
   async function writeYearState(y, state){
     localStorage.setItem(YEAR_KEY(y), JSON.stringify(await encryptJson(state)));
   }
-
-  function showOverlay(msg){
-    $("ovl").style.display="flex";
-    $("pinMsg").textContent="";
-    $("pinInput").value="";
-    $("recoveryBox").style.display="none";
-    $("btnCopyRecovery").style.display="none";
-    $("ovlText").textContent=msg||"Bitte PIN eingeben.";
-    $("btnSetPin").style.display = hasVault() ? "none" : "";
-    $("authMode").value="pin";
-    setTimeout(()=>$("pinInput").focus(), 50);
+  async function loadYear(y){
+    Y=y;
+    S=await readYearState(Y);
+    $("empName").value=S.emp||"";
+    $("mgrName").value=S.mgrName||"";
+    $("mgrMail").value=S.mgrMail||"";
+    $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
+    $("nameMsg").textContent=S.emp ? "✅ gespeichert" : "";
+    $("pdfEmpName").textContent=S.emp || "—";
+    loadEmojiUI();
   }
-  function hideOverlay(){ $("ovl").style.display="none"; }
+  async function saveYear(){ await writeYearState(Y, S); }
 
-  /* ---------- App State ---------- */
-  let Y=new Date().getFullYear();
-  let S={emp:"", mgrName:"", mgrMail:"", emojis:{...DEFAULT_EMOJI}, E:[], A:[]};
-  let run=null;
-
-  /* ---------- Emoji Settings ---------- */
+  /* =======================
+     Emoji Settings
+  ======================== */
   function emojiOrMarker(v){ return (v==="(aus)") ? "(aus)" : v; }
   function emojiDisplay(savedValue, fallback){
     if (savedValue === "(aus)") return "";
@@ -668,7 +660,6 @@ th{text-align:left;color:#64748b}
     i = (i + dir + arr.length) % arr.length;
     sel.value = arr[i];
   }
-
   function refreshAbsenceDropdown(){
     const saved = (S.emojis || {});
     const em = {
@@ -676,7 +667,6 @@ th{text-align:left;color:#64748b}
       sick: emojiDisplay(saved.sick, DEFAULT_EMOJI.sick),
       hol:  emojiDisplay(saved.hol,  DEFAULT_EMOJI.hol),
     };
-
     const s=$("aType");
     const cur=s.value || "vac";
     s.innerHTML="";
@@ -693,7 +683,6 @@ th{text-align:left;color:#64748b}
     }
     s.value = ["vac","sick","hol"].includes(cur) ? cur : "vac";
   }
-
   function loadEmojiUI(){
     fillSelect($("wePick"), PICKS.we);
     fillSelect($("vacPick"), PICKS.vac);
@@ -735,24 +724,25 @@ th{text-align:left;color:#64748b}
     alert("↩️ Standard Emojis gesetzt");
   };
 
-  /* ---------- Load / Save year ---------- */
-  async function loadYear(y){
-    Y=y;
-    S=await readYearState(Y);
-
-    $("empName").value=S.emp||"";
-    $("mgrName").value=S.mgrName||"";
-    $("mgrMail").value=S.mgrMail||"";
-
-    $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
-    $("nameMsg").textContent=S.emp ? "✅ gespeichert" : "";
-    $("pdfEmpName").textContent=S.emp || "—";
-
-    loadEmojiUI();
+  /* =======================
+     Overlay UI
+  ======================== */
+  function showOverlay(msg){
+    $("ovl").style.display="flex";
+    $("pinMsg").textContent="";
+    $("pinInput").value="";
+    $("recoveryBox").style.display="none";
+    $("btnCopyRecovery").style.display="none";
+    $("ovlText").textContent=msg||"Bitte PIN eingeben.";
+    $("btnSetPin").style.display = hasVault() ? "none" : "";
+    $("authMode").value="pin";
+    setTimeout(()=>$("pinInput").focus(), 50);
   }
-  async function saveYear(){ await writeYearState(Y, S); }
+  function hideOverlay(){ $("ovl").style.display="none"; }
 
-  /* ---------- Timer ---------- */
+  /* =======================
+     Timer / Entries
+  ======================== */
   function setTimerStatus(txt, cls){
     $("timerStatus").textContent=txt;
     $("timerStatus").className="badge"+(cls?(" "+cls):"");
@@ -790,7 +780,7 @@ th{text-align:left;color:#64748b}
     if(!run.pauseStart){
       run.pauseStart=now;
       $("btnPause").textContent="▶️ Weiter";
-      setTimerStatus("⏸️ Pause", "chip-warn");
+      setTimerStatus("⏸️ Pause", "chip-mid");
     }else{
       run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
       run.pauseStart=null;
@@ -844,7 +834,9 @@ th{text-align:left;color:#64748b}
     alert("✅ Manager gespeichert");
   };
 
-  /* ---------- Rückwirkend ---------- */
+  /* =======================
+     Rückwirkend
+  ======================== */
   $("saveManual").onclick=async()=>{
     $("editMsg").textContent="";
     if(!$("eDate").value||!$("eStart").value||!$("eEnd").value){
@@ -878,7 +870,9 @@ th{text-align:left;color:#64748b}
     $("editMsg").textContent="";
   };
 
-  /* ---------- Abwesenheit (Start = Ende automatisch) ---------- */
+  /* =======================
+     Abwesenheit
+  ======================== */
   let aEndTouched=false;
   $("aEnd").addEventListener("input", ()=>{ aEndTouched=true; });
   $("aStart").addEventListener("input", ()=>{
@@ -968,7 +962,9 @@ th{text-align:left;color:#64748b}
     $("absMsg").textContent = removed ? `🗑️ ${removed} gelöscht` : "🤷 nichts gefunden";
   };
 
-  /* ---------- Übersicht Range Helpers ---------- */
+  /* =======================
+     Range / Targets
+  ======================== */
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
     const monIndex=(d.getDay()+6)%7;
@@ -1023,6 +1019,9 @@ th{text-align:left;color:#64748b}
     return {allE,allA,emp,mgrName,mgrMail,emojis};
   }
 
+  /* =======================
+     Übersicht (Ampel + Anrechnung)
+  ======================== */
   async function renderOverview(){
     const [start,end]=getPeriodRange();
     const W=getWeeklyTargetMinutes();
@@ -1043,6 +1042,7 @@ th{text-align:left;color:#64748b}
       hol:  emojiDisplay(saved.hol,  DEFAULT_EMOJI.hol),
     };
 
+    // IST pro Tag
     const istBy=Object.create(null);
     for(const e of merged.allE){
       if(!e || !e.d) continue;
@@ -1052,6 +1052,7 @@ th{text-align:left;color:#64748b}
       istBy[e.d]=(istBy[e.d]||0)+nm;
     }
 
+    // Abwesenheit pro Tag
     const absBy = Object.create(null);
     for (const a of (merged.allA || [])) {
       if (!a || !a.d || !a.t) continue;
@@ -1062,12 +1063,12 @@ th{text-align:left;color:#64748b}
       absBy[a.d].add(t);
     }
 
-    let istSum=0, sollSum=0, workdays=0;
+    let istSum=0, sollSum=0, workdays=0, creditSum=0;
     let weMin=0, weDays=0;
 
     const dayNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
     let html=`<div class="table-wrap"><table><thead><tr>
-      <th>📅 Datum</th><th>Tag</th><th>IST</th><th>SOLL</th><th>Abw.</th><th>Δ</th>
+      <th>📅 Datum</th><th>Tag</th><th>IST</th><th>Anr.</th><th>SOLL</th><th>Abw.</th><th>Δ</th>
     </tr></thead><tbody>`;
 
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
@@ -1076,10 +1077,19 @@ th{text-align:left;color:#64748b}
 
       const absTypes = absBy[ds] ? Array.from(absBy[ds]) : [];
       const isW = wd(d);
-      const soll = Math.round(isW ? (absTypes.length>0 ? 0 : DAY) : 0);
-      const delta=ist-soll;
 
-      istSum += ist; sollSum += soll;
+      // SOLL reduziert sich NICHT durch Abwesenheit
+      const soll = Math.round(isW ? DAY : 0);
+
+      // Abwesenheit wird als Anrechnung gezählt (Tages-Soll)
+      const credit = (isW && absTypes.length>0) ? Math.round(DAY) : 0;
+
+      const istEff = ist + credit;
+      const delta = istEff - soll;
+
+      istSum += istEff;
+      sollSum += soll;
+      creditSum += credit;
       if(isW) workdays++;
 
       const abw = absTypes.length
@@ -1100,6 +1110,7 @@ th{text-align:left;color:#64748b}
         <td class="mono">${ds}</td>
         <td>${dayNames[d.getDay()]}</td>
         <td class="mono">${hhmm(ist)}</td>
+        <td class="mono">${credit?hhmm(credit):"—"}</td>
         <td class="mono">${hhmm(soll)}</td>
         <td>${abw2}</td>
         <td class="mono">${hhmm(delta)}</td>
@@ -1108,16 +1119,25 @@ th{text-align:left;color:#64748b}
     html+=`</tbody></table></div>`;
     $("overviewTable").innerHTML=html;
 
+    // Ampel (skaliert im Monat/Jahr über "Wochenäquivalent")
     const delta=istSum-sollSum;
     const weeksEq = workdays ? (workdays/5) : 1;
-    const tol = TOL_WEEK_MIN * Math.max(1, weeksEq);
-    const ok = Math.abs(delta) <= tol;
+    const tolY = TOL_Y_WEEK * Math.max(1, weeksEq);
+    const tolR = TOL_R_WEEK * Math.max(1, weeksEq);
 
-    $("sumChip").className="badge "+(ok ? "chip-ok" : "chip-warn");
+    const absDelta=Math.abs(delta);
+    let cls="chip-ok", icon="🟢";
+    if(absDelta>tolY && absDelta<=tolR){ cls="chip-mid"; icon="🟡"; }
+    if(absDelta>tolR){ cls="chip-warn"; icon="🔴"; }
+
+    $("sumChip").className="badge block "+cls;
     $("sumChip").innerHTML =
-      `<div><b>${ok?"✅":"⚠️"} IST ${hhmm(istSum)}</b> · SOLL ${hhmm(sollSum)}</div>` +
-      `<div>Δ ${hhmm(delta)} <span class="muted">(±10:00/Woche ok)</span></div>`;
-    $("pdfSumText").textContent = `IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)}`;
+      `<div><b>${icon} IST ${hhmm(istSum)}</b> · SOLL ${hhmm(sollSum)}</div>`+
+      `<div>Δ ${hhmm(delta)} <span class="muted">(±5:00/W · bis ±10:00/W)</span></div>`+
+      (creditSum>0 ? `<div class="muted">inkl. Anrechnung: ${hhmm(creditSum)}</div>` : "");
+
+    $("pdfSumText").textContent =
+      `IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)}` + (creditSum>0 ? ` · Anr ${hhmm(creditSum)}` : "");
 
     if(weMin>0){
       $("weChip").style.display="";
@@ -1127,7 +1147,9 @@ th{text-align:left;color:#64748b}
     }
   }
 
-  /* ---------- Einträge ---------- */
+  /* =======================
+     Einträge
+  ======================== */
   function rangeForEntries(filter){
     const ref = $("refDate").value ? d0($("refDate").value) : new Date();
     if(filter==="week") return weekRangeISO(ref);
@@ -1227,7 +1249,6 @@ th{text-align:left;color:#64748b}
     $("entriesToWrap").style.display = isCustom ? "" : "none";
   }
 
-  /* ✅ Komfort: Einträge Zeitraum Von=Bis automatisch */
   let entriesToTouched=false;
   $("entriesTo").addEventListener("input", ()=>{ entriesToTouched=true; });
   $("entriesFrom").addEventListener("input", ()=>{
@@ -1245,7 +1266,9 @@ th{text-align:left;color:#64748b}
     if($("entriesTo").value === $("entriesFrom").value) entriesToTouched=false;
   });
 
-  /* ---------- CSV / Share / PDF ---------- */
+  /* =======================
+     CSV / Share / PDF
+  ======================== */
   function csvSafe(s){
     s=(s??"").toString();
     const t=s.trimStart();
@@ -1288,7 +1311,6 @@ th{text-align:left;color:#64748b}
     a.download=`Zeiterfassung_${$("mode").value}_${$("refDate").value}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
   };
-
   $("entriesExportCSV").onclick=async()=>{ $("btnCSV").click(); };
 
   $("btnShare").onclick=async()=>{
@@ -1315,7 +1337,9 @@ th{text-align:left;color:#64748b}
     }
   };
 
-  /* ---------- Settings ---------- */
+  /* =======================
+     Settings: Lock / Pin / Reset
+  ======================== */
   $("btnLock").onclick=()=>{
     clearSessionMaster();
     showOverlay("🔒 Gesperrt. Entsperre mit PIN oder Recovery-Key.");
@@ -1365,18 +1389,9 @@ th{text-align:left;color:#64748b}
     }
   };
 
-  /* ---------- Controls ---------- */
-  $("btnRefresh").onclick=async()=>{ await renderAll(); };
-  $("mode").onchange=async()=>{ await renderAll(); };
-  $("weeklyTarget").onchange=async()=>{ await renderAll(); };
-  $("refDate").onchange=async()=>{ await loadYear(getRefYear()); await renderAll(); };
-
-  $("entriesFilter").onchange=async()=>{ updateEntriesCustomVisibility(); await renderEntries(); };
-  $("entriesSearch").oninput=async()=>{ await renderEntries(); };
-  $("entriesFrom").onchange=async()=>{ await renderEntries(); };
-  $("entriesTo").onchange=async()=>{ await renderEntries(); };
-
-  /* ---------- Overlay Actions ---------- */
+  /* =======================
+     Overlay actions
+  ======================== */
   $("btnUnlock").onclick=async()=>{
     try{
       if(!hasVault()){ $("pinMsg").textContent="⚠️ Bitte PIN setzen."; return; }
@@ -1409,7 +1424,22 @@ th{text-align:left;color:#64748b}
     }catch{ $("pinMsg").textContent="❌ Fehler"; }
   };
 
-  /* ---------- Render All ---------- */
+  /* =======================
+     Controls
+  ======================== */
+  $("btnRefresh").onclick=async()=>{ await renderAll(); };
+  $("mode").onchange=async()=>{ await renderAll(); };
+  $("weeklyTarget").onchange=async()=>{ await renderAll(); };
+  $("refDate").onchange=async()=>{ await loadYear(getRefYear()); await renderAll(); };
+
+  $("entriesFilter").onchange=async()=>{ updateEntriesCustomVisibility(); await renderEntries(); };
+  $("entriesSearch").oninput=async()=>{ await renderEntries(); };
+  $("entriesFrom").onchange=async()=>{ await renderEntries(); };
+  $("entriesTo").onchange=async()=>{ await renderEntries(); };
+
+  /* =======================
+     Render All
+  ======================== */
   async function renderAll(){
     $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
     $("pdfEmpName").textContent = S.emp || "—";
@@ -1419,7 +1449,9 @@ th{text-align:left;color:#64748b}
     await renderEntries();
   }
 
-  /* ---------- Defaults ---------- */
+  /* =======================
+     Defaults + Boot
+  ======================== */
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
@@ -1432,9 +1464,9 @@ th{text-align:left;color:#64748b}
   $("entriesFilter").value="month";
   updateEntriesCustomVisibility();
 
-  /* ---------- Boot ---------- */
   (async()=>{
-    if(!await getSessionMaster()){
+    const master = await getSessionMaster();
+    if(!master){
       showOverlay(hasVault()
         ? "🔐 Bitte PIN oder Recovery-Key eingeben."
         : "🧷 Bitte PIN setzen (Recovery-Key wird angezeigt).");
