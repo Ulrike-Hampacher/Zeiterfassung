@@ -11,6 +11,10 @@
 <meta name="theme-color" content="#0b1220" />
 <meta name="robots" content="noindex,nofollow" />
 
+<!-- iPhone Home-Screen Icon: lege apple-touch-icon.png (180x180) ins Repo -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="favicon.ico">
+
 <style>
 :root{
   --bg:#f4f6f8; --card:#fff; --text:#0f172a; --muted:#64748b;
@@ -25,7 +29,7 @@
 body{margin:0;padding:14px;font-family:-apple-system,system-ui;background:var(--bg);color:var(--text)}
 .card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
 h1{margin:0 0 6px 0;font-size:20px}
-h2{margin:6px 0 10px 0;font-size:16px}
+h2{margin:10px 0 10px 0;font-size:16px}
 .muted{color:var(--muted);font-size:13px}
 .mono{font-family:ui-monospace,Menlo,monospace}
 
@@ -90,12 +94,12 @@ th{text-align:left;color:#64748b}
 }
 #overviewControls{ row-gap:16px; }
 
-/* ✅ WE Badge: klein, mit Emoji, neben IST */
+/* ✅ WE Badge: klein, Emoji, neben Zeiten | -3px näher */
 .we-badge{
   display:inline-flex;
   align-items:center;
   gap:4px;
-  margin-left:6px;
+  margin-left:3px;        /* ✅ -3px */
   padding:2px 7px;
   border-radius:999px;
   font-size:11px;
@@ -115,7 +119,7 @@ th{text-align:left;color:#64748b}
 .modal h2{margin-top:0}
 .pin{width:min(360px,86vw);max-width:86vw;letter-spacing:.08em;font-weight:900;text-align:center;font-size:18px;padding:10px 12px}
 
-/* ===== PRINT/PDF ===== */
+/* PRINT/PDF */
 @media print{
   body{background:#fff;padding:0}
   .card{box-shadow:none;border-radius:0;margin:0 0 12px 0}
@@ -227,7 +231,7 @@ th{text-align:left;color:#64748b}
     <span class="badge right" id="avgChip" style="display:none">—</span>
   </div>
 
-  <!-- ✅ Manager in App, aber NICHT im PDF -->
+  <!-- Manager: in App sichtbar, im PDF verborgen -->
   <div id="managerBlock" style="margin-top:14px">
     <h2>👔 Manager</h2>
     <div class="row">
@@ -336,6 +340,17 @@ th{text-align:left;color:#64748b}
     <button class="btn-ghost" id="btnNewRecovery">🧩 Recovery-Key</button>
   </div>
 
+  <h2>😀 Emojis</h2>
+  <div class="muted">Du kannst die Emojis anpassen (kurz halten, am besten 1 Emoji).</div>
+  <div class="row" style="margin-top:10px">
+    <div><div class="muted">WE</div><input id="emoWE" maxlength="2" style="width:80px"></div>
+    <div><div class="muted">Urlaub</div><input id="emoVac" maxlength="2" style="width:80px"></div>
+    <div><div class="muted">Krank</div><input id="emoSick" maxlength="2" style="width:80px"></div>
+    <div><div class="muted">Feiertag</div><input id="emoHol" maxlength="2" style="width:80px"></div>
+    <button class="btn-ghost" id="saveEmoji">💾 Speichern</button>
+    <button class="btn-ghost" id="resetEmoji">↩️ Standard</button>
+  </div>
+
   <div class="row" style="margin-top:12px">
     <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
     <button class="btn-ghost" id="btnResetAll">🧨 Alles löschen</button>
@@ -386,10 +401,11 @@ th{text-align:left;color:#64748b}
   const NS="ZEITERFASSUNG";
   const AUTO_BREAK=55;     // ✅ Auto-Pause 55 min
   const TOL_WEEK_MIN=600;  // ✅ ±10h pro Woche ok (600 Minuten)
-
   const VAULT_KEY = NS+"::vault_v1";
   const SESSION_MASTER = NS+"::session_master_raw";
   const YEAR_KEY = (y)=> NS+"::year::"+y;
+
+  const DEFAULT_EMOJI = { we:"🧑‍💻", vac:"🏖️", sick:"🤒", hol:"🎉" };
 
   const $=id=>document.getElementById(id);
   const pad=n=>String(n).padStart(2,"0");
@@ -527,14 +543,16 @@ th{text-align:left;color:#64748b}
     if(!master) throw new Error("LOCKED");
     return await aesDecrypt(master, blob);
   }
+
   async function readYearState(y){
     const raw=localStorage.getItem(YEAR_KEY(y));
-    if(!raw) return {emp:"", mgrName:"", mgrMail:"", E:[], A:[]};
+    if(!raw) return {emp:"", mgrName:"", mgrMail:"", emojis:{...DEFAULT_EMOJI}, E:[], A:[]};
     const obj=await decryptJson(JSON.parse(raw));
     return {
       emp: obj.emp || "",
       mgrName: obj.mgrName || "",
       mgrMail: obj.mgrMail || "",
+      emojis: {...DEFAULT_EMOJI, ...(obj.emojis||{})},
       E: Array.isArray(obj.E)?obj.E:[],
       A: Array.isArray(obj.A)?obj.A:[]
     };
@@ -559,13 +577,14 @@ th{text-align:left;color:#64748b}
 
   // ===== App state =====
   let Y=new Date().getFullYear();
-  let S={emp:"", mgrName:"", mgrMail:"", E:[], A:[]};
+  let S={emp:"", mgrName:"", mgrMail:"", emojis:{...DEFAULT_EMOJI}, E:[], A:[]};
   let run=null;
   let editingId=null;
   let aEndTouched=false;
 
   function parseISO(s){ const d=new Date(s); return isNaN(d.getTime())?null:d; }
   function fmtTimeHM(d){ if(!d) return "--:--"; return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+
   function netMinutes(entry){
     const s=parseISO(entry.s), e=parseISO(entry.e);
     if(!s||!e) return null;
@@ -584,6 +603,7 @@ th{text-align:left;color:#64748b}
     $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
     $("nameMsg").textContent=S.emp ? "✅ gespeichert" : "";
     $("pdfEmpName").textContent=S.emp || "—";
+    loadEmojiSettings();
   }
   async function saveYear(){ await writeYearState(Y, S); }
 
@@ -591,6 +611,33 @@ th{text-align:left;color:#64748b}
     $("timerStatus").textContent=txt;
     $("timerStatus").className="badge"+(cls?(" "+cls):"");
   }
+
+  // ===== Emoji Settings =====
+  function loadEmojiSettings(){
+    const e=S.emojis || DEFAULT_EMOJI;
+    $("emoWE").value = e.we || DEFAULT_EMOJI.we;
+    $("emoVac").value = e.vac || DEFAULT_EMOJI.vac;
+    $("emoSick").value = e.sick || DEFAULT_EMOJI.sick;
+    $("emoHol").value = e.hol || DEFAULT_EMOJI.hol;
+  }
+  $("saveEmoji").onclick = async ()=>{
+    S.emojis = {
+      we: ($("emoWE").value || DEFAULT_EMOJI.we).trim(),
+      vac: ($("emoVac").value || DEFAULT_EMOJI.vac).trim(),
+      sick: ($("emoSick").value || DEFAULT_EMOJI.sick).trim(),
+      hol: ($("emoHol").value || DEFAULT_EMOJI.hol).trim()
+    };
+    await saveYear();
+    await renderAll();
+    alert("😀 Emojis gespeichert");
+  };
+  $("resetEmoji").onclick = async ()=>{
+    S.emojis = {...DEFAULT_EMOJI};
+    loadEmojiSettings();
+    await saveYear();
+    await renderAll();
+    alert("↩️ Standard Emojis gesetzt");
+  };
 
   // ===== Timer: Start / Pause / Stop =====
   $("btnStart").onclick=async()=>{
@@ -723,7 +770,12 @@ th{text-align:left;color:#64748b}
   $("aStart").addEventListener("change",()=>{ if(!aEndTouched) $("aEnd").value=$("aStart").value; });
 
   function absBadge(t){
-    const map={vac:"🏖️ Urlaub", sick:"🤒 Krank", hol:"🎉 Feiertag"};
+    const e=S.emojis || DEFAULT_EMOJI;
+    const map={
+      vac:`${e.vac} Urlaub`,
+      sick:`${e.sick} Krank`,
+      hol:`${e.hol} Feiertag`
+    };
     return `<span class="badge">${map[t]||t}</span>`;
   }
 
@@ -821,16 +873,18 @@ th{text-align:left;color:#64748b}
   async function getMergedForRange(start,end){
     const years=new Set([start.getFullYear(), end.getFullYear()]);
     const allE=[], allA=[];
-    let emp=S.emp||"", mgrName=S.mgrName||"", mgrMail=S.mgrMail||"";
+    let emp=S.emp||"", mgrName=S.mgrName||"", mgrMail=S.mgrMail||"", emojis={...DEFAULT_EMOJI, ...(S.emojis||{})};
+
     for(const y of years){
       const st=await readYearState(y);
       if(!emp && st.emp) emp=st.emp;
       if(!mgrName && st.mgrName) mgrName=st.mgrName;
       if(!mgrMail && st.mgrMail) mgrMail=st.mgrMail;
+      emojis = {...emojis, ...(st.emojis||{})};
       allE.push(...(st.E||[]));
       allA.push(...(st.A||[]));
     }
-    return {allE,allA,emp,mgrName,mgrMail};
+    return {allE,allA,emp,mgrName,mgrMail,emojis};
   }
 
   async function renderOverview(){
@@ -846,6 +900,7 @@ th{text-align:left;color:#64748b}
     $("pdfEmpName").textContent = merged.emp || S.emp || "—";
 
     const E=merged.allE, A=merged.allA;
+    const emoWE = merged.emojis.we || DEFAULT_EMOJI.we;
 
     const istBy={};
     for(const e of E){
@@ -876,16 +931,16 @@ th{text-align:left;color:#64748b}
 
       const abw = absTypes.length ? absTypes.map(t=>absBadge(t)).join(" ") : "";
 
-      // ✅ WE: NICHT in Abw., sondern mini neben IST
+      // ✅ WE Badge mit Emoji neben IST & SOLL (nur wenn am Wochenende gearbeitet wurde)
       const weBadge = (isWeekend(d) && ist>0)
-        ? `<span class="we-badge"><span class="we-emoji">🧑‍💻</span>WE</span>`
+        ? `<span class="we-badge"><span class="we-emoji">${emoWE}</span>WE</span>`
         : "";
 
       html+=`<tr>
         <td class="mono">${ds}</td>
         <td>${dayNames[d.getDay()]}</td>
         <td class="mono">${hhmm(ist)}${weBadge}</td>
-        <td class="mono">${hhmm(soll)}</td>
+        <td class="mono">${hhmm(soll)}${weBadge}</td>
         <td>${abw}</td>
         <td class="mono">${hhmm(delta)}</td>
       </tr>`;
@@ -911,7 +966,6 @@ th{text-align:left;color:#64748b}
     }
   }
 
-  // Abwesenheiten Liste
   function renderAbsList(){
     if(!S.A.length){ $("absList").innerHTML=`<div class="muted">🤷 Keine Abwesenheiten im Jahr ${Y}.</div>`; return; }
     const arr=S.A.slice().sort((a,b)=>a.d.localeCompare(b.d));
@@ -950,9 +1004,7 @@ th{text-align:left;color:#64748b}
   <td class="mono">${hhmm(pause)}</td>
   <td class="mono">${hhmm(net)}</td>
   <td>${safeText(e.n||"")}</td>
-  <td>
-    <button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button>
-  </td>
+  <td><button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button></td>
 </tr>`;
   }
 
@@ -990,7 +1042,6 @@ th{text-align:left;color:#64748b}
     document.querySelectorAll("[data-del]").forEach(b=>{
       b.onclick=async()=>{
         const id=b.getAttribute("data-del");
-        // ✅ Löschen kann über Jahresgrenzen liegen -> in allen betroffenen Jahren suchen
         const years=[start.getFullYear(), end.getFullYear(), Y];
         for(const y of [...new Set(years)]){
           const st=await readYearState(y);
