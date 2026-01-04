@@ -879,7 +879,7 @@
     S.E.push({
       id:(crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
       d, s:s.toISOString(), e:e.toISOString(),
-      p:0, // ✅ Rückwirkend ohne Auto-Pause
+      p:(gross>=AUTO_BREAK?AUTO_BREAK:0),
       n:($("eNote").value||"").trim()
     });
 
