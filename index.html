@@ -54,9 +54,10 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .tab.active{background:#111;color:#fff}
 
 .badge{
-  display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;
+  display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;
   font-size:12px;font-weight:900;background:var(--chip);
-  border:1px solid rgba(0,0,0,.06);white-space:nowrap
+  border:1px solid rgba(0,0,0,.06);
+  white-space:nowrap; /* default, overridden for sumChip */
 }
 .chip-ok{background:var(--okbg);color:var(--ok)}
 .chip-warn{background:var(--warnbg);color:var(--warn)}
@@ -70,7 +71,7 @@ th{text-align:left;color:#64748b}
 .w-save{width:170px;max-width:170px}
 .w-edit-note{width:220px;max-width:220px;height:44px}
 
-/* Manager Felder: kurz + Mail etwas rein */
+/* Manager Felder: kurz + Mail länger, etwas rein (left) */
 .w-mgr-name{width:190px;max-width:190px;margin-left:-7px}
 .w-mgr-mail{width:360px;max-width:88vw;min-width:320px;margin-left:-11px}
 
@@ -87,6 +88,16 @@ th{text-align:left;color:#64748b}
   .w-mgr-mail{min-width:320px;margin-left:-11px}
 }
 
+/* ✅ Übersicht: Summe darf umbrechen (2 Zeilen) */
+#sumChip{
+  white-space:normal !important;
+  line-height:1.25;
+  max-width:100%;
+  display:block;
+}
+/* ✅ Mehr Abstand, falls eine zweite Zeile entsteht */
+#overviewControls{ row-gap:16px; }
+
 /* ===== PRINT/PDF ===== */
 @media print{
   body{background:#fff;padding:0}
@@ -94,7 +105,7 @@ th{text-align:left;color:#64748b}
   #tabsCard, #timer, #edit, #absence, #entries, #settings, #ovl {display:none !important;}
   #overview{display:block !important;}
   #overviewControls, #btnRefresh, #btnCSV, #btnShare, #btnPDF {display:none !important;}
-  #managerBlock {display:none !important;} /* ✅ Manager komplett raus im PDF */
+  #managerBlock {display:none !important;} /* ✅ Manager NICHT im PDF */
   #appHeader{display:block !important;}
   #topHint{display:none !important;}
   a[href]:after{content:""}
@@ -158,9 +169,15 @@ th{text-align:left;color:#64748b}
 <div class="card" id="overview" style="display:none">
   <h2 id="hOverview">📊 Übersicht</h2>
 
-  <!-- ✅ PDF zeigt Mitarbeiter -->
+  <!-- ✅ PDF Kopf (immer sichtbar, Manager wird nur im PDF ausgeblendet) -->
   <div class="muted" id="pdfEmpLine" style="margin-top:6px;">
     👤 Mitarbeiter: <span id="pdfEmpName">—</span>
+  </div>
+  <div class="muted" id="pdfRangeLine" style="margin-top:4px;">
+    📅 Zeitraum: <span id="pdfRangeText">—</span>
+  </div>
+  <div class="muted" id="pdfSumLine" style="margin-top:4px;">
+    ⏱️ IST/SOLL/Δ: <span id="pdfSumText">—</span>
   </div>
 
   <div class="row" id="overviewControls" style="margin-top:12px">
@@ -196,9 +213,9 @@ th{text-align:left;color:#64748b}
     <span class="badge right" id="avgChip" style="display:none">—</span>
   </div>
 
-  <!-- Manager bleibt in App sichtbar, aber NICHT im PDF -->
+  <!-- ✅ Manager in App, aber NICHT im PDF -->
   <div id="managerBlock" style="margin-top:14px">
-    <h2>👔 Empfänger (optional)</h2>
+    <h2>👔 Manager</h2>
     <div class="row" id="mgrControls">
       <div class="muted" style="width:100%">Name</div>
       <input id="mgrName" class="w-mgr-name" placeholder="Name" />
@@ -372,8 +389,8 @@ th{text-align:left;color:#64748b}
 <script>
 (() => {
   const NS="ZEITERFASSUNG";
-  const AUTO_BREAK=55;           // ✅ Auto-Pause 55 min
-  const TOL_WEEK_MIN=600;        // ✅ ±10h pro Woche ok
+  const AUTO_BREAK=55;     // ✅ Auto-Pause 55 min
+  const TOL_WEEK_MIN=600;  // ✅ ±10h pro Woche ok
 
   const EMOJI_PREF = NS+"::emoji_mode";
   const HEADER_PREF= NS+"::header_mode";
@@ -453,11 +470,6 @@ th{text-align:left;color:#64748b}
     $("btnShare").textContent = off?"Teilen":(pro?"Teilen":"📤 Teilen");
     $("btnPDF").textContent = off?"PDF":(pro?"PDF":"🖨️ PDF");
     $("entriesExportCSV").textContent = off?"CSV":(pro?"CSV":"⬇️ CSV");
-
-    $("topHint").textContent =
-      off ? "Offline · PIN+Recovery · Auto-Pause 55 min · Einträge · PDF"
-          : (pro ? "Offline · PIN+Recovery · Auto-Pause 55 min · Einträge · PDF"
-                 : "✨ Offline · 🔐 PIN+Recovery · ⏳ Auto-Pause 55 min · 🧾 Einträge · 🖨️ PDF");
   }
 
   // ===== App Icon (Blue + clock + glowing yellow Z) =====
@@ -663,8 +675,8 @@ th{text-align:left;color:#64748b}
     const obj=await decryptJson(JSON.parse(raw));
     return {
       emp: obj.emp || "",
-      rec: obj.rec || "",     // optional receiver name
-      recv: obj.recv || "",   // optional receiver mail
+      rec: obj.rec || "",
+      recv: obj.recv || "",
       E: Array.isArray(obj.E)?obj.E:[],
       A: Array.isArray(obj.A)?obj.A:[]
     };
@@ -779,13 +791,14 @@ th{text-align:left;color:#64748b}
 
     run=null;
     $("btnPause").disabled=true;
+    $("btnPause").textContent="⏸️ Pause";
     $("timerInfo").textContent="";
     setTimerStatus("✅ gespeichert", "chip-ok");
     await saveYear();
     await renderAll();
   };
 
-  // Save name / receiver
+  // Save name / manager
   $("saveName").onclick=async()=>{
     S.emp=($("empName").value||"").trim();
     await saveYear();
@@ -797,7 +810,7 @@ th{text-align:left;color:#64748b}
     S.rec=($("mgrName").value||"").trim();
     S.recv=($("mgrMail").value||"").trim();
     await saveYear();
-    alert("✅ Empfänger gespeichert");
+    alert("✅ Manager gespeichert");
   };
 
   // Rückwirkend
@@ -844,7 +857,7 @@ th{text-align:left;color:#64748b}
     await renderAll();
   };
 
-  // Abwesenheit (Zeitraum) + pro Tag max. 1
+  // Abwesenheit (Zeitraum) + pro Tag max. 1 + Start=Ende default
   let aEndTouched=false;
   $("aEnd").addEventListener("change",()=>{aEndTouched=true});
   $("aStart").addEventListener("change",()=>{ if(!aEndTouched) $("aEnd").value=$("aStart").value; });
@@ -969,6 +982,7 @@ th{text-align:left;color:#64748b}
     const E=merged.allE, A=merged.allA;
 
     $("rangeHint").textContent = `${startS} → ${endS}`;
+    $("pdfRangeText").textContent = `${startS} → ${endS}`; // ✅ PDF
 
     const istBy={};
     for(const e of E){
@@ -1017,13 +1031,21 @@ th{text-align:left;color:#64748b}
     const delta=istSum-sollSum;
     const weeksEq = workdays ? (workdays/5) : 1;
     const cls = chipClassByWeeklyTolerance(delta, weeksEq);
+
     $("sumChip").className="badge "+cls;
-    $("sumChip").textContent = `${cls==="chip-ok"?"✅":"⚠️"} IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)} (±10:00/Woche ok)`;
+
+    /* ✅ zweizeilig, handyfreundlich */
+    $("sumChip").innerHTML =
+      `<div><b>${cls==="chip-ok"?"✅":"⚠️"} IST ${hhmm(istSum)}</b> · SOLL ${hhmm(sollSum)}</div>` +
+      `<div>Δ ${hhmm(delta)} <span class="muted">(±10:00/Woche ok)</span></div>`;
+
+    /* ✅ PDF Zeile */
+    $("pdfSumText").textContent = `IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)}`;
 
     $("avgChip").style.display = ($("mode").value==="month") ? "" : "none";
     if($("mode").value==="month"){
       $("avgChip").className="badge "+cls;
-      $("avgChip").textContent = `${cls==="chip-ok"?"✅":"⚠️"} Monats-Check aktiv`;
+      $("avgChip").textContent = `${cls==="chip-ok"?"✅":"⚠️"} Monats-Check`;
     }
   }
 
@@ -1098,7 +1120,6 @@ th{text-align:left;color:#64748b}
     document.querySelectorAll("[data-del]").forEach(b=>{
       b.onclick=async()=>{
         const id=b.getAttribute("data-del");
-        // delete in whatever year it exists
         for(const y of [start.getFullYear(), end.getFullYear(), Y]){
           const st=await readYearState(y);
           const before=st.E.length;
@@ -1152,7 +1173,7 @@ th{text-align:left;color:#64748b}
     const sep=";";
 
     const rows=[];
-    rows.push(["Mitarbeiter","Von","Bis","WochenSoll_min","Datum","StartISO","EndeISO","Pause_min","Netto_min","Netto_hhmm","Notiz","EmpfaengerName","EmpfaengerMail"].join(sep));
+    rows.push(["Mitarbeiter","Von","Bis","WochenSoll_min","Datum","StartISO","EndeISO","Pause_min","Netto_min","Netto_hhmm","Notiz","ManagerName","ManagerMail"].join(sep));
 
     const entries=merged.allE.filter(e=>e.d>=startS && e.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
     for(const e of entries){
@@ -1163,8 +1184,8 @@ th{text-align:left;color:#64748b}
         Number.isFinite(nm)?String(Math.round(nm)):"",
         hhmm(nm),
         csvSafe(e.n||""),
-        csvSafe(merged.rec||""),
-        csvSafe(merged.recv||"")
+        csvSafe(merged.rec||S.rec||""),
+        csvSafe(merged.recv||S.recv||"")
       ].join(sep));
     }
     return rows.join("\n");
@@ -1295,47 +1316,6 @@ th{text-align:left;color:#64748b}
   $("entriesFrom").onchange=async()=>{ await renderEntries(); };
   $("entriesTo").onchange=async()=>{ await renderEntries(); };
 
-  $("entriesExportCSV").onclick=async()=>{
-    const filter=$("entriesFilter").value;
-    const ref = $("refDate").value ? d0($("refDate").value) : new Date();
-    const [start,end]=(()=>{
-      if(filter==="week") return weekRangeISO(ref);
-      if(filter==="month") return monthRange(ref);
-      if(filter==="year") return yearRange(ref.getFullYear());
-      const f=$("entriesFrom").value, t=$("entriesTo").value;
-      if(f && t){ const s=d0(f), e=d0(t); return s<=e?[s,e]:[e,s]; }
-      return weekRangeISO(ref);
-    })();
-    const startS=toDateStr(start), endS=toDateStr(end);
-    const merged=await getMergedForRange(start,end);
-    const query = normalizeSearch($("entriesSearch").value);
-
-    const entries = merged.allE
-      .filter(e=>e.d>=startS && e.d<=endS)
-      .filter(e=> !query || normalizeSearch(e.n).includes(query))
-      .sort((a,b)=>a.d.localeCompare(b.d));
-
-    const sep=";";
-    const rows=[];
-    rows.push(["Mitarbeiter","Von","Bis","Datum","StartISO","EndeISO","Pause_min","Netto_min","Netto_hhmm","Notiz"].join(sep));
-    for(const e of entries){
-      const nm=netMinutes(e);
-      rows.push([
-        csvSafe(merged.emp||S.emp||""), startS, endS,
-        e.d, e.s, e.e, String(e.p||0),
-        Number.isFinite(nm)?String(Math.round(nm)):"",
-        hhmm(nm),
-        csvSafe(e.n||"")
-      ].join(sep));
-    }
-    const csv=rows.join("\n");
-    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download=`Zeiterfassung_Eintraege_${startS}_bis_${endS}.csv`;
-    document.body.appendChild(a); a.click(); a.remove();
-  };
-
   // Refresh wiring
   $("btnRefresh").onclick=async()=>{ await renderAll(); };
   $("mode").onchange=async()=>{ await renderAll(); };
@@ -1354,7 +1334,7 @@ th{text-align:left;color:#64748b}
 
   async function renderAll(){
     $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
-    $("pdfEmpName").textContent = S.emp || "—";   // ✅ PDF zeigt MA
+    $("pdfEmpName").textContent = S.emp || "—";
     renderAbsList();
     await renderOverview();
     await renderEntries();
