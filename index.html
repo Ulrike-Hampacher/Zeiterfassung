@@ -1324,6 +1324,35 @@ $("aEnd").addEventListener("change", () => {
     $("entriesFromWrap").style.display = isCustom ? "" : "none";
     $("entriesToWrap").style.display = isCustom ? "" : "none";
   }
+  /* ---------- Einträge: Zeitraum Komfort (Von = Bis automatisch) ---------- */
+let entriesToTouched = false;
+
+// Wenn "Bis" manuell geändert wird → Automatik aus
+$("entriesTo").addEventListener("input", () => {
+  entriesToTouched = true;
+});
+
+// Wenn "Von" geändert wird → "Bis" mitziehen (solange nicht manuell geändert)
+$("entriesFrom").addEventListener("input", () => {
+  if (!entriesToTouched) $("entriesTo").value = $("entriesFrom").value;
+});
+
+// Sicherheit: Bis leer oder < Von → korrigieren und wieder koppeln
+$("entriesFrom").addEventListener("change", () => {
+  const f = $("entriesFrom").value;
+  const t = $("entriesTo").value;
+  if (!t || t < f) {
+    $("entriesTo").value = f;
+    entriesToTouched = false;
+  }
+});
+
+// Wenn Bis wieder = Von → Automatik wieder aktiv
+$("entriesTo").addEventListener("change", () => {
+  if ($("entriesTo").value === $("entriesFrom").value) {
+    entriesToTouched = false;
+  }
+});
 
   /* ---------- CSV / Share / PDF ---------- */
   function csvSafe(s){
