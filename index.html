@@ -11,8 +11,9 @@
 <meta name="theme-color" content="#0b1220" />
 <meta name="robots" content="noindex,nofollow" />
 
-<link rel="apple-touch-icon" href="icon.png?v=2">
-<link rel="icon" href="icon.png?v=2">
+<!-- ✅ SICHERES ICON: statisch aus icon.png (kein JS, kein Crash) -->
+<link rel="apple-touch-icon" href="icon.png?v=7">
+<link rel="icon" href="icon.png?v=7">
 
 <style>
 :root{
@@ -78,17 +79,17 @@ th{text-align:left;color:#64748b}
   .table-wrap table{min-width:500px}
 }
 
-/* 👤 Name: etwas kürzer, Save drunter */
+/* 👤 Name */
 .w-emp{width:210px;max-width:210px}
 .w-save{width:170px;max-width:170px}
 .w-note{width:150px;max-width:150px}
 .w-edit-note{width:190px;max-width:190px;height:44px}
 
-/* 👔 Manager: kurz + Mail länger, leicht nach links (wie gewünscht) */
+/* 👔 Manager */
 .w-mgr-name{width:170px;max-width:170px;margin-left:-10px}
-.w-mgr-mail{width:370px;max-width:88vw;min-width:320px;margin-left:-17px} /* "left -2 mehr" */
+.w-mgr-mail{width:370px;max-width:88vw;min-width:320px;margin-left:-17px}
 
-/* Übersicht: Chip zweizeilig (passt aufs Handy) */
+/* Übersicht: Chip zweizeilig */
 #sumChip{white-space:normal !important;line-height:1.25;max-width:100%;display:block}
 #overviewControls{row-gap:16px}
 
@@ -103,40 +104,17 @@ th{text-align:left;color:#64748b}
 }
 .small-badge .e{font-size:12px;line-height:1}
 
-/* Einträge: alles "mehr nach links", aber sauber im Feld */
-.entries-search-wrap{
-  margin-left:0;           /* nicht mehr nach rechts schieben */
-  margin-right:0;
-  width:100%;
-}
-
-#entriesSearch{
-  width:min(340px, 92vw);  /* am Handy mehr Platz */
-}
-
+/* Einträge Controls */
+.entries-search-wrap{margin-left:0;margin-right:0;width:100%}
+#entriesSearch{width:min(340px, 92vw)}
 .entries-sum-wrap{
-  margin-left:0;
-  margin-right:0;
-  width:100%;
-  display:flex;
-  justify-content:flex-start; /* Badge links */
+  margin-left:0;margin-right:0;width:100%;
+  display:flex;justify-content:flex-start
 }
+#entriesSum{margin-left:0}
+#entriesExportCSV{margin-left:0}
 
-#entriesSum{
-  margin-left:0;
-}
-
-/* CSV Button bei Einträge: links/unter Badge (passt am Handy) */
-#entriesExportCSV{
-  margin-left:0;
-}
-
-/* Optional: Einträge-Header/Controls etwas enger */
-@media(max-width:430px){
-  .row{ column-gap:8px; row-gap:10px; }
-}
-
-/* Notiz: kompakt */
+/* Notiz */
 .note-cell{display:flex; align-items:center; gap:6px; max-width:260px}
 .note-text{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px}
 @media(max-width:430px){
@@ -150,7 +128,7 @@ th{text-align:left;color:#64748b}
 .modal h2{margin-top:0}
 .pin{width:min(320px,86vw);max-width:86vw;letter-spacing:.08em;font-weight:900;text-align:center;font-size:18px;padding:10px 12px}
 
-/* PRINT/PDF (Manager NICHT im PDF) */
+/* PRINT/PDF: Manager NICHT im PDF */
 @media print{
   body{background:#fff;padding:0}
   .card{box-shadow:none;border-radius:0;margin:0 0 12px 0}
@@ -451,66 +429,7 @@ th{text-align:left;color:#64748b}
 
 <script>
 (() => {
-  /* ---------- App Icon (blau + Uhr + gelbes Z) ---------- */
-  function svgToDataURL(svg){ return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim()); }
-  async function svgToPngDataURL(svg, size=512){
-    const img = new Image();
-    img.decoding="async";
-    const url = svgToDataURL(svg);
-    await new Promise((res, rej)=>{ img.onload=res; img.onerror=()=>rej(new Error("ICON")); img.src=url; });
-    const canvas=document.createElement("canvas");
-    canvas.width=size; canvas.height=size;
-    const ctx=canvas.getContext("2d");
-    ctx.drawImage(img,0,0,size,size);
-    return canvas.toDataURL("image/png");
-  }
-  function appIconSVG(){
-    const blue1="#0ea5e9", blue2="#2563eb";
-    const yellow="#facc15";
-    return `
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${blue1}"/>
-      <stop offset="1" stop-color="${blue2}"/>
-    </linearGradient>
-    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
-      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000" flood-opacity=".22"/>
-    </filter>
-    <filter id="zglow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="6" result="b"/>
-      <feColorMatrix in="b" type="matrix"
-        values="1 0 0 0 0.98
-                0 1 0 0 0.82
-                0 0 1 0 0.12
-                0 0 0 0.75 0"/>
-      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-  <rect x="0" y="0" width="1024" height="1024" rx="220" fill="url(#bg)"/>
-  <g filter="url(#shadow)">
-    <circle cx="560" cy="540" r="270" fill="rgba(255,255,255,.16)"/>
-    <circle cx="560" cy="540" r="230" fill="rgba(255,255,255,.20)"/>
-    <circle cx="560" cy="540" r="190" fill="rgba(255,255,255,.12)"/>
-  </g>
-  <g stroke="rgba(255,255,255,.92)" stroke-linecap="round" filter="url(#shadow)">
-    <line x1="560" y1="540" x2="560" y2="420" stroke-width="22"/>
-    <line x1="560" y1="540" x2="645" y2="585" stroke-width="18"/>
-    <circle cx="560" cy="540" r="20" fill="rgba(255,255,255,.92)"/>
-  </g>
-  <g filter="url(#zglow)">
-    <path d="M245 355 H470 L335 520 H470 V615 H245 L380 450 H245 Z"
-          fill="${yellow}" />
-  </g>
-</svg>`;
-  }
-  (async()=>{
-    try{
-      const png = await svgToPngDataURL(appIconSVG(), 512);
-      document.getElementById("appleIcon").href = png;
-      document.getElementById("faviconIcon").href = png;
-    }catch(e){}
-  })();
+  "use strict";
 
   /* ---------- Constants ---------- */
   const NS="ZEITERFASSUNG";
@@ -723,7 +642,6 @@ th{text-align:left;color:#64748b}
   let Y=new Date().getFullYear();
   let S={emp:"", mgrName:"", mgrMail:"", emojis:{...DEFAULT_EMOJI}, E:[], A:[]};
   let run=null;
-  let aEndTouched=false;
 
   /* ---------- Emoji Settings ---------- */
   function emojiOrMarker(v){ return (v==="(aus)") ? "(aus)" : v; }
@@ -754,7 +672,6 @@ th{text-align:left;color:#64748b}
   function refreshAbsenceDropdown(){
     const saved = (S.emojis || {});
     const em = {
-      we:   emojiDisplay(saved.we,   DEFAULT_EMOJI.we),
       vac:  emojiDisplay(saved.vac,  DEFAULT_EMOJI.vac),
       sick: emojiDisplay(saved.sick, DEFAULT_EMOJI.sick),
       hol:  emojiDisplay(saved.hol,  DEFAULT_EMOJI.hol),
@@ -764,9 +681,9 @@ th{text-align:left;color:#64748b}
     const cur=s.value || "vac";
     s.innerHTML="";
     const opts=[
-      {v:"vac",  t:`${em.vac ? em.vac+" " : ""}Urlaub`},
+      {v:"vac",  t:`${em.vac  ? em.vac+" "  : ""}Urlaub`},
       {v:"sick", t:`${em.sick ? em.sick+" " : ""}Krank`},
-      {v:"hol",  t:`${em.hol ? em.hol+" " : ""}Feiertag`},
+      {v:"hol",  t:`${em.hol  ? em.hol+" "  : ""}Feiertag`},
     ];
     for(const o of opts){
       const op=document.createElement("option");
@@ -961,31 +878,23 @@ th{text-align:left;color:#64748b}
     $("editMsg").textContent="";
   };
 
-  /* ---------- Abwesenheit ---------- */
-let aEndTouched = false;
-
-// Ende gilt nur als "manuell", wenn User wirklich eintippt/ändert
-$("aEnd").addEventListener("input", () => { aEndTouched = true; });
-
-// Start ändert -> Ende automatisch mitziehen (solange Ende nicht manuell geändert wurde)
-$("aStart").addEventListener("input", () => {
-  if (!aEndTouched) $("aEnd").value = $("aStart").value;
-});
-
-// Sicherheit: wenn Ende leer oder kleiner als Start -> korrigieren und wieder koppeln
-$("aStart").addEventListener("change", () => {
-  const s = $("aStart").value;
-  const e = $("aEnd").value;
-  if (!e || e < s) {
-    $("aEnd").value = s;
-    aEndTouched = false;
-  }
-});
-
-// Wenn Ende wieder gleich Start -> wieder koppeln
-$("aEnd").addEventListener("change", () => {
-  if ($("aEnd").value === $("aStart").value) aEndTouched = false;
-});
+  /* ---------- Abwesenheit (Start = Ende automatisch) ---------- */
+  let aEndTouched=false;
+  $("aEnd").addEventListener("input", ()=>{ aEndTouched=true; });
+  $("aStart").addEventListener("input", ()=>{
+    if(!aEndTouched) $("aEnd").value=$("aStart").value;
+  });
+  $("aStart").addEventListener("change", ()=>{
+    const s=$("aStart").value;
+    const e=$("aEnd").value;
+    if(!e || e < s){
+      $("aEnd").value=s;
+      aEndTouched=false;
+    }
+  });
+  $("aEnd").addEventListener("change", ()=>{
+    if($("aEnd").value === $("aStart").value) aEndTouched=false;
+  });
 
   function renderAbsList(){
     if(!S.A.length){
@@ -1029,7 +938,6 @@ $("aEnd").addEventListener("change", () => {
       if(!perYear.has(y)) perYear.set(y, await readYearState(y));
       const st=perYear.get(y);
 
-      // pro Tag max 1: ersetzen
       const before=st.A.length;
       st.A = st.A.filter(a=>a.d!==ds);
       replaced += (before - st.A.length);
@@ -1060,7 +968,7 @@ $("aEnd").addEventListener("change", () => {
     $("absMsg").textContent = removed ? `🗑️ ${removed} gelöscht` : "🤷 nichts gefunden";
   };
 
-  /* ---------- Übersicht: Zeitraum + Abwesenheiten + WE ---------- */
+  /* ---------- Übersicht Range Helpers ---------- */
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
     const monIndex=(d.getDay()+6)%7;
@@ -1127,7 +1035,6 @@ $("aEnd").addEventListener("change", () => {
     const merged=await getMergedForRange(start,end);
     $("pdfEmpName").textContent = merged.emp || S.emp || "—";
 
-    // Emojis (AUS möglich)
     const saved = merged.emojis || DEFAULT_EMOJI;
     const em = {
       we:   emojiDisplay(saved.we,   DEFAULT_EMOJI.we),
@@ -1136,7 +1043,6 @@ $("aEnd").addEventListener("change", () => {
       hol:  emojiDisplay(saved.hol,  DEFAULT_EMOJI.hol),
     };
 
-    // IST pro Tag
     const istBy=Object.create(null);
     for(const e of merged.allE){
       if(!e || !e.d) continue;
@@ -1146,7 +1052,6 @@ $("aEnd").addEventListener("change", () => {
       istBy[e.d]=(istBy[e.d]||0)+nm;
     }
 
-    // ✅ Abwesenheiten robust pro Datum (Set: dedupe + filter)
     const absBy = Object.create(null);
     for (const a of (merged.allA || [])) {
       if (!a || !a.d || !a.t) continue;
@@ -1177,7 +1082,6 @@ $("aEnd").addEventListener("change", () => {
       istSum += ist; sollSum += soll;
       if(isW) workdays++;
 
-      // Abwesenheit Badges (Urlaub/Krank/Feiertag)
       const abw = absTypes.length
         ? absTypes.map(t=>(
             t==="vac" ? smallBadge(em.vac,"Urlaub") :
@@ -1186,7 +1090,6 @@ $("aEnd").addEventListener("change", () => {
           )).join(" ")
         : "";
 
-      // ✅ WE Badge gehört in Abw.-Spalte + WE Summen separat
       let abw2 = abw;
       if (isWeekend(d) && ist > 0) {
         abw2 = (abw2 ? (abw2+" ") : "") + smallBadge(em.we,"WE");
@@ -1205,7 +1108,6 @@ $("aEnd").addEventListener("change", () => {
     html+=`</tbody></table></div>`;
     $("overviewTable").innerHTML=html;
 
-    // ✅ Toleranz: ±10h pro Woche, auf Monate/Jahr skaliert
     const delta=istSum-sollSum;
     const weeksEq = workdays ? (workdays/5) : 1;
     const tol = TOL_WEEK_MIN * Math.max(1, weeksEq);
@@ -1324,35 +1226,24 @@ $("aEnd").addEventListener("change", () => {
     $("entriesFromWrap").style.display = isCustom ? "" : "none";
     $("entriesToWrap").style.display = isCustom ? "" : "none";
   }
-  /* ---------- Einträge: Zeitraum Komfort (Von = Bis automatisch) ---------- */
-let entriesToTouched = false;
 
-// Wenn "Bis" manuell geändert wird → Automatik aus
-$("entriesTo").addEventListener("input", () => {
-  entriesToTouched = true;
-});
-
-// Wenn "Von" geändert wird → "Bis" mitziehen (solange nicht manuell geändert)
-$("entriesFrom").addEventListener("input", () => {
-  if (!entriesToTouched) $("entriesTo").value = $("entriesFrom").value;
-});
-
-// Sicherheit: Bis leer oder < Von → korrigieren und wieder koppeln
-$("entriesFrom").addEventListener("change", () => {
-  const f = $("entriesFrom").value;
-  const t = $("entriesTo").value;
-  if (!t || t < f) {
-    $("entriesTo").value = f;
-    entriesToTouched = false;
-  }
-});
-
-// Wenn Bis wieder = Von → Automatik wieder aktiv
-$("entriesTo").addEventListener("change", () => {
-  if ($("entriesTo").value === $("entriesFrom").value) {
-    entriesToTouched = false;
-  }
-});
+  /* ✅ Komfort: Einträge Zeitraum Von=Bis automatisch */
+  let entriesToTouched=false;
+  $("entriesTo").addEventListener("input", ()=>{ entriesToTouched=true; });
+  $("entriesFrom").addEventListener("input", ()=>{
+    if(!entriesToTouched) $("entriesTo").value=$("entriesFrom").value;
+  });
+  $("entriesFrom").addEventListener("change", ()=>{
+    const f=$("entriesFrom").value;
+    const t=$("entriesTo").value;
+    if(!t || t < f){
+      $("entriesTo").value=f;
+      entriesToTouched=false;
+    }
+  });
+  $("entriesTo").addEventListener("change", ()=>{
+    if($("entriesTo").value === $("entriesFrom").value) entriesToTouched=false;
+  });
 
   /* ---------- CSV / Share / PDF ---------- */
   function csvSafe(s){
@@ -1411,17 +1302,13 @@ $("entriesTo").addEventListener("change", () => {
     alert("📤 Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
   };
 
-  /* ✅ PDF wie “vorher”: offline über Druckdialog (funktioniert zuverlässig auf iPhone) */
   $("btnPDF").onclick = async () => {
     try {
       tab("overview");
       await renderOverview();
-
-      // Safari/iOS: 2 Frames + kurzer Delay -> vermeidet leere Druckansicht
       await new Promise(r => requestAnimationFrame(() => r()));
       await new Promise(r => requestAnimationFrame(() => r()));
       setTimeout(() => window.print(), 350);
-
     } catch (e) {
       console.error(e);
       alert("❌ PDF konnte nicht gestartet werden.");
