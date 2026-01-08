@@ -124,7 +124,7 @@
 <body>
   <div class="card">
     <h1>Zeiterfassung</h1>
-    <div class="muted" id="topHint">🔐 PIN+Recovery · Offline · Auto-Pause 55 min · 🌙 Mitternacht-Split · 📊 Ampel · 🖨️ PDF · ⬇️ CSV</div>
+    <div class="muted" id="topHint">🔐 PIN+Recovery · Offline · Auto-Pause 55 min (ab >6h) · 💾 Crash-Save · 🌙 Mitternacht-Split · 📊 Ampel · 🖨️ PDF · ⬇️ CSV</div>
   </div>
 
   <div class="card" id="tabsCard">
@@ -244,7 +244,9 @@
       <button class="btn-ghost" id="newManual">🆕 Neu</button>
       <span class="right muted mono" id="editMsg"></span>
     </div>
-    <div class="muted" style="margin-top:8px">Hinweis: Rückwirkend zieht automatisch 55 Min Pause ab, wenn Dauer ≥ 55 Min.</div>
+    <div class="muted" style="margin-top:8px">
+      Hinweis: Rückwirkend zieht automatisch 55 Min Pause ab – aber erst wenn die Dauer > 6:00 h ist.
+    </div>
   </div>
 
   <!-- ABSENCE -->
@@ -427,13 +429,22 @@
      Konfiguration
   ======================== */
   const NS = "ZEITERFASSUNG";
-  const AUTO_BREAK = 55;                 // Auto-Pause 55 min (einmal pro durchgehendem Lauf)
+
+  // ✅ Pause-Regel:
+  // - pro gespeicherten Tages-Eintrag: 55 Min, aber erst wenn Dauer > 6:00 h
+  const AUTO_BREAK = 55;
+  const AUTO_BREAK_AFTER_MIN = 6 * 60;
+
   const TOL_Y_WEEK = 300;                // ±5:00 pro Woche (gelb)
   const TOL_R_WEEK = 600;                // ±10:00 pro Woche (rot)
 
   const VAULT_KEY = NS+"::vault_v1";
   const SESSION_MASTER = NS+"::session_master_raw";
   const YEAR_KEY = (y)=> NS+"::year::"+y;
+
+  // ✅ Crash-Save für laufenden Timer (verschlüsselt)
+  const RUN_KEY = NS + "::run_v1";
+  const RUN_SAVE_MS = 15000;
 
   const DEFAULT_EMOJI = { we:"🧑‍💻", vac:"🏖️", sick:"🤒", hol:"🎉", comp:"⚖️" };
   const PICKS = {
@@ -614,8 +625,75 @@
   let Y = new Date().getFullYear();
   let S = { emp:"", mgrName:"", mgrMail:"", emojis:{...DEFAULT_EMOJI}, E:[], A:[] };
 
-  // laufender Timer (kein Persist, absichtlich)
+  // ✅ laufender Timer mit Crash-Save
   let run = null;
+
+  async function saveRun(){
+    try{
+      const master = await getSessionMaster();
+      if(!master || !run) return;
+
+      const payload = {
+        v: 1,
+        y: Y,
+        run: {
+          date: run.date,
+          start: run.start ? run.start.toISOString() : null,
+          pauseMin: run.pauseMin || 0,
+          pauseStart: run.pauseStart ? run.pauseStart.toISOString() : null,
+          note: run.note || ""
+        }
+      };
+      localStorage.setItem(RUN_KEY, JSON.stringify(await encryptJson(payload)));
+    }catch(e){
+      console.warn("saveRun failed", e);
+    }
+  }
+  function clearRun(){ localStorage.removeItem(RUN_KEY); }
+
+  async function restoreRunIfAny(){
+    try{
+      const raw = localStorage.getItem(RUN_KEY);
+      if(!raw) return false;
+
+      const payload = await decryptJson(JSON.parse(raw));
+      if(!payload?.run?.date || !payload?.run?.start) return false;
+
+      const start = parseISO(payload.run.start);
+      if(!start) return false;
+
+      const yr = d0(payload.run.date).getFullYear();
+      if(yr !== Y) await loadYear(yr);
+
+      run = {
+        date: payload.run.date,
+        start,
+        pauseMin: Number(payload.run.pauseMin||0),
+        pauseStart: payload.run.pauseStart ? parseISO(payload.run.pauseStart) : null,
+        note: (payload.run.note||"").trim()
+      };
+
+      $("timerDate").value = run.date;
+      $("timerNote").value = run.note || "";
+      $("btnPause").disabled = false;
+
+      if(run.pauseStart){
+        $("btnPause").textContent="▶️ Weiter";
+        setTimerStatus("⏸️ Pause (wiederhergestellt)", "chip-mid");
+        $("timerInfo").textContent=`Pause seit ${fmtTimeHM(run.pauseStart)}`;
+      }else{
+        $("btnPause").textContent="⏸️ Pause";
+        setTimerStatus("🟢 läuft (wiederhergestellt)", "chip-ok");
+        $("timerInfo").textContent=`Start ${fmtTimeHM(run.start)}`;
+      }
+      return true;
+    }catch(e){
+      console.warn("restoreRunIfAny failed", e);
+      // wenn beschädigt: löschen, damit nix blockiert
+      localStorage.removeItem(RUN_KEY);
+      return false;
+    }
+  }
 
   async function readYearState(y){
     const raw=localStorage.getItem(YEAR_KEY(y));
@@ -784,10 +862,14 @@
     return Math.round(gross-p);
   }
 
+  function autoBreakForGross(grossMin){
+    return (Number.isFinite(grossMin) && grossMin > AUTO_BREAK_AFTER_MIN) ? AUTO_BREAK : 0;
+  }
+
   /* =======================
      Timer: Mitternacht-Split
      - splittet laufenden Timer automatisch auf Tagesgrenzen
-     - Auto-Pause wird nur 1x pro durchgehendem Lauf beim finalen Stop angewandt
+     - ✅ pro Tag wird Auto-Pause (55) nur angewandt, wenn Segmentdauer > 6h
   ======================== */
   async function splitAtMidnightIfNeeded(){
     if(!run) return;
@@ -799,22 +881,21 @@
     // Grenze: 00:00 vom neuen Tag
     const boundary = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
 
-    // Pause bis boundary dem alten Segment zuschlagen
+    // falls Pause aktiv, Pause bis boundary dem alten Segment zuschlagen
     if(run.pauseStart){
       run.pauseMin += Math.max(0, Math.round((boundary - run.pauseStart)/60000));
       run.pauseStart = boundary; // Pause läuft im neuen Tag weiter
     }
 
-    // altes Segment speichern (ohne Auto-Pause)
+    // altes Segment speichern (pro Tag)
     const segGross = Math.round((boundary - run.start)/60000);
     if(Number.isFinite(segGross) && segGross > 0){
-      run.totalGrossMin += segGross;
-
-      const segPause = run.pauseMin;
       const segDate  = toDateStr(run.start);
       const segYear  = d0(segDate).getFullYear();
 
-      // Segment in richtiges Jahr schreiben
+      const auto = autoBreakForGross(segGross);
+      const pause = (run.pauseMin || 0) + auto;
+
       if(segYear !== Y){
         await saveYear();
         await loadYear(segYear);
@@ -825,7 +906,7 @@
         d: segDate,
         s: run.start.toISOString(),
         e: boundary.toISOString(),
-        p: segPause,
+        p: pause,
         n: run.note || ""
       });
 
@@ -842,11 +923,24 @@
 
     $("timerDate").value = run.date; // sichtbar umspringen
     $("timerInfo").textContent = `läuft weiter ab 00:00`;
+    await saveRun();
     await renderAll();
   }
 
   // check alle 15s wenn Timer läuft
-  setInterval(()=>{ if(run) splitAtMidnightIfNeeded(); }, 15000);
+  setInterval(async ()=>{
+    if(run) await splitAtMidnightIfNeeded();
+  }, 15000);
+
+  // ✅ Auto-Save (Crash-Schutz)
+  setInterval(async ()=>{
+    if(run) await saveRun();
+  }, RUN_SAVE_MS);
+
+  window.addEventListener("pagehide", ()=>{ if(run) saveRun(); });
+  document.addEventListener("visibilitychange", ()=>{
+    if(document.visibilityState==="hidden" && run) saveRun();
+  });
 
   /* =======================
      Timer Actions
@@ -868,14 +962,14 @@
       start,
       pauseMin:0,
       pauseStart:null,
-      note:($("timerNote").value||"").trim(),
-      totalGrossMin:0,
-      autoApplied:false
+      note:($("timerNote").value||"").trim()
     };
 
     $("btnPause").disabled=false;
     setTimerStatus("🟢 läuft", "chip-ok");
     $("timerInfo").textContent=`Start ${fmtTimeHM(start)}`;
+
+    await saveRun();
   };
 
   $("btnPause").onclick=()=>{
@@ -892,6 +986,7 @@
       $("btnPause").textContent="⏸️ Pause";
       setTimerStatus("🟢 läuft", "chip-ok");
     }
+    saveRun();
   };
 
   $("btnStop").onclick=async()=>{
@@ -909,17 +1004,11 @@
     }
 
     const gross=Math.round((end-run.start)/60000);
-    if(!Number.isFinite(gross)||gross<=0){ run=null; return; }
+    if(!Number.isFinite(gross)||gross<=0){ run=null; clearRun(); return; }
 
-    run.totalGrossMin += gross;
-
-    // Auto-Pause nur 1x pro Lauf
-    let auto=0;
-    if(!run.autoApplied && run.totalGrossMin >= AUTO_BREAK){
-      auto=AUTO_BREAK;
-      run.autoApplied=true;
-    }
-    const pause=auto+run.pauseMin;
+    // ✅ pro Tag: Auto-Pause 55 nur wenn > 6h
+    const auto = autoBreakForGross(gross);
+    const pause = (run.pauseMin||0) + auto;
 
     // Eintrag im richtigen Jahr
     const entryDate = run.date;
@@ -936,6 +1025,8 @@
     });
 
     run=null;
+    clearRun();
+
     $("btnPause").disabled=true;
     $("btnPause").textContent="⏸️ Pause";
     $("timerInfo").textContent="";
@@ -960,7 +1051,8 @@
   };
 
   /* =======================
-     Rückwirkend (mit Auto-Pause)
+     Rückwirkend
+     - ✅ Auto-Pause 55 min nur wenn Dauer > 6:00 h
   ======================== */
   $("saveManual").onclick=async()=>{
     $("editMsg").textContent="";
@@ -979,10 +1071,12 @@
     const yr=d0(d).getFullYear();
     if(yr!==Y) await loadYear(yr);
 
+    const auto = autoBreakForGross(gross);
+
     S.E.push({
       id:(crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
       d, s:s.toISOString(), e:e.toISOString(),
-      p:(gross>=AUTO_BREAK?AUTO_BREAK:0),
+      p:auto,
       n:($("eNote").value||"").trim()
     });
 
@@ -1503,7 +1597,7 @@
       const del=[];
       for(let i=0;i<localStorage.length;i++){
         const k=localStorage.key(i);
-        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY)) del.push(k);
+        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY || k===RUN_KEY)) del.push(k);
       }
       del.forEach(k=>localStorage.removeItem(k));
       clearSessionMaster();
@@ -1523,8 +1617,12 @@
       const mode=$("authMode").value;
       await unlockWithSecret(secret, mode);
       hideOverlay();
+
       await loadYear(getRefYear());
       await renderAll();
+
+      // ✅ nach Unlock evtl. laufenden Timer wiederherstellen
+      await restoreRunIfAny();
       tab("timer");
     }catch{ $("pinMsg").textContent="❌ falsch"; }
   };
@@ -1595,8 +1693,13 @@
         : "🧷 Bitte PIN setzen (Recovery-Key wird angezeigt).");
       return;
     }
+
     await loadYear(getRefYear());
     await renderAll();
+
+    // ✅ Wenn zuvor ein Timer lief und die App beendet wurde: wiederherstellen
+    await restoreRunIfAny();
+
     tab("timer");
   })();
 
