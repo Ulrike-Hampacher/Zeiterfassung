@@ -108,15 +108,21 @@
     .modal h2{margin-top:0}
     .pin{width:min(320px,86vw);max-width:86vw;letter-spacing:.08em;font-weight:900;text-align:center;font-size:18px;padding:10px 12px}
 
-    /* PRINT: Manager NICHT im PDF */
+    /* Manager-Zeile: nur fürs PDF */
+    #managerPdfLine{display:none}
+
+    /* PRINT: Manager IST im PDF ✅ */
     @media print{
       body{background:#fff;padding:0}
       .card{box-shadow:none;border-radius:0;margin:0 0 12px 0}
       #tabsCard, #timer, #edit, #absence, #entries, #settings, #ovl {display:none !important;}
       #overview{display:block !important;}
       #overviewControls, #btnRefresh, #btnCSV, #btnShare, #btnPDF {display:none !important;}
-      #managerBlock {display:none !important;}
       #topHint{display:none !important;}
+
+      /* ✅ Manager zeigen, aber Eingabefelder/Buttons verstecken */
+      #managerBlock input, #managerBlock button, #managerBlock .pdfHide {display:none !important;}
+      #managerPdfLine{display:block !important;}
     }
   </style>
 </head>
@@ -124,7 +130,9 @@
 <body>
   <div class="card">
     <h1>Zeiterfassung</h1>
-    <div class="muted" id="topHint">🔐 PIN+Recovery · Offline · Auto-Pause 55 min (nur wenn keine manuelle Pause & >6h) · 💾 Crash-Save · 🌙 Mitternacht-Split · 📊 Ampel · 🖨️ PDF · ⬇️ CSV</div>
+    <div class="muted" id="topHint">
+      🔐 PIN+Recovery · Offline · Auto-Pause 55 min (nur wenn keine manuelle Pause &gt;6h) · 💾 Crash-Save · 🌙 Mitternacht-Split · 📊 Ampel · 🖨️ PDF · ⬇️ CSV
+    </div>
   </div>
 
   <div class="card" id="tabsCard">
@@ -218,13 +226,19 @@
 
     <div id="managerBlock" style="margin-top:14px">
       <h2>👔 Manager</h2>
-      <div class="row">
+
+      <!-- ✅ Diese Zeile wird im PDF angezeigt -->
+      <div id="managerPdfLine" class="muted"></div>
+
+      <!-- ✅ Diese Eingaben sind für die App, im PDF versteckt -->
+      <div class="row pdfHide">
         <div class="muted" style="width:100%">Name</div>
         <input id="mgrName" class="w-mgr-name" placeholder="Name" />
         <div class="muted" style="width:100%">E-Mail</div>
         <input id="mgrMail" class="w-mgr-mail" placeholder="vorname.nachname@firma.de" />
         <button class="btn-ghost w-save" id="saveMgr">💾 Speichern</button>
       </div>
+      <div class="muted pdfHide" style="margin-top:6px">✅ Manager wird global gespeichert und immer in CSV + PDF übernommen.</div>
     </div>
 
     <div id="overviewTable" style="margin-top:12px"></div>
@@ -244,9 +258,7 @@
       <button class="btn-ghost" id="newManual">🆕 Neu</button>
       <span class="right muted mono" id="editMsg"></span>
     </div>
-    <div class="muted" style="margin-top:8px">
-      Hinweis: Rückwirkend zieht automatisch 55 Min Pause ab – aber erst wenn die Dauer > 6:00 h ist.
-    </div>
+    <div class="muted" style="margin-top:8px">Hinweis: Rückwirkend zieht automatisch 55 Min Pause ab – aber erst wenn Dauer &gt; 6:00 h ist.</div>
   </div>
 
   <!-- ABSENCE -->
@@ -442,6 +454,9 @@
   const SESSION_MASTER = NS+"::session_master_raw";
   const YEAR_KEY = (y)=> NS+"::year::"+y;
 
+  // ✅ globaler Manager (jahr-unabhängig)
+  const GLOBAL_KEY = NS+"::global_v1";
+
   // ✅ Crash-Save für laufenden Timer (verschlüsselt)
   const RUN_KEY = NS + "::run_v1";
   const RUN_SAVE_MS = 15000;
@@ -620,6 +635,25 @@
   }
 
   /* =======================
+     Global State (Manager)
+  ======================== */
+  async function readGlobal(){
+    const raw = localStorage.getItem(GLOBAL_KEY);
+    if(!raw) return { mgrName:"", mgrMail:"" };
+    try{
+      return await decryptJson(JSON.parse(raw));
+    }catch{
+      return { mgrName:"", mgrMail:"" };
+    }
+  }
+  async function writeGlobal(obj){
+    localStorage.setItem(GLOBAL_KEY, JSON.stringify(await encryptJson({
+      mgrName: (obj?.mgrName||"").toString(),
+      mgrMail: (obj?.mgrMail||"").toString()
+    })));
+  }
+
+  /* =======================
      Datenmodell
   ======================== */
   let Y = new Date().getFullYear();
@@ -713,6 +747,11 @@
   async function loadYear(y){
     Y=y;
     S=await readYearState(Y);
+
+    // ✅ globalen Manager als Fallback reinziehen
+    const g = await readGlobal();
+    if(!S.mgrName && g.mgrName) S.mgrName = g.mgrName;
+    if(!S.mgrMail && g.mgrMail) S.mgrMail = g.mgrMail;
 
     $("empName").value=S.emp||"";
     $("mgrName").value=S.mgrName||"";
@@ -956,7 +995,6 @@
     $("btnPause").disabled=false;
     setTimerStatus("🟢 läuft", "chip-ok");
     $("timerInfo").textContent=`Start ${fmtTimeHM(start)}`;
-
     await saveRun();
   };
 
@@ -1027,16 +1065,21 @@
     $("nameMsg").textContent=S.emp ? "✅ gespeichert" : "";
     $("pdfEmpName").textContent=S.emp || "—";
   };
+
+  // ✅ Manager speichern: Jahr + Global
   $("saveMgr").onclick=async()=>{
-    S.mgrName=($("mgrName").value||"").trim();
-    S.mgrMail=($("mgrMail").value||"").trim();
+    const name = ($("mgrName").value||"").trim();
+    const mail = ($("mgrMail").value||"").trim();
+    S.mgrName = name;
+    S.mgrMail = mail;
     await saveYear();
+    await writeGlobal({mgrName:name, mgrMail:mail});
+    await renderAll();
     alert("✅ Manager gespeichert");
   };
 
   /* =======================
      Rückwirkend
-     - Auto-Pause 55 nur wenn Dauer > 6h (unabhängig von „manueller Pause“, weil manuell gibt’s hier nicht)
   ======================== */
   $("saveManual").onclick=async()=>{
     $("editMsg").textContent="";
@@ -1074,11 +1117,8 @@
   };
 
   /* =======================
-     Abwesenheit / Übersicht / Einträge / CSV / Settings / Boot
-     (unverändert aus deinem bisherigen Code – hier der Rest 1:1)
+     Abwesenheit
   ======================== */
-
-  /* --- Abwesenheit: exakt wie vorher --- */
   let aEndTouched=false;
   $("aEnd").addEventListener("input", ()=>{ aEndTouched=true; });
   $("aStart").addEventListener("input", ()=>{
@@ -1172,7 +1212,9 @@
     $("absMsg").textContent = removed ? `🗑️ ${removed} gelöscht` : "🤷 nichts gefunden";
   };
 
-  /* --- Range / Targets: wie vorher --- */
+  /* =======================
+     Range / Targets
+  ======================== */
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
     const monIndex=(d.getDay()+6)%7;
@@ -1224,9 +1266,18 @@
       allE.push(...(st.E||[]));
       allA.push(...(st.A||[]));
     }
+
+    // ✅ globaler Manager als Fallback
+    const g = await readGlobal();
+    if(!mgrName && g.mgrName) mgrName = g.mgrName;
+    if(!mgrMail && g.mgrMail) mgrMail = g.mgrMail;
+
     return {allE,allA,emp,mgrName,mgrMail,emojis};
   }
 
+  /* =======================
+     Übersicht (Ampel + Anrechnung)
+  ======================== */
   async function renderOverview(){
     const [start,end]=getPeriodRange();
     const W=getWeeklyTargetMinutes();
@@ -1238,6 +1289,11 @@
 
     const merged=await getMergedForRange(start,end);
     $("pdfEmpName").textContent = merged.emp || S.emp || "—";
+
+    // ✅ Manager-Zeile fürs PDF befüllen
+    const mn = (merged.mgrName||"").trim();
+    const mm = (merged.mgrMail||"").trim();
+    $("managerPdfLine").textContent = (mn||mm) ? `👔 ${mn || "—"} · ${mm || "—"}` : "👔 —";
 
     const saved = merged.emojis || DEFAULT_EMOJI;
     const em = {
@@ -1343,6 +1399,9 @@
     }
   }
 
+  /* =======================
+     Einträge
+  ======================== */
   function rangeForEntries(filter){
     const ref = $("refDate").value ? d0($("refDate").value) : new Date();
     if(filter==="week") return weekRangeISO(ref);
@@ -1459,6 +1518,9 @@
     if($("entriesTo").value === $("entriesFrom").value) entriesToTouched=false;
   });
 
+  /* =======================
+     CSV / Share / PDF
+  ======================== */
   function csvSafe(s){
     s=(s??"").toString();
     const t=s.trimStart();
@@ -1485,8 +1547,8 @@
         Number.isFinite(nm)?String(Math.round(nm)):"",
         hhmm(nm),
         csvSafe(e.n||""),
-        csvSafe(merged.mgrName||S.mgrName||""),
-        csvSafe(merged.mgrMail||S.mgrMail||"")
+        csvSafe(merged.mgrName||""),
+        csvSafe(merged.mgrMail||"")
       ].join(sep));
     }
     return rows.join("\n");
@@ -1527,6 +1589,9 @@
     }
   };
 
+  /* =======================
+     Settings: Lock / Pin / Reset
+  ======================== */
   $("btnLock").onclick=()=>{
     clearSessionMaster();
     showOverlay("🔒 Gesperrt. Entsperre mit PIN oder Recovery-Key.");
@@ -1567,7 +1632,7 @@
       const del=[];
       for(let i=0;i<localStorage.length;i++){
         const k=localStorage.key(i);
-        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY || k===RUN_KEY)) del.push(k);
+        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY || k===RUN_KEY || k===GLOBAL_KEY)) del.push(k);
       }
       del.forEach(k=>localStorage.removeItem(k));
       clearSessionMaster();
@@ -1576,6 +1641,9 @@
     }
   };
 
+  /* =======================
+     Overlay actions
+  ======================== */
   $("btnUnlock").onclick=async()=>{
     try{
       if(!hasVault()){ $("pinMsg").textContent="⚠️ Bitte PIN setzen."; return; }
@@ -1611,6 +1679,9 @@
     }catch{ $("pinMsg").textContent="❌ Fehler"; }
   };
 
+  /* =======================
+     Controls
+  ======================== */
   $("btnRefresh").onclick=async()=>{ await renderAll(); };
   $("mode").onchange=async()=>{ await renderAll(); };
   $("weeklyTarget").onchange=async()=>{ await renderAll(); };
@@ -1621,6 +1692,9 @@
   $("entriesFrom").onchange=async()=>{ await renderEntries(); };
   $("entriesTo").onchange=async()=>{ await renderEntries(); };
 
+  /* =======================
+     Render All
+  ======================== */
   async function renderAll(){
     $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
     $("pdfEmpName").textContent = S.emp || "—";
@@ -1630,6 +1704,9 @@
     await renderEntries();
   }
 
+  /* =======================
+     Defaults + Boot
+  ======================== */
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
@@ -1650,10 +1727,8 @@
         : "🧷 Bitte PIN setzen (Recovery-Key wird angezeigt).");
       return;
     }
-
     await loadYear(getRefYear());
     await renderAll();
-
     await restoreRunIfAny();
     tab("timer");
   })();
