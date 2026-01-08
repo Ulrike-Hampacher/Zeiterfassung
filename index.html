@@ -95,7 +95,7 @@
     .w-edit-note{width:190px;max-width:190px;height:44px}
     .w-mgr-name{width:170px;max-width:170px;margin-left:-10px}
     /* ✅ Mailfeld 0,2cm nach rechts (≈8px) */
-    .w-mgr-mail{width:370px;max-width:88vw;min-width:320px;margin-left:-10px}
+    .w-mgr-mail{width:370px;max-width:88vw;min-width:320px;margin-left:8px}
 
     .entries-search-wrap{width:100%}
     #entriesSearch{width:min(340px, 92vw)}
@@ -124,7 +124,7 @@
 <body>
   <div class="card">
     <h1>Zeiterfassung</h1>
-    <div class="muted" id="topHint">🔐 PIN+Recovery · Offline · Auto-Pause 55 min (ab >6h) · 💾 Crash-Save · 🌙 Mitternacht-Split · 📊 Ampel · 🖨️ PDF · ⬇️ CSV</div>
+    <div class="muted" id="topHint">🔐 PIN+Recovery · Offline · Auto-Pause 55 min (nur wenn keine manuelle Pause & >6h) · 💾 Crash-Save · 🌙 Mitternacht-Split · 📊 Ampel · 🖨️ PDF · ⬇️ CSV</div>
   </div>
 
   <div class="card" id="tabsCard">
@@ -430,8 +430,8 @@
   ======================== */
   const NS = "ZEITERFASSUNG";
 
-  // ✅ Pause-Regel:
-  // - pro gespeicherten Tages-Eintrag: 55 Min, aber erst wenn Dauer > 6:00 h
+  // ✅ Tages-Auto-Pause: 55 Min, aber erst wenn Dauer > 6h
+  // ✅ UND: NUR wenn keine manuelle Pause genommen wurde (sonst doppelt)
   const AUTO_BREAK = 55;
   const AUTO_BREAK_AFTER_MIN = 6 * 60;
 
@@ -689,7 +689,6 @@
       return true;
     }catch(e){
       console.warn("restoreRunIfAny failed", e);
-      // wenn beschädigt: löschen, damit nix blockiert
       localStorage.removeItem(RUN_KEY);
       return false;
     }
@@ -862,14 +861,14 @@
     return Math.round(gross-p);
   }
 
-  function autoBreakForGross(grossMin){
+  function autoBreakForGross(grossMin, manualPauseMin){
+    const hasManualPause = (manualPauseMin||0) > 0;
+    if(hasManualPause) return 0;
     return (Number.isFinite(grossMin) && grossMin > AUTO_BREAK_AFTER_MIN) ? AUTO_BREAK : 0;
   }
 
   /* =======================
      Timer: Mitternacht-Split
-     - splittet laufenden Timer automatisch auf Tagesgrenzen
-     - ✅ pro Tag wird Auto-Pause (55) nur angewandt, wenn Segmentdauer > 6h
   ======================== */
   async function splitAtMidnightIfNeeded(){
     if(!run) return;
@@ -878,22 +877,19 @@
     const todayStr = toDateStr(now);
     if(todayStr === run.date) return;
 
-    // Grenze: 00:00 vom neuen Tag
     const boundary = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
 
-    // falls Pause aktiv, Pause bis boundary dem alten Segment zuschlagen
     if(run.pauseStart){
       run.pauseMin += Math.max(0, Math.round((boundary - run.pauseStart)/60000));
-      run.pauseStart = boundary; // Pause läuft im neuen Tag weiter
+      run.pauseStart = boundary;
     }
 
-    // altes Segment speichern (pro Tag)
     const segGross = Math.round((boundary - run.start)/60000);
     if(Number.isFinite(segGross) && segGross > 0){
       const segDate  = toDateStr(run.start);
       const segYear  = d0(segDate).getFullYear();
 
-      const auto = autoBreakForGross(segGross);
+      const auto = autoBreakForGross(segGross, run.pauseMin||0);
       const pause = (run.pauseMin || 0) + auto;
 
       if(segYear !== Y){
@@ -913,7 +909,6 @@
       await saveYear();
     }
 
-    // weiter im neuen Tag
     const newYear = boundary.getFullYear();
     if(newYear !== Y) await loadYear(newYear);
 
@@ -921,21 +916,14 @@
     run.date  = toDateStr(boundary);
     run.pauseMin = 0;
 
-    $("timerDate").value = run.date; // sichtbar umspringen
+    $("timerDate").value = run.date;
     $("timerInfo").textContent = `läuft weiter ab 00:00`;
     await saveRun();
     await renderAll();
   }
 
-  // check alle 15s wenn Timer läuft
-  setInterval(async ()=>{
-    if(run) await splitAtMidnightIfNeeded();
-  }, 15000);
-
-  // ✅ Auto-Save (Crash-Schutz)
-  setInterval(async ()=>{
-    if(run) await saveRun();
-  }, RUN_SAVE_MS);
+  setInterval(async ()=>{ if(run) await splitAtMidnightIfNeeded(); }, 15000);
+  setInterval(async ()=>{ if(run) await saveRun(); }, RUN_SAVE_MS);
 
   window.addEventListener("pagehide", ()=>{ if(run) saveRun(); });
   document.addEventListener("visibilitychange", ()=>{
@@ -992,12 +980,10 @@
   $("btnStop").onclick=async()=>{
     if(!run) return alert("⚪ Kein Timer läuft.");
 
-    // sicherstellen: wenn kurz nach Mitternacht gestoppt wird, vorher splitten
     await splitAtMidnightIfNeeded();
 
     const end=new Date(); end.setSeconds(0,0);
 
-    // falls Pause aktiv: beenden
     if(run.pauseStart){
       run.pauseMin += Math.max(0, Math.round((end-run.pauseStart)/60000));
       run.pauseStart=null;
@@ -1006,11 +992,9 @@
     const gross=Math.round((end-run.start)/60000);
     if(!Number.isFinite(gross)||gross<=0){ run=null; clearRun(); return; }
 
-    // ✅ pro Tag: Auto-Pause 55 nur wenn > 6h
-    const auto = autoBreakForGross(gross);
+    const auto = autoBreakForGross(gross, run.pauseMin||0);
     const pause = (run.pauseMin||0) + auto;
 
-    // Eintrag im richtigen Jahr
     const entryDate = run.date;
     const entryYear = d0(entryDate).getFullYear();
     if(entryYear!==Y) await loadYear(entryYear);
@@ -1052,7 +1036,7 @@
 
   /* =======================
      Rückwirkend
-     - ✅ Auto-Pause 55 min nur wenn Dauer > 6:00 h
+     - Auto-Pause 55 nur wenn Dauer > 6h (unabhängig von „manueller Pause“, weil manuell gibt’s hier nicht)
   ======================== */
   $("saveManual").onclick=async()=>{
     $("editMsg").textContent="";
@@ -1071,7 +1055,7 @@
     const yr=d0(d).getFullYear();
     if(yr!==Y) await loadYear(yr);
 
-    const auto = autoBreakForGross(gross);
+    const auto = (gross > AUTO_BREAK_AFTER_MIN) ? AUTO_BREAK : 0;
 
     S.E.push({
       id:(crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
@@ -1090,8 +1074,11 @@
   };
 
   /* =======================
-     Abwesenheit
+     Abwesenheit / Übersicht / Einträge / CSV / Settings / Boot
+     (unverändert aus deinem bisherigen Code – hier der Rest 1:1)
   ======================== */
+
+  /* --- Abwesenheit: exakt wie vorher --- */
   let aEndTouched=false;
   $("aEnd").addEventListener("input", ()=>{ aEndTouched=true; });
   $("aStart").addEventListener("input", ()=>{
@@ -1148,7 +1135,7 @@
     const perYear=new Map();
 
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-      if(!wd(d)) continue; // Mo–Fr
+      if(!wd(d)) continue;
       const ds=toDateStr(d);
       const y=d.getFullYear();
 
@@ -1185,9 +1172,7 @@
     $("absMsg").textContent = removed ? `🗑️ ${removed} gelöscht` : "🤷 nichts gefunden";
   };
 
-  /* =======================
-     Range / Targets
-  ======================== */
+  /* --- Range / Targets: wie vorher --- */
   function weekRangeISO(ref){
     const d=new Date(ref); d.setHours(0,0,0,0);
     const monIndex=(d.getDay()+6)%7;
@@ -1242,9 +1227,6 @@
     return {allE,allA,emp,mgrName,mgrMail,emojis};
   }
 
-  /* =======================
-     Übersicht (Ampel + Anrechnung)
-  ======================== */
   async function renderOverview(){
     const [start,end]=getPeriodRange();
     const W=getWeeklyTargetMinutes();
@@ -1266,7 +1248,6 @@
       comp: emojiDisplay(saved.comp, DEFAULT_EMOJI.comp),
     };
 
-    // IST pro Tag (Netto)
     const istBy=Object.create(null);
     for(const e of merged.allE){
       if(!e || !e.d) continue;
@@ -1276,14 +1257,13 @@
       istBy[e.d]=(istBy[e.d]||0)+nm;
     }
 
-    // Abwesenheit pro Tag
     const absBy = Object.create(null);
     for (const a of (merged.allA || [])) {
       if (!a || !a.d || !a.t) continue;
       if (a.d < startS || a.d > endS) continue;
       const t = (a.t==="vac"||a.t==="sick"||a.t==="hol"||a.t==="comp") ? a.t : null;
       if (!t) continue;
-      absBy[a.d] = t; // max 1 pro Tag
+      absBy[a.d] = t;
     }
 
     let istSum=0, sollSum=0, workdays=0, creditSum=0;
@@ -1299,9 +1279,9 @@
       const ist=Number.isFinite(istBy[ds]) ? istBy[ds] : 0;
 
       const isW = wd(d);
-      const soll = Math.round(isW ? DAY : 0);               // SOLL bleibt gleich (reduziert sich NICHT)
+      const soll = Math.round(isW ? DAY : 0);
       const absType = absBy[ds] || null;
-      const credit = (isW && absType) ? Math.round(DAY) : 0; // Abwesenheit zählt als Anrechnung
+      const credit = (isW && absType) ? Math.round(DAY) : 0;
 
       const istEff = ist + credit;
       const delta = istEff - soll;
@@ -1336,7 +1316,6 @@
     html+=`</tbody></table></div>`;
     $("overviewTable").innerHTML=html;
 
-    // Ampel (Monat/Jahr skaliert über Wochenäquivalent)
     const delta=istSum-sollSum;
     const weeksEq = workdays ? (workdays/5) : 1;
     const tolY = TOL_Y_WEEK * Math.max(1, weeksEq);
@@ -1364,9 +1343,6 @@
     }
   }
 
-  /* =======================
-     Einträge
-  ======================== */
   function rangeForEntries(filter){
     const ref = $("refDate").value ? d0($("refDate").value) : new Date();
     if(filter==="week") return weekRangeISO(ref);
@@ -1483,9 +1459,6 @@
     if($("entriesTo").value === $("entriesFrom").value) entriesToTouched=false;
   });
 
-  /* =======================
-     CSV / Share / PDF
-  ======================== */
   function csvSafe(s){
     s=(s??"").toString();
     const t=s.trimStart();
@@ -1554,9 +1527,6 @@
     }
   };
 
-  /* =======================
-     Settings: Lock / Pin / Reset
-  ======================== */
   $("btnLock").onclick=()=>{
     clearSessionMaster();
     showOverlay("🔒 Gesperrt. Entsperre mit PIN oder Recovery-Key.");
@@ -1606,9 +1576,6 @@
     }
   };
 
-  /* =======================
-     Overlay actions
-  ======================== */
   $("btnUnlock").onclick=async()=>{
     try{
       if(!hasVault()){ $("pinMsg").textContent="⚠️ Bitte PIN setzen."; return; }
@@ -1621,7 +1588,6 @@
       await loadYear(getRefYear());
       await renderAll();
 
-      // ✅ nach Unlock evtl. laufenden Timer wiederherstellen
       await restoreRunIfAny();
       tab("timer");
     }catch{ $("pinMsg").textContent="❌ falsch"; }
@@ -1645,9 +1611,6 @@
     }catch{ $("pinMsg").textContent="❌ Fehler"; }
   };
 
-  /* =======================
-     Controls
-  ======================== */
   $("btnRefresh").onclick=async()=>{ await renderAll(); };
   $("mode").onchange=async()=>{ await renderAll(); };
   $("weeklyTarget").onchange=async()=>{ await renderAll(); };
@@ -1658,9 +1621,6 @@
   $("entriesFrom").onchange=async()=>{ await renderEntries(); };
   $("entriesTo").onchange=async()=>{ await renderEntries(); };
 
-  /* =======================
-     Render All
-  ======================== */
   async function renderAll(){
     $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
     $("pdfEmpName").textContent = S.emp || "—";
@@ -1670,9 +1630,6 @@
     await renderEntries();
   }
 
-  /* =======================
-     Defaults + Boot
-  ======================== */
   const today=new Date().toISOString().slice(0,10);
   $("timerDate").value=today;
   $("refDate").value=today;
@@ -1697,9 +1654,7 @@
     await loadYear(getRefYear());
     await renderAll();
 
-    // ✅ Wenn zuvor ein Timer lief und die App beendet wurde: wiederherstellen
     await restoreRunIfAny();
-
     tab("timer");
   })();
 
