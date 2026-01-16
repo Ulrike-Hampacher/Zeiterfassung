@@ -739,7 +739,13 @@
       mgrName: obj.mgrName || "",
       mgrMail: obj.mgrMail || "",
       emojis: {...DEFAULT_EMOJI, ...(obj.emojis||{})},
-      E: Array.isArray(obj.E)?obj.E:[],
+      E: (Array.isArray(obj.E)?obj.E:[]).map(e=>({
+        ...e,
+        p: Number(e?.p||0),
+        pm: Number(e?.pm||0),
+        ab: Number(e?.ab||0),
+        br: Array.isArray(e?.br) ? e.br : []
+      })),
       A: Array.isArray(obj.A)?obj.A:[]
     };
   }
@@ -944,6 +950,9 @@
         s: run.start.toISOString(),
         e: boundary.toISOString(),
         p: pause,
+        pm: (run.pauseMin||0),
+        ab: auto,
+        br: Array.isArray(run.breaks)?run.breaks:[],
         n: run.note || ""
       });
 
@@ -1124,8 +1133,13 @@
 
     S.E.push({
       id:(crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
-      d, s:s.toISOString(), e:e.toISOString(),
-      p:auto,
+      d,
+      s:s.toISOString(),
+      e:e.toISOString(),
+      p: auto,
+      pm: 0,
+      ab: auto,
+      br: [],
       n:($("eNote").value||"").trim()
     });
 
@@ -1327,12 +1341,21 @@
     };
 
     const istBy=Object.create(null);
+    const pauseBy=Object.create(null); // ✅ NEU
+
     for(const e of merged.allE){
       if(!e || !e.d) continue;
       if(e.d<startS||e.d>endS) continue;
+
       const nm=netMinutes(e);
-      if(!Number.isFinite(nm)) continue;
-      istBy[e.d]=(istBy[e.d]||0)+nm;
+      if(Number.isFinite(nm)){
+        istBy[e.d]=(istBy[e.d]||0)+nm;
+      }
+
+      const p = Number(e.p||0);
+      if(Number.isFinite(p) && p>0){
+        pauseBy[e.d]=(pauseBy[e.d]||0)+Math.round(p);
+      }
     }
 
     const absBy = Object.create(null);
@@ -1349,12 +1372,13 @@
 
     const dayNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
     let html=`<div class="table-wrap"><table><thead><tr>
-      <th>📅 Datum</th><th>Tag</th><th>IST</th><th>Anr.</th><th>SOLL</th><th>Abw.</th><th>Δ</th>
+      <th>📅 Datum</th><th>Tag</th><th>IST</th><th>Pause</th><th>Anr.</th><th>SOLL</th><th>Abw.</th><th>Δ</th>
     </tr></thead><tbody>`;
 
     for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
       const ds=toDateStr(d);
       const ist=Number.isFinite(istBy[ds]) ? istBy[ds] : 0;
+      const pauseDay = Number.isFinite(pauseBy[ds]) ? pauseBy[ds] : 0;
 
       const isW = wd(d);
       const soll = Math.round(isW ? DAY : 0);
@@ -1385,6 +1409,7 @@
         <td class="mono">${ds}</td>
         <td>${dayNames[d.getDay()]}</td>
         <td class="mono">${hhmm(ist)}</td>
+        <td class="mono">${pauseDay?hhmm(pauseDay):"—"}</td>
         <td class="mono">${credit?hhmm(credit):"—"}</td>
         <td class="mono">${hhmm(soll)}</td>
         <td>${abw2}</td>
@@ -1450,21 +1475,37 @@
       : "";
 
     const note = (e.n||"").toString();
+
+    // ✅ NEU: Pausen-Zeiten (Start–Ende) anzeigen, wenn vorhanden
+    const br = Array.isArray(e.br) ? e.br : [];
+    const brTxt = br
+      .filter(x=>x && x.s)
+      .map(x=>{
+        const bs = parseISO(x.s);
+        const be = x.e ? parseISO(x.e) : null;
+        return `${fmtTimeHM(bs)}–${be ? fmtTimeHM(be) : "…"}`;
+      })
+      .join(", ");
+    const brLine = brTxt
+      ? `<div class="muted" style="margin-top:2px">⏸️ ${brTxt}</div>`
+      : "";
+
     return `
-<tr>
-  <td class="mono">${e.d}</td>
-  <td class="mono">${fmtTimeHM(s)}</td>
-  <td class="mono">${fmtTimeHM(en)}</td>
-  <td class="mono">${hhmm(pause)}</td>
-  <td class="mono">${hhmm(net)}</td>
-  <td>
-    <div class="note-cell">
-      ${weBadge}
-      <span class="note-text">${note.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</span>
-    </div>
-  </td>
-  <td><button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button></td>
-</tr>`;
+  <tr>
+    <td class="mono">${e.d}</td>
+    <td class="mono">${fmtTimeHM(s)}</td>
+    <td class="mono">${fmtTimeHM(en)}</td>
+    <td class="mono">${hhmm(pause)}</td>
+    <td class="mono">${hhmm(net)}</td>
+    <td>
+      <div class="note-cell">
+        ${weBadge}
+        <span class="note-text">${note.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</span>
+      </div>
+      ${brLine}
+    </td>
+    <td><button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button></td>
+  </tr>`;
   }
 
   async function renderEntries(){
@@ -1558,20 +1599,44 @@
     const sep=";";
 
     const rows=[];
-    rows.push(["Mitarbeiter","Von","Bis","WochenSoll_min","Datum","StartISO","EndeISO","Pause_min","Netto_min","Netto_hhmm","Notiz","ManagerName","ManagerMail"].join(sep));
+    rows.push([
+      "Mitarbeiter","Von","Bis","WochenSoll_min",
+      "Datum","StartISO","EndeISO",
+      "Pause_min","PauseManuell_min","PauseAuto_min","PausenZeiten",
+      "Netto_min","Netto_hhmm",
+      "Notiz","ManagerName","ManagerMail"
+    ].join(sep));
 
     const entries=(merged.allE||[]).filter(e=>e.d>=startS && e.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
     for(const e of entries){
       const nm=netMinutes(e);
-      rows.push([
-        csvSafe(merged.emp||S.emp||""), startS, endS, String(W),
-        e.d, e.s, e.e, String(e.p||0),
-        Number.isFinite(nm)?String(Math.round(nm)):"",
-        hhmm(nm),
-        csvSafe(e.n||""),
-        csvSafe(merged.mgrName||""),
-        csvSafe(merged.mgrMail||"")
-      ].join(sep));
+      const pTotal = Number(e.p||0);
+const pMan   = Number(e.pm||0);
+const pAuto  = Number(e.ab||0);
+
+const br = Array.isArray(e.br) ? e.br : [];
+const brTxt = br
+  .filter(x=>x && x.s)
+  .map(x=>{
+    const bs = parseISO(x.s);
+    const be = x.e ? parseISO(x.e) : null;
+    return `${fmtTimeHM(bs)}-${be ? fmtTimeHM(be) : "…"}`;
+  })
+  .join(", ");
+
+rows.push([
+  csvSafe(merged.emp||S.emp||""), startS, endS, String(W),
+  e.d, e.s, e.e,
+  String(Math.round(pTotal)),
+  String(Math.round(pMan)),
+  String(Math.round(pAuto)),
+  csvSafe(brTxt),
+  Number.isFinite(nm)?String(Math.round(nm)):"",
+  hhmm(nm),
+  csvSafe(e.n||""),
+  csvSafe(merged.mgrName||""),
+  csvSafe(merged.mgrMail||"")
+].join(sep));
     }
     return rows.join("\n");
   }
