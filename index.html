@@ -202,8 +202,8 @@
       <div>
         <div class="muted">🎯 Wochen-Soll</div>
         <select id="weeklyTarget">
-          <option value="2400">40:00 🇩🇪</option>
-          <option value="2310">38:30 🇦🇹</option>
+          <option value="2400">40:00 </option>
+          <option value="2310">38:30 </option>
         </select>
       </div>
 
@@ -675,6 +675,7 @@
           start: run.start ? run.start.toISOString() : null,
           pauseMin: run.pauseMin || 0,
           pauseStart: run.pauseStart ? run.pauseStart.toISOString() : null,
+          breaks: Array.isArray(run.breaks) ? run.breaks : [],   // ✅ NEU
           note: run.note || ""
         }
       };
@@ -704,6 +705,7 @@
         start,
         pauseMin: Number(payload.run.pauseMin||0),
         pauseStart: payload.run.pauseStart ? parseISO(payload.run.pauseStart) : null,
+        breaks: Array.isArray(payload.run.breaks) ? payload.run.breaks : [], // ✅ NEU
         note: (payload.run.note||"").trim()
       };
 
