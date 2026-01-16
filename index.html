@@ -394,6 +394,11 @@
     </div>
 
     <div class="row" style="margin-top:12px">
+      <h2>💾 Backup</h2>
+      <div class="row" style="margin-top:8px">
+        <button class="btn-ghost" id="btnBackup">📤 Backup exportieren</button>
+        <button class="btn-ghost" id="btnRestore">📥 Backup importieren</button>
+      </div>
       <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
       <button class="btn-ghost" id="btnResetAll">🧨 Alles löschen</button>
     </div>
@@ -1824,7 +1829,76 @@ rows.push([
     await restoreRunIfAny();
     tab("timer");
   })();
+/* =======================
+   Backup / Restore (Update-sicher)
+======================= */
 
+// 📤 Backup exportieren
+const btnBackup = document.getElementById("btnBackup");
+if (btnBackup) {
+  btnBackup.onclick = () => {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(NS + "::")) {
+        data[k] = localStorage.getItem(k);
+      }
+    }
+
+    const blob = new Blob(
+      [JSON.stringify({ app: NS, created: new Date().toISOString(), data }, null, 2)],
+      { type: "application/json" }
+    );
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "zeiterfassung-backup.json";
+    a.click();
+  };
+}
+
+// 📥 Backup importieren
+const btnRestore = document.getElementById("btnRestore");
+if (btnRestore) {
+  btnRestore.onclick = () => {
+    const inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "application/json";
+
+    inp.onchange = async () => {
+      const file = inp.files[0];
+      if (!file) return;
+
+      if (!confirm("⚠️ Achtung!\nVorhandene Daten werden ersetzt.\nFortfahren?")) return;
+
+      const txt = await file.text();
+      const json = JSON.parse(txt);
+
+      if (!json?.data) {
+        alert("❌ Ungültiges Backup");
+        return;
+      }
+
+      // alte App-Daten löschen
+      const del = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(NS + "::")) del.push(k);
+      }
+      del.forEach(k => localStorage.removeItem(k));
+
+      // Backup einspielen
+      for (const k in json.data) {
+        localStorage.setItem(k, json.data[k]);
+      }
+
+      alert("✅ Backup importiert – App startet neu");
+      location.reload();
+    };
+
+    inp.click();
+  };
+}
 })();
 </script>
 </body>
