@@ -991,6 +991,7 @@
       start,
       pauseMin:0,
       pauseStart:null,
+      breaks: [],          // ← NEU
       note:($("timerNote").value||"").trim()
     };
 
@@ -1004,12 +1005,23 @@
     if(!run) return;
     const now=new Date(); now.setSeconds(0,0);
 
+    run.breaks = Array.isArray(run.breaks) ? run.breaks : [];
+
     if(!run.pauseStart){
       run.pauseStart=now;
+      run.breaks.push({ s: now.toISOString(), e: null });
       $("btnPause").textContent="▶️ Weiter";
       setTimerStatus("⏸️ Pause", "chip-mid");
     }else{
       run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
+
+      for(let i=run.breaks.length-1;i>=0;i--){
+        if(!run.breaks[i].e){
+          run.breaks[i].e = now.toISOString();
+          break;
+        }
+      }
+
       run.pauseStart=null;
       $("btnPause").textContent="⏸️ Pause";
       setTimerStatus("🟢 läuft", "chip-ok");
@@ -1039,12 +1051,20 @@
     const entryYear = d0(entryDate).getFullYear();
     if(entryYear!==Y) await loadYear(entryYear);
 
+    run.breaks = Array.isArray(run.breaks) ? run.breaks : [];
+
+    const manualPause = run.pauseMin || 0;
+    const autoPause = autoBreakForGross(gross, manualPause);
+
     S.E.push({
       id:(crypto.randomUUID?crypto.randomUUID():"id_"+Date.now()),
       d: entryDate,
       s: run.start.toISOString(),
       e: end.toISOString(),
-      p: pause,
+      p: manualPause + autoPause,
+      pm: manualPause,
+      ab: autoPause,
+      br: run.breaks,
       n: run.note||""
     });
 
