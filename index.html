@@ -5,918 +5,1735 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Zeiterfassung</title>
 
-  <meta name="theme-color" content="#0b1220" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Zeiterfassung" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="robots" content="noindex,nofollow" />
+
+  <link rel="apple-touch-icon" href="icon.png?v=10">
+  <link rel="icon" href="icon.png?v=10">
 
   <style>
     :root{
-      --bg:#0b1220; --card:#121a2b; --text:#e7ecff; --muted:#a9b2d6;
-      --line:rgba(255,255,255,.12);
-      --good:#38d39f; --warn:#ffcc66; --bad:#ff6b6b; --accent:#6aa6ff;
-      --radius:14px;
-      font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      --bg:#f4f6f8; --card:#fff; --text:#0f172a; --muted:#64748b;
+      --line:#e5e7eb; --shadow:0 2px 12px rgba(0,0,0,.08);
+      --primary:#2563eb;
+
+      /* Ampel */
+      --ok:#166534;   --okbg:#dcfce7;
+      --mid:#92400e;  --midbg:#fef3c7;
+      --bad:#9a3412;  --badbg:#fff7ed;
+
+      --chip:#eef2ff;
     }
-    body{margin:0;background:linear-gradient(180deg,#070c16,var(--bg));color:var(--text);}
-    header{position:sticky;top:0;z-index:9;background:rgba(11,18,32,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
-    .wrap{max-width:1100px;margin:0 auto;padding:14px 14px 64px;}
-    .topbar{display:flex;gap:12px;align-items:center;justify-content:space-between;}
-    .brand{display:flex;gap:10px;align-items:center;}
-    .logo{width:34px;height:34px;border-radius:10px;background:
-      radial-gradient(circle at 30% 20%, #7bd6ff, transparent 55%),
-      radial-gradient(circle at 70% 80%, #7bffcf, transparent 60%),
-      #101a33;border:1px solid rgba(255,255,255,.12);}
-    h1{font-size:16px;margin:0;}
-    .sub{font-size:12px;color:var(--muted);margin-top:2px;}
-    .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px;}
-    @media(max-width:900px){.grid{grid-template-columns:1fr;}}
-    .card{background:rgba(18,26,43,.92);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.22);}
-    .card h2{margin:0 0 10px;font-size:14px;}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-    .col{flex:1 1 240px;}
-    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;}
-    input,select,textarea{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:var(--text);outline:none;}
-    textarea{min-height:80px;resize:vertical;}
-    .btn{appearance:none;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:var(--text);
-      padding:10px 12px;border-radius:12px;font-size:13px;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;}
-    .btn.primary{background:rgba(106,166,255,.20);border-color:rgba(106,166,255,.35);}
-    .btn.good{background:rgba(56,211,159,.18);border-color:rgba(56,211,159,.35);}
-    .btn.warn{background:rgba(255,204,102,.16);border-color:rgba(255,204,102,.35);}
-    .btn.bad{background:rgba(255,107,107,.14);border-color:rgba(255,107,107,.35);}
-    .btn.small{padding:8px 10px;border-radius:10px;font-size:12px;}
-    .btn:active{transform:translateY(1px);}
-    .divider{height:1px;background:var(--line);margin:14px 0;}
-    .tiny{font-size:12px;color:var(--muted);}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-size:12px;color:var(--muted);}
-    .pill strong{color:var(--text);font-weight:600;}
-    .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
-    table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
-    th,td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
-    th{color:var(--muted);font-weight:600;text-align:left;font-size:12px;}
-    .right{text-align:right;}
-    .tag{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);display:inline-block;}
-    .tag.good{color:var(--good);border-color:rgba(56,211,159,.35);background:rgba(56,211,159,.10);}
-    .tag.warn{color:var(--warn);border-color:rgba(255,204,102,.35);background:rgba(255,204,102,.08);}
-    .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);padding:10px 12px;border-radius:12px;
-      background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);color:var(--text);font-size:13px;opacity:0;pointer-events:none;transition:opacity .18s ease;max-width:min(92vw,1050px);}
-    .toast.show{opacity:1;}
-    .dangerBox{border:1px solid rgba(255,107,107,.35);background:rgba(255,107,107,.08);padding:12px;border-radius:12px;}
-    .smallNote{font-size:12px;color:var(--muted);line-height:1.25;}
+    *{box-sizing:border-box}
+    body{margin:0;padding:14px;font-family:-apple-system,system-ui;background:var(--bg);color:var(--text)}
+    .card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+    h1{margin:0 0 6px 0;font-size:20px}
+    h2{margin:10px 0 10px 0;font-size:16px}
+    .muted{color:var(--muted);font-size:13px}
+    .mono{font-family:ui-monospace,Menlo,monospace}
+    .row{display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:10px;row-gap:12px}
+    .right{margin-left:auto}
+
+    input,select,button,textarea{
+      font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff
+    }
+    button{border:none;font-weight:800;cursor:pointer}
+    button:disabled{opacity:.55;cursor:not-allowed}
+
+    .btn-start{background:#16a34a;color:#fff}
+    .btn-pause{background:#111827;color:#fff}
+    .btn-stop{background:#dc2626;color:#fff}
+    .btn-blue{background:var(--primary);color:#fff}
+    .btn-ghost{background:#eef2f7;color:#0f172a}
+    .btn-sm{padding:8px 10px;font-size:14px;border-radius:10px}
+
+    .tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{padding:10px 14px;border-radius:12px;background:#eef2f7;cursor:pointer}
+    .tab.active{background:#111;color:#fff}
+
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:8px 12px;border-radius:999px;
+      font-size:12px;font-weight:900;
+      background:var(--chip);
+      border:1px solid rgba(0,0,0,.06);
+      white-space:nowrap;
+    }
+    .badge.block{white-space:normal !important;line-height:1.25;max-width:100%;display:block}
+    .chip-ok{background:var(--okbg);color:var(--ok)}
+    .chip-mid{background:var(--midbg);color:var(--mid)}
+    .chip-warn{background:var(--badbg);color:var(--bad)}
+
+    .table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:14px}
+    .table-wrap table{min-width:560px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid #eef2f7;font-size:14px;vertical-align:top}
+    th{text-align:left;color:#64748b}
+
+    @media(max-width:430px){
+      th,td{padding:6px;font-size:13px}
+      .table-wrap table{min-width:520px}
+    }
+
+    .small-badge{
+      display:inline-flex;align-items:center;gap:4px;
+      padding:2px 7px;border-radius:999px;
+      font-size:11px;font-weight:900;line-height:1.2;
+      background:#eef2f7;color:#111827;
+      border:1px solid rgba(0,0,0,.10);
+      vertical-align:middle; white-space:nowrap;
+    }
+    .small-badge .e{font-size:12px;line-height:1}
+
+    /* widths */
+    .w-emp{width:210px;max-width:210px}
+    .w-save{width:170px;max-width:170px}
+    .w-note{width:150px;max-width:150px}
+    .w-edit-note{width:190px;max-width:190px;height:44px}
+    .w-mgr-name{width:170px;max-width:170px;margin-left:-10px}
+    /* ✅ Mailfeld 0,2cm nach rechts (≈8px) */
+    .w-mgr-mail{width:370px;max-width:88vw;min-width:320px;margin-left:-10px}
+
+    .entries-search-wrap{width:100%}
+    #entriesSearch{width:min(340px, 92vw)}
+    .note-cell{display:flex; align-items:center; gap:6px; max-width:260px}
+    .note-text{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px}
+
+    /* overlay */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
+    .modal{width:min(560px,100%);background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+    .modal h2{margin-top:0}
+    .pin{width:min(320px,86vw);max-width:86vw;letter-spacing:.08em;font-weight:900;text-align:center;font-size:18px;padding:10px 12px}
+
+    /* Manager-Zeile: nur fürs PDF */
+    #managerPdfLine{display:none}
+
+    /* PRINT: Manager IST im PDF ✅ */
+    @media print{
+      body{background:#fff;padding:0}
+      .card{box-shadow:none;border-radius:0;margin:0 0 12px 0}
+      #tabsCard, #timer, #edit, #absence, #entries, #settings, #ovl {display:none !important;}
+      #overview{display:block !important;}
+      #overviewControls, #btnRefresh, #btnCSV, #btnShare, #btnPDF {display:none !important;}
+      #topHint{display:none !important;}
+
+      /* ✅ Manager zeigen, aber Eingabefelder/Buttons verstecken */
+      #managerBlock input, #managerBlock button, #managerBlock .pdfHide {display:none !important;}
+      #managerPdfLine{display:block !important;}
+    }
   </style>
 </head>
 
 <body>
-<header>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
+  <div class="card">
+    <h1>Zeiterfassung</h1>
+    <div class="muted" id="topHint">
+      🔐 PIN+Recovery · Offline · Auto-Pause 55 min (nur wenn keine manuelle Pause &gt;6h) · 💾 Crash-Save · 🌙 Mitternacht-Split · 📊 Ampel · 🖨️ PDF · ⬇️ CSV
+    </div>
+  </div>
+
+  <div class="card" id="tabsCard">
+    <div class="tabs">
+      <div class="tab active" data-tab="timer">⏱️ Timer</div>
+      <div class="tab" data-tab="overview">📊 Übersicht</div>
+      <div class="tab" data-tab="edit">🗓️ Rückwirkend</div>
+      <div class="tab" data-tab="absence">🏖️ Abwesenheit</div>
+      <div class="tab" data-tab="entries">🧾 Einträge</div>
+      <div class="tab" data-tab="settings">⚙️ Settings</div>
+    </div>
+  </div>
+
+  <!-- TIMER -->
+  <div class="card" id="timer">
+    <h2>⏱️ Timer</h2>
+
+    <div class="row" style="margin-bottom:10px">
+      <div class="muted" style="width:100%">👤 Mitarbeiter</div>
+      <input id="empName" class="w-emp" placeholder="Vorname Nachname" />
+      <button class="btn-ghost w-save" id="saveName">💾 Speichern</button>
+      <span class="right muted mono" id="timerMini"></span>
+    </div>
+    <div class="muted" id="nameMsg"></div>
+
+    <div class="row" style="margin-top:12px">
+      <div>
+        <div class="muted">📅 Datum</div>
+        <input type="date" id="timerDate" />
+      </div>
+      <div>
+        <div class="muted">📝 Notiz (optional)</div>
+        <input id="timerNote" class="w-note" placeholder="kurz (optional)" />
+      </div>
+      <span class="right muted mono" id="timerInfo"></span>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn-start" id="btnStart">▶️ Start</button>
+      <button class="btn-pause" id="btnPause" disabled>⏸️ Pause</button>
+      <button class="btn-stop" id="btnStop">⏹️ Stop</button>
+      <span class="badge" id="timerStatus">⚪ bereit</span>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="card" id="overview" style="display:none">
+    <h2>📊 Übersicht</h2>
+
+    <div class="muted" style="margin-top:6px;">👤 Mitarbeiter: <span id="pdfEmpName">—</span></div>
+    <div class="muted" style="margin-top:4px;">📅 Zeitraum: <span id="pdfRangeText">—</span></div>
+    <div class="muted" style="margin-top:4px;">⏱️ IST/SOLL/Δ: <span id="pdfSumText">—</span></div>
+
+    <div class="row" id="overviewControls" style="margin-top:12px">
+      <div>
+        <div class="muted">🧭 Modus</div>
+        <select id="mode">
+          <option value="week">📆 Woche</option>
+          <option value="month">🗓️ Monat</option>
+          <option value="year">📅 Jahr</option>
+        </select>
+      </div>
+      <div>
+        <div class="muted">📅 Datum</div>
+        <input type="date" id="refDate" />
+      </div>
+      <div>
+        <div class="muted">🎯 Wochen-Soll</div>
+        <select id="weeklyTarget">
+          <option value="2400">40:00 🇩🇪</option>
+          <option value="2310">38:30 🇦🇹</option>
+        </select>
+      </div>
+
+      <button class="btn-ghost" id="btnRefresh">🔄</button>
+      <button class="btn-blue" id="btnCSV">⬇️ CSV</button>
+      <button class="btn-ghost" id="btnShare">📤 Teilen</button>
+      <button class="btn-ghost" id="btnPDF">🖨️ PDF</button>
+      <span class="right muted mono" id="rangeHint"></span>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <span class="badge block" id="sumChip">—</span>
+      <span class="badge" id="weChip" style="display:none">—</span>
+    </div>
+
+    <div class="muted" style="margin-top:10px">
+      🟢 bis ±5:00/Woche · 🟡 bis ±10:00/Woche · 🔴 darüber ·
+      Abwesenheit (Urlaub/Krank/Feiertag/Ausgleichstag) wird als <b>Anrechnung</b> (Tages-Soll) gezählt und reduziert die Wochenzeit nicht.
+    </div>
+
+    <div id="managerBlock" style="margin-top:14px">
+      <h2>👔 Manager</h2>
+
+      <!-- ✅ Diese Zeile wird im PDF angezeigt -->
+      <div id="managerPdfLine" class="muted"></div>
+
+      <!-- ✅ Diese Eingaben sind für die App, im PDF versteckt -->
+      <div class="row pdfHide">
+        <div class="muted" style="width:100%">Name</div>
+        <input id="mgrName" class="w-mgr-name" placeholder="Name" />
+        <div class="muted" style="width:100%">E-Mail</div>
+        <input id="mgrMail" class="w-mgr-mail" placeholder="vorname.nachname@firma.de" />
+        <button class="btn-ghost w-save" id="saveMgr">💾 Speichern</button>
+      </div>
+      <div class="muted pdfHide" style="margin-top:6px">✅ Manager wird global gespeichert und immer in CSV + PDF übernommen.</div>
+    </div>
+
+    <div id="overviewTable" style="margin-top:12px"></div>
+  </div>
+
+  <!-- EDIT -->
+  <div class="card" id="edit" style="display:none">
+    <h2>🗓️ Rückwirkend</h2>
+    <div class="row">
+      <div><div class="muted">📅 Datum</div><input type="date" id="eDate" /></div>
+      <div><div class="muted">⏱️ Start</div><input type="time" id="eStart" /></div>
+      <div><div class="muted">⏹️ Ende</div><input type="time" id="eEnd" /></div>
+      <div><div class="muted">📝 Notiz</div><input id="eNote" class="w-edit-note" placeholder="optional" /></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn-ghost" id="saveManual">💾 Speichern</button>
+      <button class="btn-ghost" id="newManual">🆕 Neu</button>
+      <span class="right muted mono" id="editMsg"></span>
+    </div>
+    <div class="muted" style="margin-top:8px">Hinweis: Rückwirkend zieht automatisch 55 Min Pause ab – aber erst wenn Dauer &gt; 6:00 h ist.</div>
+  </div>
+
+  <!-- ABSENCE -->
+  <div class="card" id="absence" style="display:none">
+    <h2>🏖️ Abwesenheit</h2>
+    <div class="muted">📆 Zeitraum · Mo–Fr · pro Tag max. 1 (ersetzt doppelte automatisch) · wird als Tages-Soll angerechnet</div>
+
+    <div class="row" style="margin-top:10px">
+      <div><div class="muted">Start</div><input type="date" id="aStart" /></div>
+      <div><div class="muted">Ende</div><input type="date" id="aEnd" /></div>
+      <div>
+        <div class="muted">Typ</div>
+        <select id="aType"></select>
+      </div>
+      <button class="btn-ghost" id="addAbs">💾 Speichern</button>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <div><div class="muted">Einzeltag löschen</div><input type="date" id="aDelDate" /></div>
+      <button class="btn-ghost" id="delAbsDay">🗑️ Löschen</button>
+      <span class="right muted mono" id="absMsg"></span>
+    </div>
+
+    <div id="absList" style="margin-top:12px"></div>
+  </div>
+
+  <!-- ENTRIES -->
+  <div class="card" id="entries" style="display:none">
+    <h2>🧾 Einträge</h2>
+
+    <div class="row">
+      <div>
+        <div class="muted">🧩 Filter</div>
+        <select id="entriesFilter">
+          <option value="week">📆 Woche</option>
+          <option value="month" selected>🗓️ Monat</option>
+          <option value="year">📅 Jahr</option>
+          <option value="custom">🧷 Zeitraum</option>
+        </select>
+      </div>
+
+      <div id="entriesFromWrap" style="display:none">
+        <div class="muted">Von</div>
+        <input type="date" id="entriesFrom" />
+      </div>
+
+      <div id="entriesToWrap" style="display:none">
+        <div class="muted">Bis</div>
+        <input type="date" id="entriesTo" />
+      </div>
+
+      <div class="entries-search-wrap">
+        <div class="muted">🔎 Suche (Notiz)</div>
+        <input id="entriesSearch" placeholder="z.B. Urlaub / Workshop" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <span class="badge" id="entriesSum">—</span>
+      <button class="btn-ghost right" id="entriesExportCSV">⬇️ CSV</button>
+    </div>
+
+    <div id="entryList" style="margin-top:12px"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="card" id="settings" style="display:none">
+    <h2>⚙️ Settings</h2>
+    <div class="muted">🔐 Entsperrt bleibt bis Safari geschlossen wird (Session). PIN kann nur geändert / Recovery neu erzeugt werden.</div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn-ghost" id="btnLock">🔒 Sperren</button>
+      <button class="btn-ghost" id="btnChangePin">🔁 PIN ändern</button>
+      <button class="btn-ghost" id="btnNewRecovery">🧩 Recovery-Key</button>
+    </div>
+
+    <h2>😀 Emojis</h2>
+    <div class="muted">➖ / ➕ / AUS</div>
+
+    <div class="row" style="margin-top:10px">
+      <div style="min-width:150px">
+        <div class="muted">Wochenende</div>
+        <div class="row" style="gap:6px">
+          <button class="btn-ghost btn-sm" id="weMinus">➖</button>
+          <select id="wePick"></select>
+          <button class="btn-ghost btn-sm" id="wePlus">➕</button>
+        </div>
+      </div>
+
+      <div style="min-width:150px">
+        <div class="muted">Urlaub</div>
+        <div class="row" style="gap:6px">
+          <button class="btn-ghost btn-sm" id="vacMinus">➖</button>
+          <select id="vacPick"></select>
+          <button class="btn-ghost btn-sm" id="vacPlus">➕</button>
+        </div>
+      </div>
+
+      <div style="min-width:150px">
+        <div class="muted">Krank</div>
+        <div class="row" style="gap:6px">
+          <button class="btn-ghost btn-sm" id="sickMinus">➖</button>
+          <select id="sickPick"></select>
+          <button class="btn-ghost btn-sm" id="sickPlus">➕</button>
+        </div>
+      </div>
+
+      <div style="min-width:150px">
+        <div class="muted">Feiertag</div>
+        <div class="row" style="gap:6px">
+          <button class="btn-ghost btn-sm" id="holMinus">➖</button>
+          <select id="holPick"></select>
+          <button class="btn-ghost btn-sm" id="holPlus">➕</button>
+        </div>
+      </div>
+
+      <div style="min-width:150px">
+        <div class="muted">Ausgleichstag</div>
+        <div class="row" style="gap:6px">
+          <button class="btn-ghost btn-sm" id="compMinus">➖</button>
+          <select id="compPick"></select>
+          <button class="btn-ghost btn-sm" id="compPlus">➕</button>
+        </div>
+      </div>
+
+      <button class="btn-ghost" id="saveEmoji">💾 Speichern</button>
+      <button class="btn-ghost" id="resetEmoji">↩️ Standard</button>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn-stop" id="btnResetThisYear">🧹 Jahr löschen</button>
+      <button class="btn-ghost" id="btnResetAll">🧨 Alles löschen</button>
+    </div>
+  </div>
+
+  <!-- PIN Overlay -->
+  <div class="overlay" id="ovl">
+    <div class="modal">
+      <h2>Zeiterfassung entsperren</h2>
+      <div class="muted" id="ovlText">Bitte PIN eingeben.</div>
+
+      <div style="margin-top:10px;display:flex;justify-content:center">
+        <input id="pinInput" class="pin" inputmode="text" maxlength="80" placeholder="PIN oder Recovery-Key" autocomplete="off" />
+      </div>
+
+      <div class="row" style="margin-top:8px">
         <div>
-          <h1>Zeiterfassung</h1>
-          <div class="sub">1 Datei • Update-sicher • Pause: 55 Min nach 6h • Pausenzeiten in Übersicht</div>
-        </div>
-      </div>
-      <div class="row">
-        <button class="btn small" id="btnBackup">Backup</button>
-        <button class="btn small" id="btnRestoreBtn">Restore</button>
-      </div>
-    </div>
-  </div>
-</header>
-
-<div class="wrap">
-  <div class="grid">
-    <section class="card">
-      <h2>Live-Tracking</h2>
-
-      <div class="row">
-        <div class="col">
-          <label>Datum</label>
-          <input id="date" type="date" />
-          <div class="tiny">Bei Mitternacht wird automatisch auf den nächsten Tag gesplittet.</div>
-        </div>
-        <div class="col">
-          <label>Mitarbeiter</label>
-          <select id="employee"></select>
-          <div class="tiny">Mitarbeiter verwaltest du rechts unter „Stammdaten“.</div>
-        </div>
-      </div>
-
-      <div class="row" style="margin-top:10px;">
-        <div class="col">
-          <label>Arbeitszeitmodell</label>
-          <select id="model">
-            <option value="standard">Standardarbeitszeit</option>
-            <option value="gleitzeit">Gleitzeit</option>
-            <option value="fix">Fixe Arbeitszeit</option>
+          <div class="muted">🔐 Entsperren mit</div>
+          <select id="authMode">
+            <option value="pin" selected>PIN</option>
+            <option value="recovery">Recovery-Key</option>
           </select>
-          <div class="tiny">Flaggen entfernt.</div>
         </div>
-        <div class="col">
-          <label>Notiz (optional)</label>
-          <input id="note" placeholder="z.B. Filiale, Auftrag, Thema…" />
-        </div>
+        <span class="right muted mono" id="pinMsg"></span>
       </div>
 
-      <div class="divider"></div>
-
-      <div class="row">
-        <button class="btn good" id="start">▶️ Start</button>
-        <button class="btn warn" id="pause" disabled>⏸ Pause</button>
-        <button class="btn primary" id="resume" disabled>⏯ Weiter</button>
-        <button class="btn bad" id="stop" disabled>⏹ Stop</button>
+      <div class="row" style="margin-top:10px">
+        <button class="btn-blue" id="btnUnlock">Entsperren</button>
+        <button class="btn-ghost" id="btnSetPin">PIN setzen</button>
+        <button class="btn-ghost" id="btnCopyRecovery" style="display:none">Recovery kopieren</button>
       </div>
 
-      <div class="kpi">
-        <div class="pill">Status: <strong id="kStatus">bereit</strong></div>
-        <div class="pill">Arbeit: <strong id="kWork">00:00</strong></div>
-        <div class="pill">Pause: <strong id="kBreak">00:00</strong></div>
-        <div class="pill">Auto-Abzug: <strong id="kAuto">00:00</strong></div>
+      <div class="muted" style="margin-top:10px">
+        🧩 PIN vergessen? → Recovery-Key nutzen. Beides weg → nur Reset (Daten weg).
       </div>
 
-      <div class="divider"></div>
-
-      <div class="row">
-        <button class="btn" id="manual">➕ Manuell eintragen (inkl. Pausenzeiten)</button>
-        <button class="btn" id="csvDay">⬇️ CSV (Tag)</button>
-        <button class="btn" id="shareDay">📤 Teilen (Tag)</button>
-        <button class="btn" id="pdfDay">🖨️ PDF (Tag)</button>
+      <div class="card" id="recoveryBox" style="display:none;margin-top:12px;background:#fbfbfb">
+        <h2>Dein Recovery-Key</h2>
+        <div class="muted">Bitte in Passwortmanager speichern.</div>
+        <div class="mono" id="recoveryText" style="margin-top:8px;font-size:16px;font-weight:900"></div>
       </div>
-
-      <div class="tiny" style="margin-top:10px;">
-        Regel: Wenn <span class="mono">&gt; 6:00h</span> Arbeitszeit und Pause <span class="mono">&lt; 55 Min</span>,
-        wird die fehlende Pause als <b>Auto-Abzug</b> gerechnet (keine Doppel-Pause).
-      </div>
-    </section>
-
-    <aside class="card">
-      <h2>Stammdaten</h2>
-
-      <div class="row">
-        <div class="col">
-          <label>Manager E-Mail</label>
-          <input id="manager" type="email" placeholder="manager@firma.de" />
-          <div class="tiny">Wird in CSV & PDF übernommen.</div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="row">
-        <div class="col">
-          <label>Neuer Mitarbeiter – Name</label>
-          <input id="empName" placeholder="Vorname Nachname" />
-        </div>
-        <div class="col">
-          <label>E-Mail (optional)</label>
-          <input id="empEmail" type="email" placeholder="name@firma.de" />
-        </div>
-      </div>
-
-      <div class="row" style="margin-top:10px;">
-        <button class="btn primary" id="addEmp">➕ Mitarbeiter speichern</button>
-        <button class="btn bad" id="delEmp">🗑️ Löschen</button>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="dangerBox">
-        <div class="tiny"><b>Updates löschen keine Daten.</b> Nur „Alles löschen“ entfernt alles.</div>
-        <div class="row" style="margin-top:10px;">
-          <button class="btn bad" id="wipe">⚠️ Alles löschen</button>
-        </div>
-      </div>
-    </aside>
+    </div>
   </div>
-
-  <section class="card" style="margin-top:14px;">
-    <div class="row" style="justify-content:space-between;">
-      <h2 style="margin:0;">Übersicht (letzte 30 Tage)</h2>
-      <div class="row">
-        <button class="btn" id="csv30">⬇️ CSV (30 Tage)</button>
-        <button class="btn" id="pdf30">🖨️ PDF (30 Tage)</button>
-      </div>
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Datum</th>
-          <th>Mitarbeiter</th>
-          <th>Pausenzeiten</th>
-          <th>Segmente</th>
-          <th class="right">Arbeit</th>
-          <th class="right">Pause</th>
-          <th class="right">Auto</th>
-          <th class="right">Netto</th>
-          <th class="right">Aktion</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-
-    <div class="tiny" style="margin-top:10px;">
-      Pausenzeiten als <span class="mono">HH:MM–HH:MM</span>. Zusätzliche Minuten ohne Uhrzeit erscheinen als <span class="mono">Manuell +XXm</span>.
-    </div>
-  </section>
-</div>
-
-<div class="toast" id="toast"></div>
-<input id="restoreFile" type="file" accept="application/json" style="display:none;" />
 
 <script>
-/* ===========================
-   Update-sicherer Speicher
-   =========================== */
-const STORAGE_KEY = "zeiterfassung_singlefile_data";
-const SCHEMA_VERSION = 2;
+(() => {
+  "use strict";
 
-function loadData(){
-  try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; }
-  catch { return null; }
-}
-function saveData(d){ localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
-function freshData(){
-  return { schemaVersion: SCHEMA_VERSION, managerEmail:"", employees:[], days:{} };
-}
-function migrate(d){
-  const v = d?.schemaVersion ?? 0;
-  if (v < 1) d = freshData();
-  if (v < 2) {
-    d = Object.assign(freshData(), d || {});
-    if (!Array.isArray(d.employees)) d.employees = [];
-    if (!d.days) d.days = {};
-  }
-  d.schemaVersion = SCHEMA_VERSION;
-  // normalize days
-  for (const k of Object.keys(d.days||{})) {
-    const day = d.days[k] || {};
-    if (!Array.isArray(day.segments)) day.segments = [];
-    if (!day.manual) day.manual = { breakAddMin: 0 };
-    day.manual.breakAddMin = Number(day.manual.breakAddMin || 0);
-    day.model = day.model || "standard";
-    day.note = day.note || "";
-    d.days[k] = day;
-  }
-  return d;
-}
-let data = migrate(loadData() || freshData());
-saveData(data);
+  /* =======================
+     Konfiguration
+  ======================== */
+  const NS = "ZEITERFASSUNG";
 
-/* ===========================
-   Helpers
-   =========================== */
-const $ = (id)=>document.getElementById(id);
-function pad(n){ return String(n).padStart(2,"0"); }
-function isoDate(dt){ return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`; }
-function parseDay(dayStr){
-  const [y,m,d] = dayStr.split("-").map(Number);
-  return new Date(y, m-1, d, 0,0,0,0);
-}
-function fmtHM(min){
-  min = Math.max(0, Math.round(min));
-  const h = Math.floor(min/60), m = min%60;
-  return `${pad(h)}:${pad(m)}`;
-}
-function minutesBetween(a,b){ return (b.getTime()-a.getTime())/60000; }
-function hhmm(iso){
-  const dt = new Date(iso);
-  return `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-}
-function toast(msg){
-  const t=$("toast");
-  t.textContent=msg;
-  t.classList.add("show");
-  clearTimeout(t._x);
-  t._x=setTimeout(()=>t.classList.remove("show"),2200);
-}
-function uid(){ return Math.random().toString(16).slice(2)+Date.now().toString(16); }
+  // ✅ Tages-Auto-Pause: 55 Min, aber erst wenn Dauer > 6h
+  // ✅ UND: NUR wenn keine manuelle Pause genommen wurde (sonst doppelt)
+  const AUTO_BREAK = 55;
+  const AUTO_BREAK_AFTER_MIN = 6 * 60;
 
-function ensureDay(dayStr){
-  if (!data.days[dayStr]) data.days[dayStr] = { model:"standard", note:"", segments:[], manual:{breakAddMin:0} };
-  const d = data.days[dayStr];
-  if (!Array.isArray(d.segments)) d.segments = [];
-  if (!d.manual) d.manual = { breakAddMin:0 };
-  d.manual.breakAddMin = Number(d.manual.breakAddMin || 0);
-  d.model = d.model || "standard";
-  d.note = d.note || "";
-  return d;
-}
+  const TOL_Y_WEEK = 300;                // ±5:00 pro Woche (gelb)
+  const TOL_R_WEEK = 600;                // ±10:00 pro Woche (rot)
 
-function splitByMidnight(start,end){
-  const out=[];
-  let cur=new Date(start);
-  while(cur<end){
-    const d=isoDate(cur);
-    const next=new Date(cur.getFullYear(), cur.getMonth(), cur.getDate()+1, 0,0,0,0);
-    const segEnd = end<next ? end : next;
-    out.push({dayStr:d, start:new Date(cur), end:new Date(segEnd)});
-    cur=new Date(segEnd);
-  }
-  return out;
-}
+  const VAULT_KEY = NS+"::vault_v1";
+  const SESSION_MASTER = NS+"::session_master_raw";
+  const YEAR_KEY = (y)=> NS+"::year::"+y;
 
-/* ===========================
-   Regeln / Summen
-   =========================== */
-function sumDay(dayObj){
-  let work=0, brk=0;
-  for (const s of dayObj.segments){
-    const a=new Date(s.startISO), b=new Date(s.endISO);
-    const mins = minutesBetween(a,b);
-    if (s.type==="work") work += mins;
-    if (s.type==="break") brk += mins;
-  }
-  brk += Number(dayObj.manual?.breakAddMin || 0);
-  return {work, brk};
-}
-function autoDeduction(workMin, breakMin){
-  if (workMin <= 360) return 0;     // erst nach 6h
-  return Math.max(0, 55 - breakMin);// nur fehlende Minuten
-}
-function breakTimesLabel(dayObj){
-  const breaks = (dayObj.segments||[])
-    .filter(s=>s.type==="break" && s.startISO && s.endISO)
-    .sort((a,b)=> new Date(a.startISO) - new Date(b.startISO))
-    .map(s=>`${hhmm(s.startISO)}–${hhmm(s.endISO)}`);
+  // ✅ globaler Manager (jahr-unabhängig)
+  const GLOBAL_KEY = NS+"::global_v1";
 
-  const manual = Number(dayObj.manual?.breakAddMin || 0);
-  let label = breaks.length ? breaks.join(", ") : "";
-  if (manual > 0) label = label ? `${label} • Manuell +${manual}m` : `Manuell +${manual}m`;
-  return label || "—";
-}
+  // ✅ Crash-Save für laufenden Timer (verschlüsselt)
+  const RUN_KEY = NS + "::run_v1";
+  const RUN_SAVE_MS = 15000;
 
-/* ===========================
-   Mitarbeiter / Labels
-   =========================== */
-function renderEmployees(){
-  const sel=$("employee");
-  sel.innerHTML="";
-  if (!data.employees.length){
-    const o=document.createElement("option");
-    o.value=""; o.textContent="— zuerst Mitarbeiter anlegen —";
-    sel.appendChild(o);
-    return;
-  }
-  for (const e of data.employees){
-    const o=document.createElement("option");
-    o.value=e.id; o.textContent=e.name;
-    sel.appendChild(o);
-  }
-}
-function currentEmployee(){
-  const id=$("employee").value;
-  return data.employees.find(e=>e.id===id) || null;
-}
-function employeesLabel(dayObj){
-  const ids = new Set((dayObj.segments||[]).map(s=>s.employeeId).filter(Boolean));
-  const names=[...ids].map(id=>data.employees.find(e=>e.id===id)?.name).filter(Boolean);
-  return names.length ? names.join(", ") : "—";
-}
-
-/* ===========================
-   Live Tracking
-   =========================== */
-let live = { running:false, mode:null, start:null, employeeId:"", model:"standard", note:"" };
-
-function setButtons(){
-  $("start").disabled = live.running;
-  $("pause").disabled = !live.running || live.mode!=="work";
-  $("resume").disabled = !live.running || live.mode!=="break";
-  $("stop").disabled = !live.running;
-  $("kStatus").textContent = live.running ? (live.mode==="work"?"läuft":"Pause") : "bereit";
-}
-function closeSegment(now){
-  if (!live.running || !live.start || !live.mode) return;
-  const start=new Date(live.start), end=new Date(now);
-  if (end<=start) return;
-
-  const pieces = splitByMidnight(start,end);
-  for (const p of pieces){
-    const dayObj = ensureDay(p.dayStr);
-    dayObj.model = live.model || dayObj.model;
-    dayObj.note  = live.note  || dayObj.note;
-
-    dayObj.segments.push({
-      type: live.mode,
-      employeeId: live.employeeId,
-      startISO: p.start.toISOString(),
-      endISO: p.end.toISOString()
-    });
-  }
-  saveData(data);
-}
-function updateKPI(){
-  const dayStr=$("date").value;
-  if (!dayStr) return;
-  const dayObj=ensureDay(dayStr);
-  const {work, brk} = sumDay(dayObj);
-  const auto = autoDeduction(work, brk);
-  $("kWork").textContent = fmtHM(work);
-  $("kBreak").textContent = fmtHM(brk);
-  $("kAuto").textContent = fmtHM(auto);
-}
-function startLive(){
-  const emp=currentEmployee();
-  if (!emp){ toast("Bitte zuerst einen Mitarbeiter anlegen."); return; }
-  const dayStr=$("date").value;
-  if (!dayStr){ toast("Bitte Datum wählen."); return; }
-
-  live.running=true;
-  live.mode="work";
-  live.start=new Date();
-  live.employeeId=emp.id;
-  live.model=$("model").value;
-  live.note=$("note").value || "";
-
-  const d=ensureDay(dayStr);
-  d.model=live.model;
-  d.note=live.note;
-
-  saveData(data);
-  setButtons();
-  toast("Start");
-  updateKPI();
-}
-function pauseLive(){
-  const now=new Date();
-  closeSegment(now);
-  live.mode="break";
-  live.start=now;
-  saveData(data);
-  setButtons();
-  toast("Pause");
-  updateKPI();
-}
-function resumeLive(){
-  const now=new Date();
-  closeSegment(now);
-  live.mode="work";
-  live.start=now;
-  saveData(data);
-  setButtons();
-  toast("Weiter");
-  updateKPI();
-}
-function stopLive(){
-  const now=new Date();
-  closeSegment(now);
-  live={ running:false, mode:null, start:null, employeeId:"", model:"standard", note:"" };
-  saveData(data);
-  setButtons();
-  toast("Stop");
-  updateKPI();
-  renderTable();
-}
-
-/* ===========================
-   Manuell eintragen (inkl Pausenzeiten)
-   =========================== */
-function addManual(){
-  const emp=currentEmployee();
-  if (!emp){ toast("Bitte zuerst einen Mitarbeiter anlegen."); return; }
-  const dayStr=$("date").value;
-  if (!dayStr){ toast("Bitte Datum wählen."); return; }
-
-  const startStr = prompt("Arbeits-Start (HH:MM)", "09:00"); if (!startStr) return;
-  const endStr   = prompt("Arbeits-Ende (HH:MM)", "17:00");   if (!endStr) return;
-
-  const breaksStr = prompt("Pausenzeiten (z.B. 12:00-12:30, 15:10-15:20) oder leer", "12:00-12:30");
-  if (breaksStr === null) return;
-
-  const breakAddStr = prompt("Zusätzliche Pausen-Minuten ohne Uhrzeit (optional) oder leer", "");
-  if (breakAddStr === null) return;
-
-  const [sh,sm]=startStr.split(":").map(Number);
-  const [eh,em]=endStr.split(":").map(Number);
-
-  const day=parseDay(dayStr);
-  const workStart=new Date(day.getFullYear(),day.getMonth(),day.getDate(),sh,sm,0,0);
-  const workEnd  =new Date(day.getFullYear(),day.getMonth(),day.getDate(),eh,em,0,0);
-  if (!(workStart<workEnd)){ toast("Ende muss nach Start liegen."); return; }
-
-  const dayObj=ensureDay(dayStr);
-  dayObj.model = $("model").value;
-  dayObj.note  = $("note").value || dayObj.note;
-
-  // Work
-  dayObj.segments.push({ type:"work", employeeId:emp.id, startISO:workStart.toISOString(), endISO:workEnd.toISOString() });
-
-  // Break intervals -> echte Break-Segmente
-  const trimmed = (breaksStr||"").trim();
-  if (trimmed) {
-    const parts = trimmed.split(",").map(x=>x.trim()).filter(Boolean);
-    for (const part of parts){
-      const norm = part.replace("–","-");
-      const [a,b] = norm.split("-").map(x=>x.trim());
-      if (!a || !b) continue;
-      const [bh,bm] = a.split(":").map(Number);
-      const [ch,cm] = b.split(":").map(Number);
-      if ([bh,bm,ch,cm].some(n=>Number.isNaN(n))) continue;
-
-      const bStart = new Date(day.getFullYear(),day.getMonth(),day.getDate(),bh,bm,0,0);
-      const bEnd   = new Date(day.getFullYear(),day.getMonth(),day.getDate(),ch,cm,0,0);
-      if (!(bStart < bEnd)) continue;
-
-      dayObj.segments.push({ type:"break", employeeId:emp.id, startISO:bStart.toISOString(), endISO:bEnd.toISOString() });
-    }
-  }
-
-  // zusätzliche Minuten ohne Uhrzeit
-  const add = Math.max(0, Number((breakAddStr||"").trim() || 0));
-  if (add > 0) dayObj.manual.breakAddMin = Number(dayObj.manual.breakAddMin||0) + add;
-
-  saveData(data);
-  toast("Manuell gespeichert");
-  updateKPI();
-  renderTable();
-}
-
-/* ===========================
-   CSV / Share / Print
-   =========================== */
-function rowsForDay(dayStr){
-  const dayObj=data.days[dayStr];
-  if (!dayObj) return [];
-
-  const map=new Map();
-  for (const s of dayObj.segments){
-    const mins = minutesBetween(new Date(s.startISO), new Date(s.endISO));
-    const key=s.employeeId||"";
-    if (!map.has(key)) map.set(key,{work:0,brk:0,segs:0});
-    const it=map.get(key);
-    it.segs++;
-    if (s.type==="work") it.work+=mins;
-    if (s.type==="break") it.brk+=mins;
-  }
-  const manualBreak = Number(dayObj.manual?.breakAddMin||0);
-
-  const rows=[];
-  for (const [eid,it] of map.entries()){
-    const emp=data.employees.find(e=>e.id===eid);
-    const breakTotal = it.brk + manualBreak;
-    const auto = autoDeduction(it.work, breakTotal);
-    rows.push({
-      date: dayStr,
-      employee: emp?.name || "—",
-      employeeEmail: emp?.email || "",
-      managerEmail: data.managerEmail || "",
-      model: dayObj.model || "standard",
-      note: dayObj.note || "",
-      breakTimes: breakTimesLabel(dayObj),
-      segments: it.segs,
-      workMin: Math.round(it.work),
-      breakMin: Math.round(breakTotal),
-      autoMin: Math.round(auto),
-      netMin: Math.round(Math.max(0, it.work - auto))
-    });
-  }
-
-  if (!rows.length){
-    const {work,brk}=sumDay(dayObj);
-    const auto=autoDeduction(work,brk);
-    rows.push({
-      date: dayStr, employee:"—", employeeEmail:"",
-      managerEmail:data.managerEmail||"", model:dayObj.model||"standard", note:dayObj.note||"",
-      breakTimes: breakTimesLabel(dayObj),
-      segments:0, workMin:Math.round(work), breakMin:Math.round(brk),
-      autoMin:Math.round(auto), netMin:Math.round(Math.max(0, work-auto))
-    });
-  }
-  return rows;
-}
-
-function rowsToCSV(rows){
-  const header=[
-    "Datum","Mitarbeiter","Mitarbeiter_Email","Manager_Email","Arbeitszeitmodell","Notiz",
-    "Pausenzeiten","Segmente","Arbeit_Min","Pause_Min","AutoPause_Abzug_Min","Netto_Min"
-  ];
-  const esc=(v)=>{
-    const s=String(v??"");
-    return /[,"\n]/.test(s) ? `"${s.replaceAll('"','""')}"` : s;
+  const DEFAULT_EMOJI = { we:"🧑‍💻", vac:"🏖️", sick:"🤒", hol:"🎉", comp:"⚖️" };
+  const PICKS = {
+    we:   ["(aus)","🧑‍💻","💼","⚡️","🛠️","🕒"],
+    vac:  ["(aus)","🏖️","🌴","✈️","⛱️","🌞"],
+    sick: ["(aus)","🤒","🩺","😷","💊","🛌"],
+    hol:  ["(aus)","🎉","📅","🎊","⭐️","🏛️"],
+    comp: ["(aus)","⚖️","🔁","🧘","✅","🕊️"]
   };
-  const lines=[header.join(",")];
-  for (const r of rows){
-    lines.push([
-      r.date,r.employee,r.employeeEmail,r.managerEmail,r.model,r.note,
-      r.breakTimes,r.segments,r.workMin,r.breakMin,r.autoMin,r.netMin
-    ].map(esc).join(","));
-  }
-  return lines.join("\n");
-}
-function downloadFile(name, content, mime){
-  const blob=new Blob([content],{type:mime});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url; a.download=name;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-}
-async function shareCSV(name, csv){
-  try{
-    const file=new File([csv], name, {type:"text/csv"});
-    if (navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file], title:"Zeiterfassung", text:"CSV exportiert."});
-      toast("Geteilt"); return;
-    }
-  }catch{}
-  downloadFile(name, csv, "text/csv;charset=utf-8");
-  toast("CSV heruntergeladen");
-}
-function printHTML(title, html){
-  const w=window.open("","_blank");
-  if(!w){ toast("Popup blockiert"); return; }
-  w.document.open();
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
-    <style>
-      body{font-family:-apple-system,system-ui,Segoe UI,Roboto,Arial;padding:20px;}
-      h1{margin:0 0 6px;font-size:18px;}
-      .muted{color:#555;font-size:12px;margin-bottom:14px;}
-      table{width:100%;border-collapse:collapse;font-size:12px;}
-      th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;vertical-align:top;}
-      th{background:#f4f4f4;}
-      .right{text-align:right;}
-      .small{font-size:11px;color:#666;margin-top:10px;}
-      .note{font-size:11px;color:#444;margin:8px 0 12px;}
-    </style>
-  </head><body>${html}<script>window.onload=()=>window.print();</script></body></html>`);
-  w.document.close();
-}
 
-/* ===========================
-   Übersicht
-   =========================== */
-function lastNDays(n){
-  const out=[];
-  const now=new Date();
-  for(let i=0;i<n;i++){
-    const d=new Date(now);
-    d.setDate(d.getDate()-i);
-    out.push(isoDate(d));
-  }
-  return out;
-}
-function renderTable(){
-  const tbody=$("tbody");
-  tbody.innerHTML="";
+  /* =======================
+     Helpers
+  ======================== */
+  const $ = (id)=>document.getElementById(id);
+  const pad = (n)=>String(n).padStart(2,"0");
+  const toDateStr = (d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const d0 = (s)=>{ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d,0,0,0,0); };
+  const wd = (d)=> d.getDay()>=1 && d.getDay()<=5;
+  const isWeekend = (d)=> d.getDay()===0 || d.getDay()===6;
+  const norm = (s)=>(s||"").toString().trim().toLowerCase();
+  const parseISO = (s)=>{ const d=new Date(s); return isNaN(d.getTime())?null:d; };
+  const fmtTimeHM = (d)=> d?`${pad(d.getHours())}:${pad(d.getMinutes())}`:"--:--";
+  const hhmm = (m)=>{
+    if(!Number.isFinite(m)) return "--:--";
+    const s=m<0?"-":"";
+    m=Math.abs(Math.round(m));
+    return s + pad(Math.floor(m/60)) + ":" + pad(m%60);
+  };
 
-  const days = lastNDays(30).filter(d=>data.days[d]);
-  if(!days.length){
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td colspan="9" class="smallNote">Noch keine Einträge.</td>`;
-    tbody.appendChild(tr);
-    return;
+  function smallBadge(emoji, text){
+    const e = emoji ? `<span class="e">${emoji}</span>` : "";
+    const t = text ? `<span>${text}</span>` : "";
+    return `<span class="small-badge">${e}${t}</span>`;
   }
 
-  for(const dayStr of days){
-    const dayObj=ensureDay(dayStr);
-    const {work, brk} = sumDay(dayObj);
-    const auto = autoDeduction(work, brk);
-    const net  = Math.max(0, work - auto);
-
-    const tag = auto>0 ? `<span class="tag warn">Auto</span>` : `<span class="tag good">OK</span>`;
-    const segCount = (dayObj.segments||[]).length;
-
-    const tr=document.createElement("tr");
-    tr.innerHTML = `
-      <td>${dayStr}<div class="smallNote">${tag}</div></td>
-      <td>${employeesLabel(dayObj)}</td>
-      <td class="smallNote">${breakTimesLabel(dayObj)}</td>
-      <td>${segCount}</td>
-      <td class="right">${fmtHM(work)}</td>
-      <td class="right">${fmtHM(brk)}</td>
-      <td class="right">${fmtHM(auto)}</td>
-      <td class="right"><b>${fmtHM(net)}</b></td>
-      <td class="right">
-        <button class="btn small" data-open="${dayStr}">Öffnen</button>
-        <button class="btn small bad" data-del="${dayStr}">Löschen</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  }
-
-  tbody.querySelectorAll("[data-open]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const d=btn.getAttribute("data-open");
-      $("date").value=d;
-      updateKPI();
-      toast("Tag geladen");
+  function tab(name){
+    ["timer","overview","edit","absence","entries","settings"].forEach(id=>{
+      $(id).style.display=(id===name)?"":"none";
     });
-  });
+    document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
+  }
+  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>tab(t.dataset.tab));
 
-  tbody.querySelectorAll("[data-del]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const d=btn.getAttribute("data-del");
-      if(!confirm(`Einträge am ${d} wirklich löschen?`)) return;
-      delete data.days[d];
-      saveData(data);
-      renderTable();
-      updateKPI();
-      toast("Gelöscht");
-    });
-  });
-}
+  /* =======================
+     Security (PIN + Recovery)
+  ======================== */
+  const b64 = (buf)=>btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const ub64 = (s)=>Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+  const rand = (n)=>crypto.getRandomValues(new Uint8Array(n));
+  const hex  = (bytes)=>[...bytes].map(b=>b.toString(16).padStart(2,"0")).join("");
+  const chunk=(s,n)=>(s.match(new RegExp(".{1,"+n+"}","g"))||[]).join("-");
 
-/* ===========================
-   Backup / Restore
-   =========================== */
-function downloadBackup(){
-  const blob = JSON.stringify(data, null, 2);
-  downloadFile(`zeiterfassung-backup-${isoDate(new Date())}.json`, blob, "application/json");
-  toast("Backup gespeichert");
-}
-function restoreBackup(file){
-  const reader=new FileReader();
-  reader.onload=()=>{
+  async function pbkdf2KeyFromSecret(secret, saltBytes){
+    const enc=new TextEncoder();
+    const baseKey = await crypto.subtle.importKey("raw", enc.encode(secret), {name:"PBKDF2"}, false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      {name:"PBKDF2", salt:saltBytes, iterations:150000, hash:"SHA-256"},
+      baseKey, {name:"AES-GCM", length:256}, true, ["encrypt","decrypt"]
+    );
+  }
+  async function exportRawAes(key){ return b64(await crypto.subtle.exportKey("raw", key)); }
+  async function importRawAes(rawB64){
+    return crypto.subtle.importKey("raw", ub64(rawB64), {name:"AES-GCM"}, true, ["encrypt","decrypt"]);
+  }
+  async function aesEncrypt(key, obj){
+    const iv=rand(12);
+    const pt=new TextEncoder().encode(JSON.stringify(obj));
+    const ct=await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, pt);
+    return {iv:b64(iv), ct:b64(ct)};
+  }
+  async function aesDecrypt(key, blob){
+    const pt=await crypto.subtle.decrypt({name:"AES-GCM", iv:ub64(blob.iv)}, key, ub64(blob.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+
+  function hasVault(){ return !!localStorage.getItem(VAULT_KEY); }
+  async function getSessionMaster(){
+    const raw=sessionStorage.getItem(SESSION_MASTER);
+    if(!raw) return null;
+    try{ return await importRawAes(raw); }catch{ return null; }
+  }
+  async function setSessionMaster(masterKey){
+    sessionStorage.setItem(SESSION_MASTER, await exportRawAes(masterKey));
+  }
+  function clearSessionMaster(){ sessionStorage.removeItem(SESSION_MASTER); }
+
+  async function createVaultWithPin(pin){
+    const master = await crypto.subtle.generateKey({name:"AES-GCM", length:256}, true, ["encrypt","decrypt"]);
+    const recBytes=rand(16);
+    const recovery = chunk(hex(recBytes).toUpperCase(), 4);
+
+    const pinSalt=rand(16);
+    const recSalt=rand(16);
+    const pinKey=await pbkdf2KeyFromSecret(pin, pinSalt);
+    const recKey=await pbkdf2KeyFromSecret(recovery, recSalt);
+
+    const masterRaw=await exportRawAes(master);
+    const wrapPin=await aesEncrypt(pinKey, {master: masterRaw});
+    const wrapRec=await aesEncrypt(recKey, {master: masterRaw});
+    const verifier=await aesEncrypt(master, {ok:"ZEITERFASSUNG"});
+
+    const vault={ v:1, pinSalt:b64(pinSalt), recSalt:b64(recSalt), wrapPin, wrapRec, verifier };
+    localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
+    await setSessionMaster(master);
+    return recovery;
+  }
+
+  async function unlockWithSecret(secret, mode){
+    const raw=localStorage.getItem(VAULT_KEY);
+    if(!raw) throw new Error("NO_VAULT");
+    const vault=JSON.parse(raw);
+    const pinSalt=ub64(vault.pinSalt);
+    const recSalt=ub64(vault.recSalt);
+
+    const wrap = (mode==="recovery") ? vault.wrapRec : vault.wrapPin;
+    const salt = (mode==="recovery") ? recSalt : pinSalt;
+
+    const k=await pbkdf2KeyFromSecret(secret, salt);
+    const unwrapped = await aesDecrypt(k, wrap);
+    const master = await importRawAes(unwrapped.master);
+
+    const ok = await aesDecrypt(master, vault.verifier);
+    if(ok?.ok !== "ZEITERFASSUNG") throw new Error("BAD_SECRET");
+
+    await setSessionMaster(master);
+    return true;
+  }
+
+  async function changePin(newPin){
+    const master=await getSessionMaster();
+    if(!master) throw new Error("LOCKED");
+    const raw=localStorage.getItem(VAULT_KEY);
+    if(!raw) throw new Error("NO_VAULT");
+
+    const vault=JSON.parse(raw);
+    const pinSalt=rand(16);
+    const pinKey=await pbkdf2KeyFromSecret(newPin, pinSalt);
+    const masterRaw=await exportRawAes(master);
+
+    vault.pinSalt=b64(pinSalt);
+    vault.wrapPin=await aesEncrypt(pinKey, {master: masterRaw});
+    localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
+  }
+
+  async function rotateRecovery(){
+    const master=await getSessionMaster();
+    if(!master) throw new Error("LOCKED");
+    const raw=localStorage.getItem(VAULT_KEY);
+    if(!raw) throw new Error("NO_VAULT");
+
+    const vault=JSON.parse(raw);
+    const recBytes=rand(16);
+    const recovery = chunk(hex(recBytes).toUpperCase(), 4);
+    const recSalt=rand(16);
+    const recKey=await pbkdf2KeyFromSecret(recovery, recSalt);
+    const masterRaw=await exportRawAes(master);
+
+    vault.recSalt=b64(recSalt);
+    vault.wrapRec=await aesEncrypt(recKey, {master: masterRaw});
+    localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
+    return recovery;
+  }
+
+  async function encryptJson(obj){
+    const master=await getSessionMaster();
+    if(!master) throw new Error("LOCKED");
+    return await aesEncrypt(master, obj);
+  }
+  async function decryptJson(blob){
+    const master=await getSessionMaster();
+    if(!master) throw new Error("LOCKED");
+    return await aesDecrypt(master, blob);
+  }
+
+  /* =======================
+     Global State (Manager)
+  ======================== */
+  async function readGlobal(){
+    const raw = localStorage.getItem(GLOBAL_KEY);
+    if(!raw) return { mgrName:"", mgrMail:"" };
     try{
-      data = migrate(JSON.parse(reader.result));
-      saveData(data);
-      $("manager").value = data.managerEmail || "";
-      renderEmployees();
-      renderTable();
-      updateKPI();
-      toast("Restore erfolgreich");
+      return await decryptJson(JSON.parse(raw));
     }catch{
-      alert("Backup-Datei ist ungültig.");
+      return { mgrName:"", mgrMail:"" };
+    }
+  }
+  async function writeGlobal(obj){
+    localStorage.setItem(GLOBAL_KEY, JSON.stringify(await encryptJson({
+      mgrName: (obj?.mgrName||"").toString(),
+      mgrMail: (obj?.mgrMail||"").toString()
+    })));
+  }
+
+  /* =======================
+     Datenmodell
+  ======================== */
+  let Y = new Date().getFullYear();
+  let S = { emp:"", mgrName:"", mgrMail:"", emojis:{...DEFAULT_EMOJI}, E:[], A:[] };
+
+  // ✅ laufender Timer mit Crash-Save
+  let run = null;
+
+  async function saveRun(){
+    try{
+      const master = await getSessionMaster();
+      if(!master || !run) return;
+
+      const payload = {
+        v: 1,
+        y: Y,
+        run: {
+          date: run.date,
+          start: run.start ? run.start.toISOString() : null,
+          pauseMin: run.pauseMin || 0,
+          pauseStart: run.pauseStart ? run.pauseStart.toISOString() : null,
+          note: run.note || ""
+        }
+      };
+      localStorage.setItem(RUN_KEY, JSON.stringify(await encryptJson(payload)));
+    }catch(e){
+      console.warn("saveRun failed", e);
+    }
+  }
+  function clearRun(){ localStorage.removeItem(RUN_KEY); }
+
+  async function restoreRunIfAny(){
+    try{
+      const raw = localStorage.getItem(RUN_KEY);
+      if(!raw) return false;
+
+      const payload = await decryptJson(JSON.parse(raw));
+      if(!payload?.run?.date || !payload?.run?.start) return false;
+
+      const start = parseISO(payload.run.start);
+      if(!start) return false;
+
+      const yr = d0(payload.run.date).getFullYear();
+      if(yr !== Y) await loadYear(yr);
+
+      run = {
+        date: payload.run.date,
+        start,
+        pauseMin: Number(payload.run.pauseMin||0),
+        pauseStart: payload.run.pauseStart ? parseISO(payload.run.pauseStart) : null,
+        note: (payload.run.note||"").trim()
+      };
+
+      $("timerDate").value = run.date;
+      $("timerNote").value = run.note || "";
+      $("btnPause").disabled = false;
+
+      if(run.pauseStart){
+        $("btnPause").textContent="▶️ Weiter";
+        setTimerStatus("⏸️ Pause (wiederhergestellt)", "chip-mid");
+        $("timerInfo").textContent=`Pause seit ${fmtTimeHM(run.pauseStart)}`;
+      }else{
+        $("btnPause").textContent="⏸️ Pause";
+        setTimerStatus("🟢 läuft (wiederhergestellt)", "chip-ok");
+        $("timerInfo").textContent=`Start ${fmtTimeHM(run.start)}`;
+      }
+      return true;
+    }catch(e){
+      console.warn("restoreRunIfAny failed", e);
+      localStorage.removeItem(RUN_KEY);
+      return false;
+    }
+  }
+
+  async function readYearState(y){
+    const raw=localStorage.getItem(YEAR_KEY(y));
+    if(!raw) return {emp:"", mgrName:"", mgrMail:"", emojis:{...DEFAULT_EMOJI}, E:[], A:[]};
+    const obj=await decryptJson(JSON.parse(raw));
+    return {
+      emp: obj.emp || "",
+      mgrName: obj.mgrName || "",
+      mgrMail: obj.mgrMail || "",
+      emojis: {...DEFAULT_EMOJI, ...(obj.emojis||{})},
+      E: Array.isArray(obj.E)?obj.E:[],
+      A: Array.isArray(obj.A)?obj.A:[]
+    };
+  }
+  async function writeYearState(y, state){
+    localStorage.setItem(YEAR_KEY(y), JSON.stringify(await encryptJson(state)));
+  }
+  async function loadYear(y){
+    Y=y;
+    S=await readYearState(Y);
+
+    // ✅ globalen Manager als Fallback reinziehen
+    const g = await readGlobal();
+    if(!S.mgrName && g.mgrName) S.mgrName = g.mgrName;
+    if(!S.mgrMail && g.mgrMail) S.mgrMail = g.mgrMail;
+
+    $("empName").value=S.emp||"";
+    $("mgrName").value=S.mgrName||"";
+    $("mgrMail").value=S.mgrMail||"";
+
+    $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
+    $("nameMsg").textContent=S.emp ? "✅ gespeichert" : "";
+    $("pdfEmpName").textContent=S.emp || "—";
+
+    loadEmojiUI();
+  }
+  async function saveYear(){ await writeYearState(Y, S); }
+
+  /* =======================
+     Emoji Settings
+  ======================== */
+  function emojiOrMarker(v){ return (v==="(aus)") ? "(aus)" : v; }
+  function emojiDisplay(savedValue, fallback){
+    if (savedValue === "(aus)") return "";
+    if (!savedValue) return fallback;
+    return savedValue;
+  }
+  function fillSelect(sel, arr){
+    sel.innerHTML="";
+    arr.forEach(v=>{
+      const o=document.createElement("option");
+      o.value=v; o.textContent=v;
+      sel.appendChild(o);
+    });
+  }
+  function setPick(sel, arr, emoji){
+    const v = emoji ? emoji : "(aus)";
+    sel.value = arr.includes(v) ? v : "(aus)";
+  }
+  function cyclePick(sel, arr, dir){
+    let i = arr.indexOf(sel.value);
+    if(i<0) i=0;
+    i = (i + dir + arr.length) % arr.length;
+    sel.value = arr[i];
+  }
+
+  function refreshAbsenceDropdown(){
+    const saved = (S.emojis || {});
+    const em = {
+      vac:  emojiDisplay(saved.vac,  DEFAULT_EMOJI.vac),
+      sick: emojiDisplay(saved.sick, DEFAULT_EMOJI.sick),
+      hol:  emojiDisplay(saved.hol,  DEFAULT_EMOJI.hol),
+      comp: emojiDisplay(saved.comp, DEFAULT_EMOJI.comp),
+    };
+    const s=$("aType");
+    const cur=s.value || "vac";
+    s.innerHTML="";
+    const opts=[
+      {v:"vac",  t:`${em.vac  ? em.vac+" "  : ""}Urlaub`},
+      {v:"sick", t:`${em.sick ? em.sick+" " : ""}Krank`},
+      {v:"hol",  t:`${em.hol  ? em.hol+" "  : ""}Feiertag`},
+      {v:"comp", t:`${em.comp ? em.comp+" " : ""}Ausgleichstag`},
+    ];
+    for(const o of opts){
+      const op=document.createElement("option");
+      op.value=o.v;
+      op.textContent=o.t;
+      s.appendChild(op);
+    }
+    s.value = ["vac","sick","hol","comp"].includes(cur) ? cur : "vac";
+  }
+
+  function loadEmojiUI(){
+    fillSelect($("wePick"), PICKS.we);
+    fillSelect($("vacPick"), PICKS.vac);
+    fillSelect($("sickPick"), PICKS.sick);
+    fillSelect($("holPick"), PICKS.hol);
+    fillSelect($("compPick"), PICKS.comp);
+
+    setPick($("wePick"), PICKS.we, S.emojis.we);
+    setPick($("vacPick"), PICKS.vac, S.emojis.vac);
+    setPick($("sickPick"), PICKS.sick, S.emojis.sick);
+    setPick($("holPick"), PICKS.hol, S.emojis.hol);
+    setPick($("compPick"), PICKS.comp, S.emojis.comp);
+
+    refreshAbsenceDropdown();
+  }
+
+  $("weMinus").onclick  =()=>cyclePick($("wePick"),  PICKS.we,  -1);
+  $("wePlus").onclick   =()=>cyclePick($("wePick"),  PICKS.we,  +1);
+  $("vacMinus").onclick =()=>cyclePick($("vacPick"), PICKS.vac, -1);
+  $("vacPlus").onclick  =()=>cyclePick($("vacPick"), PICKS.vac, +1);
+  $("sickMinus").onclick=()=>cyclePick($("sickPick"),PICKS.sick,-1);
+  $("sickPlus").onclick =()=>cyclePick($("sickPick"),PICKS.sick,+1);
+  $("holMinus").onclick =()=>cyclePick($("holPick"), PICKS.hol, -1);
+  $("holPlus").onclick  =()=>cyclePick($("holPick"), PICKS.hol, +1);
+  $("compMinus").onclick=()=>cyclePick($("compPick"),PICKS.comp,-1);
+  $("compPlus").onclick =()=>cyclePick($("compPick"),PICKS.comp,+1);
+
+  $("saveEmoji").onclick = async ()=>{
+    S.emojis = {
+      we:   emojiOrMarker($("wePick").value),
+      vac:  emojiOrMarker($("vacPick").value),
+      sick: emojiOrMarker($("sickPick").value),
+      hol:  emojiOrMarker($("holPick").value),
+      comp: emojiOrMarker($("compPick").value),
+    };
+    await saveYear();
+    loadEmojiUI();
+    await renderAll();
+    alert("😀 Emojis gespeichert");
+  };
+  $("resetEmoji").onclick = async ()=>{
+    S.emojis = {...DEFAULT_EMOJI};
+    await saveYear();
+    loadEmojiUI();
+    await renderAll();
+    alert("↩️ Standard Emojis gesetzt");
+  };
+
+  /* =======================
+     Overlay UI
+  ======================== */
+  function showOverlay(msg){
+    $("ovl").style.display="flex";
+    $("pinMsg").textContent="";
+    $("pinInput").value="";
+    $("recoveryBox").style.display="none";
+    $("btnCopyRecovery").style.display="none";
+    $("ovlText").textContent=msg||"Bitte PIN eingeben.";
+    $("btnSetPin").style.display = hasVault() ? "none" : "";
+    $("authMode").value="pin";
+    setTimeout(()=>$("pinInput").focus(), 50);
+  }
+  function hideOverlay(){ $("ovl").style.display="none"; }
+
+  /* =======================
+     Timer / Entries Helpers
+  ======================== */
+  function setTimerStatus(txt, cls){
+    $("timerStatus").textContent=txt;
+    $("timerStatus").className="badge"+(cls?(" "+cls):"");
+  }
+
+  function netMinutes(entry){
+    const s=parseISO(entry.s), e=parseISO(entry.e);
+    if(!s||!e) return null;
+    const gross=(e-s)/60000;
+    if(!Number.isFinite(gross)||gross<=0) return null;
+    const p=Number(entry.p||0);
+    return Math.round(gross-p);
+  }
+
+  function autoBreakForGross(grossMin, manualPauseMin){
+    const hasManualPause = (manualPauseMin||0) > 0;
+    if(hasManualPause) return 0;
+    return (Number.isFinite(grossMin) && grossMin > AUTO_BREAK_AFTER_MIN) ? AUTO_BREAK : 0;
+  }
+
+  /* =======================
+     Timer: Mitternacht-Split
+  ======================== */
+  async function splitAtMidnightIfNeeded(){
+    if(!run) return;
+
+    const now = new Date();
+    const todayStr = toDateStr(now);
+    if(todayStr === run.date) return;
+
+    const boundary = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0,0,0,0);
+
+    if(run.pauseStart){
+      run.pauseMin += Math.max(0, Math.round((boundary - run.pauseStart)/60000));
+      run.pauseStart = boundary;
+    }
+
+    const segGross = Math.round((boundary - run.start)/60000);
+    if(Number.isFinite(segGross) && segGross > 0){
+      const segDate  = toDateStr(run.start);
+      const segYear  = d0(segDate).getFullYear();
+
+      const auto = autoBreakForGross(segGross, run.pauseMin||0);
+      const pause = (run.pauseMin || 0) + auto;
+
+      if(segYear !== Y){
+        await saveYear();
+        await loadYear(segYear);
+      }
+
+      S.E.push({
+        id:(crypto.randomUUID?crypto.randomUUID():"mid_"+Date.now()),
+        d: segDate,
+        s: run.start.toISOString(),
+        e: boundary.toISOString(),
+        p: pause,
+        n: run.note || ""
+      });
+
+      await saveYear();
+    }
+
+    const newYear = boundary.getFullYear();
+    if(newYear !== Y) await loadYear(newYear);
+
+    run.start = boundary;
+    run.date  = toDateStr(boundary);
+    run.pauseMin = 0;
+
+    $("timerDate").value = run.date;
+    $("timerInfo").textContent = `läuft weiter ab 00:00`;
+    await saveRun();
+    await renderAll();
+  }
+
+  setInterval(async ()=>{ if(run) await splitAtMidnightIfNeeded(); }, 15000);
+  setInterval(async ()=>{ if(run) await saveRun(); }, RUN_SAVE_MS);
+
+  window.addEventListener("pagehide", ()=>{ if(run) saveRun(); });
+  document.addEventListener("visibilitychange", ()=>{
+    if(document.visibilityState==="hidden" && run) saveRun();
+  });
+
+  /* =======================
+     Timer Actions
+  ======================== */
+  $("btnStart").onclick=async()=>{
+    if(run) return alert("⛔ Timer läuft schon.");
+    if(!S.emp) return alert("👤 Bitte Name speichern.");
+    if(!$("timerDate").value) return alert("📅 Bitte Datum wählen.");
+
+    const entryYear=d0($("timerDate").value).getFullYear();
+    if(entryYear!==Y) await loadYear(entryYear);
+
+    const now=new Date(); now.setSeconds(0,0);
+    const d=d0($("timerDate").value);
+    const start=new Date(d.getFullYear(),d.getMonth(),d.getDate(),now.getHours(),now.getMinutes(),0,0);
+
+    run={
+      date:$("timerDate").value,
+      start,
+      pauseMin:0,
+      pauseStart:null,
+      note:($("timerNote").value||"").trim()
+    };
+
+    $("btnPause").disabled=false;
+    setTimerStatus("🟢 läuft", "chip-ok");
+    $("timerInfo").textContent=`Start ${fmtTimeHM(start)}`;
+    await saveRun();
+  };
+
+  $("btnPause").onclick=()=>{
+    if(!run) return;
+    const now=new Date(); now.setSeconds(0,0);
+
+    if(!run.pauseStart){
+      run.pauseStart=now;
+      $("btnPause").textContent="▶️ Weiter";
+      setTimerStatus("⏸️ Pause", "chip-mid");
+    }else{
+      run.pauseMin += Math.max(0, Math.round((now-run.pauseStart)/60000));
+      run.pauseStart=null;
+      $("btnPause").textContent="⏸️ Pause";
+      setTimerStatus("🟢 läuft", "chip-ok");
+    }
+    saveRun();
+  };
+
+  $("btnStop").onclick=async()=>{
+    if(!run) return alert("⚪ Kein Timer läuft.");
+
+    await splitAtMidnightIfNeeded();
+
+    const end=new Date(); end.setSeconds(0,0);
+
+    if(run.pauseStart){
+      run.pauseMin += Math.max(0, Math.round((end-run.pauseStart)/60000));
+      run.pauseStart=null;
+    }
+
+    const gross=Math.round((end-run.start)/60000);
+    if(!Number.isFinite(gross)||gross<=0){ run=null; clearRun(); return; }
+
+    const auto = autoBreakForGross(gross, run.pauseMin||0);
+    const pause = (run.pauseMin||0) + auto;
+
+    const entryDate = run.date;
+    const entryYear = d0(entryDate).getFullYear();
+    if(entryYear!==Y) await loadYear(entryYear);
+
+    S.E.push({
+      id:(crypto.randomUUID?crypto.randomUUID():"id_"+Date.now()),
+      d: entryDate,
+      s: run.start.toISOString(),
+      e: end.toISOString(),
+      p: pause,
+      n: run.note||""
+    });
+
+    run=null;
+    clearRun();
+
+    $("btnPause").disabled=true;
+    $("btnPause").textContent="⏸️ Pause";
+    $("timerInfo").textContent="";
+    setTimerStatus("✅ gespeichert", "chip-ok");
+
+    await saveYear();
+    await renderAll();
+  };
+
+  $("saveName").onclick=async()=>{
+    S.emp=($("empName").value||"").trim();
+    await saveYear();
+    $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
+    $("nameMsg").textContent=S.emp ? "✅ gespeichert" : "";
+    $("pdfEmpName").textContent=S.emp || "—";
+  };
+
+  // ✅ Manager speichern: Jahr + Global
+  $("saveMgr").onclick=async()=>{
+    const name = ($("mgrName").value||"").trim();
+    const mail = ($("mgrMail").value||"").trim();
+    S.mgrName = name;
+    S.mgrMail = mail;
+    await saveYear();
+    await writeGlobal({mgrName:name, mgrMail:mail});
+    await renderAll();
+    alert("✅ Manager gespeichert");
+  };
+
+  /* =======================
+     Rückwirkend
+  ======================== */
+  $("saveManual").onclick=async()=>{
+    $("editMsg").textContent="";
+    if(!$("eDate").value||!$("eStart").value||!$("eEnd").value){
+      $("editMsg").textContent="⚠️ Bitte Datum/Start/Ende setzen";
+      return;
+    }
+    const d=$("eDate").value;
+    const [sh,sm]=$("eStart").value.split(":").map(Number);
+    const [eh,em]=$("eEnd").value.split(":").map(Number);
+    const s=new Date(d0(d).setHours(sh,sm,0,0));
+    const e=new Date(d0(d).setHours(eh,em,0,0));
+    const gross=Math.round((e-s)/60000);
+    if(!Number.isFinite(gross)||gross<=0){ $("editMsg").textContent="⛔ Ende muss nach Start"; return; }
+
+    const yr=d0(d).getFullYear();
+    if(yr!==Y) await loadYear(yr);
+
+    const auto = (gross > AUTO_BREAK_AFTER_MIN) ? AUTO_BREAK : 0;
+
+    S.E.push({
+      id:(crypto.randomUUID?crypto.randomUUID():"m_"+Date.now()),
+      d, s:s.toISOString(), e:e.toISOString(),
+      p:auto,
+      n:($("eNote").value||"").trim()
+    });
+
+    await saveYear();
+    $("editMsg").textContent="✅ gespeichert";
+    await renderAll();
+  };
+  $("newManual").onclick=()=>{
+    $("eStart").value=""; $("eEnd").value=""; $("eNote").value="";
+    $("editMsg").textContent="";
+  };
+
+  /* =======================
+     Abwesenheit
+  ======================== */
+  let aEndTouched=false;
+  $("aEnd").addEventListener("input", ()=>{ aEndTouched=true; });
+  $("aStart").addEventListener("input", ()=>{
+    if(!aEndTouched) $("aEnd").value=$("aStart").value;
+  });
+  $("aStart").addEventListener("change", ()=>{
+    const s=$("aStart").value;
+    const e=$("aEnd").value;
+    if(!e || e < s){
+      $("aEnd").value=s;
+      aEndTouched=false;
+    }
+  });
+  $("aEnd").addEventListener("change", ()=>{
+    if($("aEnd").value === $("aStart").value) aEndTouched=false;
+  });
+
+  function renderAbsList(){
+    if(!S.A.length){
+      $("absList").innerHTML=`<div class="muted">🤷 Keine Abwesenheiten im Jahr ${Y}.</div>`;
+      return;
+    }
+    const saved=S.emojis||{};
+    const em={
+      vac:  emojiDisplay(saved.vac, DEFAULT_EMOJI.vac),
+      sick: emojiDisplay(saved.sick,DEFAULT_EMOJI.sick),
+      hol:  emojiDisplay(saved.hol, DEFAULT_EMOJI.hol),
+      comp: emojiDisplay(saved.comp,DEFAULT_EMOJI.comp),
+    };
+    const arr=S.A.slice().sort((a,b)=>a.d.localeCompare(b.d));
+    let html=`<div class="table-wrap"><table><thead><tr><th>📅 Datum</th><th>🏷️ Typ</th></tr></thead><tbody>`;
+    for(const a of arr){
+      const t = a.t==="vac"  ? smallBadge(em.vac,"Urlaub")
+              : a.t==="sick" ? smallBadge(em.sick,"Krank")
+              : a.t==="hol"  ? smallBadge(em.hol,"Feiertag")
+              :               smallBadge(em.comp,"Ausgleichstag");
+      html+=`<tr><td class="mono">${a.d}</td><td>${t}</td></tr>`;
+    }
+    html+=`</tbody></table></div>`;
+    $("absList").innerHTML=html;
+  }
+
+  $("addAbs").onclick=async()=>{
+    $("absMsg").textContent="";
+    const startV=$("aStart").value, endV=$("aEnd").value;
+    if(!startV||!endV) return alert("⚠️ Start und Ende wählen.");
+    const t=$("aType").value;
+    if(!["vac","sick","hol","comp"].includes(t)) return alert("⚠️ Typ ungültig.");
+
+    const start=d0(startV), end=d0(endV);
+    if(end<start) return alert("⛔ Ende muss nach Start sein.");
+
+    let added=0, replaced=0;
+    const perYear=new Map();
+
+    for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+      if(!wd(d)) continue;
+      const ds=toDateStr(d);
+      const y=d.getFullYear();
+
+      if(!perYear.has(y)) perYear.set(y, await readYearState(y));
+      const st=perYear.get(y);
+
+      const before=st.A.length;
+      st.A = st.A.filter(a=>a.d!==ds);
+      replaced += (before - st.A.length);
+
+      st.A.push({id:(crypto.randomUUID?crypto.randomUUID():"a_"+Date.now()+Math.random()), d:ds, t});
+      added++;
+    }
+
+    for(const [y,st] of perYear.entries()) await writeYearState(y, st);
+
+    await loadYear(getRefYear());
+    await renderAll();
+    $("absMsg").textContent = `✅ ${added} Tage gespeichert` + (replaced?` (♻️ ${replaced} ersetzt)`:"");
+  };
+
+  $("delAbsDay").onclick=async()=>{
+    $("absMsg").textContent="";
+    const ds=$("aDelDate").value;
+    if(!ds) return;
+    const y=d0(ds).getFullYear();
+    const st=await readYearState(y);
+    const before=st.A.length;
+    st.A=st.A.filter(a=>a.d!==ds);
+    await writeYearState(y, st);
+    await loadYear(getRefYear());
+    await renderAll();
+    const removed=before-st.A.length;
+    $("absMsg").textContent = removed ? `🗑️ ${removed} gelöscht` : "🤷 nichts gefunden";
+  };
+
+  /* =======================
+     Range / Targets
+  ======================== */
+  function weekRangeISO(ref){
+    const d=new Date(ref); d.setHours(0,0,0,0);
+    const monIndex=(d.getDay()+6)%7;
+    const start=new Date(d); start.setDate(d.getDate()-monIndex);
+    const end=new Date(start); end.setDate(start.getDate()+6);
+    start.setHours(0,0,0,0); end.setHours(0,0,0,0);
+    return [start,end];
+  }
+  function monthRange(ref){
+    const d=new Date(ref);
+    const start=new Date(d.getFullYear(),d.getMonth(),1);
+    const end=new Date(d.getFullYear(),d.getMonth()+1,0);
+    start.setHours(0,0,0,0); end.setHours(0,0,0,0);
+    return [start,end];
+  }
+  function yearRange(y){
+    const start=new Date(y,0,1); start.setHours(0,0,0,0);
+    const end=new Date(y,11,31); end.setHours(0,0,0,0);
+    return [start,end];
+  }
+  function getWeeklyTargetMinutes(){
+    const v=Number($("weeklyTarget").value);
+    return (Number.isFinite(v) && v>0) ? v : 2400;
+  }
+  function getPeriodRange(){
+    const v=$("refDate").value;
+    const ref=v?d0(v):new Date();
+    const yr=ref.getFullYear();
+    if($("mode").value==="year") return yearRange(yr);
+    if($("mode").value==="month") return monthRange(ref);
+    return weekRangeISO(ref);
+  }
+  function getRefYear(){
+    const v=$("refDate").value;
+    return v ? d0(v).getFullYear() : new Date().getFullYear();
+  }
+
+  async function getMergedForRange(start,end){
+    const years=new Set([start.getFullYear(), end.getFullYear()]);
+    const allE=[], allA=[];
+    let emp=S.emp||"", mgrName=S.mgrName||"", mgrMail=S.mgrMail||"", emojis={...DEFAULT_EMOJI, ...(S.emojis||{})};
+
+    for(const y of years){
+      const st=await readYearState(y);
+      if(!emp && st.emp) emp=st.emp;
+      if(!mgrName && st.mgrName) mgrName=st.mgrName;
+      if(!mgrMail && st.mgrMail) mgrMail=st.mgrMail;
+      emojis = {...emojis, ...(st.emojis||{})};
+      allE.push(...(st.E||[]));
+      allA.push(...(st.A||[]));
+    }
+
+    // ✅ globaler Manager als Fallback
+    const g = await readGlobal();
+    if(!mgrName && g.mgrName) mgrName = g.mgrName;
+    if(!mgrMail && g.mgrMail) mgrMail = g.mgrMail;
+
+    return {allE,allA,emp,mgrName,mgrMail,emojis};
+  }
+
+  /* =======================
+     Übersicht (Ampel + Anrechnung)
+  ======================== */
+  async function renderOverview(){
+    const [start,end]=getPeriodRange();
+    const W=getWeeklyTargetMinutes();
+    const DAY=W/5;
+    const startS=toDateStr(start), endS=toDateStr(end);
+
+    $("rangeHint").textContent = `${startS} → ${endS}`;
+    $("pdfRangeText").textContent = `${startS} → ${endS}`;
+
+    const merged=await getMergedForRange(start,end);
+    $("pdfEmpName").textContent = merged.emp || S.emp || "—";
+
+    // ✅ Manager-Zeile fürs PDF befüllen
+    const mn = (merged.mgrName||"").trim();
+    const mm = (merged.mgrMail||"").trim();
+    $("managerPdfLine").textContent = (mn||mm) ? `👔 ${mn || "—"} · ${mm || "—"}` : "👔 —";
+
+    const saved = merged.emojis || DEFAULT_EMOJI;
+    const em = {
+      we:   emojiDisplay(saved.we,   DEFAULT_EMOJI.we),
+      vac:  emojiDisplay(saved.vac,  DEFAULT_EMOJI.vac),
+      sick: emojiDisplay(saved.sick, DEFAULT_EMOJI.sick),
+      hol:  emojiDisplay(saved.hol,  DEFAULT_EMOJI.hol),
+      comp: emojiDisplay(saved.comp, DEFAULT_EMOJI.comp),
+    };
+
+    const istBy=Object.create(null);
+    for(const e of merged.allE){
+      if(!e || !e.d) continue;
+      if(e.d<startS||e.d>endS) continue;
+      const nm=netMinutes(e);
+      if(!Number.isFinite(nm)) continue;
+      istBy[e.d]=(istBy[e.d]||0)+nm;
+    }
+
+    const absBy = Object.create(null);
+    for (const a of (merged.allA || [])) {
+      if (!a || !a.d || !a.t) continue;
+      if (a.d < startS || a.d > endS) continue;
+      const t = (a.t==="vac"||a.t==="sick"||a.t==="hol"||a.t==="comp") ? a.t : null;
+      if (!t) continue;
+      absBy[a.d] = t;
+    }
+
+    let istSum=0, sollSum=0, workdays=0, creditSum=0;
+    let weMin=0, weDays=0;
+
+    const dayNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
+    let html=`<div class="table-wrap"><table><thead><tr>
+      <th>📅 Datum</th><th>Tag</th><th>IST</th><th>Anr.</th><th>SOLL</th><th>Abw.</th><th>Δ</th>
+    </tr></thead><tbody>`;
+
+    for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+      const ds=toDateStr(d);
+      const ist=Number.isFinite(istBy[ds]) ? istBy[ds] : 0;
+
+      const isW = wd(d);
+      const soll = Math.round(isW ? DAY : 0);
+      const absType = absBy[ds] || null;
+      const credit = (isW && absType) ? Math.round(DAY) : 0;
+
+      const istEff = ist + credit;
+      const delta = istEff - soll;
+
+      istSum += istEff;
+      sollSum += soll;
+      creditSum += credit;
+      if(isW) workdays++;
+
+      let abw = "";
+      if(absType==="vac")  abw = smallBadge(em.vac,"Urlaub");
+      if(absType==="sick") abw = smallBadge(em.sick,"Krank");
+      if(absType==="hol")  abw = smallBadge(em.hol,"Feiertag");
+      if(absType==="comp") abw = smallBadge(em.comp,"Ausgleichstag");
+
+      let abw2 = abw;
+      if (isWeekend(d) && ist > 0) {
+        abw2 = (abw2 ? (abw2+" ") : "") + smallBadge(em.we,"WE");
+        weMin += ist; weDays += 1;
+      }
+
+      html+=`<tr>
+        <td class="mono">${ds}</td>
+        <td>${dayNames[d.getDay()]}</td>
+        <td class="mono">${hhmm(ist)}</td>
+        <td class="mono">${credit?hhmm(credit):"—"}</td>
+        <td class="mono">${hhmm(soll)}</td>
+        <td>${abw2}</td>
+        <td class="mono">${hhmm(delta)}</td>
+      </tr>`;
+    }
+    html+=`</tbody></table></div>`;
+    $("overviewTable").innerHTML=html;
+
+    const delta=istSum-sollSum;
+    const weeksEq = workdays ? (workdays/5) : 1;
+    const tolY = TOL_Y_WEEK * Math.max(1, weeksEq);
+    const tolR = TOL_R_WEEK * Math.max(1, weeksEq);
+
+    const absDelta=Math.abs(delta);
+    let cls="chip-ok", icon="🟢";
+    if(absDelta>tolY && absDelta<=tolR){ cls="chip-mid"; icon="🟡"; }
+    if(absDelta>tolR){ cls="chip-warn"; icon="🔴"; }
+
+    $("sumChip").className="badge block "+cls;
+    $("sumChip").innerHTML =
+      `<div><b>${icon} IST ${hhmm(istSum)}</b> · SOLL ${hhmm(sollSum)}</div>`+
+      `<div>Δ ${hhmm(delta)} <span class="muted">(±5:00/W · bis ±10:00/W)</span></div>`+
+      (creditSum>0 ? `<div class="muted">inkl. Anrechnung: ${hhmm(creditSum)}</div>` : "");
+
+    $("pdfSumText").textContent =
+      `IST ${hhmm(istSum)} · SOLL ${hhmm(sollSum)} · Δ ${hhmm(delta)}` + (creditSum>0 ? ` · Anr ${hhmm(creditSum)}` : "");
+
+    if(weMin>0){
+      $("weChip").style.display="";
+      $("weChip").textContent = `${em.we} WE-Arbeit: ${hhmm(weMin)} (${weDays} Tag${weDays===1?"":"e"})`;
+    }else{
+      $("weChip").style.display="none";
+    }
+  }
+
+  /* =======================
+     Einträge
+  ======================== */
+  function rangeForEntries(filter){
+    const ref = $("refDate").value ? d0($("refDate").value) : new Date();
+    if(filter==="week") return weekRangeISO(ref);
+    if(filter==="month") return monthRange(ref);
+    if(filter==="year") return yearRange(ref.getFullYear());
+    const f=$("entriesFrom").value, t=$("entriesTo").value;
+    if(f && t){
+      const s=d0(f), e=d0(t);
+      return s<=e ? [s,e] : [e,s];
+    }
+    return monthRange(ref);
+  }
+
+  function entryRowHTML(e, emojis){
+    const s=parseISO(e.s);
+    const en=parseISO(e.e);
+    const net=netMinutes(e);
+    const pause=Number(e.p||0);
+    const day=d0(e.d);
+
+    const emWE = emojiDisplay(emojis.we, DEFAULT_EMOJI.we);
+    const weBadge = (isWeekend(day) && Number.isFinite(net) && net>0)
+      ? smallBadge(emWE,"WE")
+      : "";
+
+    const note = (e.n||"").toString();
+    return `
+<tr>
+  <td class="mono">${e.d}</td>
+  <td class="mono">${fmtTimeHM(s)}</td>
+  <td class="mono">${fmtTimeHM(en)}</td>
+  <td class="mono">${hhmm(pause)}</td>
+  <td class="mono">${hhmm(net)}</td>
+  <td>
+    <div class="note-cell">
+      ${weBadge}
+      <span class="note-text">${note.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</span>
+    </div>
+  </td>
+  <td><button class="btn-ghost btn-sm" data-del="${e.id}">🗑️</button></td>
+</tr>`;
+  }
+
+  async function renderEntries(){
+    const filter=$("entriesFilter").value;
+    const [start,end]=rangeForEntries(filter);
+    const startS=toDateStr(start), endS=toDateStr(end);
+    const merged=await getMergedForRange(start,end);
+
+    const query = norm($("entriesSearch").value);
+    const entries = (merged.allE||[])
+      .filter(e=>e && e.d>=startS && e.d<=endS)
+      .filter(e=> !query || norm(e.n).includes(query))
+      .sort((a,b)=> (b.d+b.s).localeCompare(a.d+a.s));
+
+    let sum=0;
+    for(const e of entries){
+      const nm=netMinutes(e);
+      if(Number.isFinite(nm)) sum += nm;
+    }
+    $("entriesSum").textContent = `${startS} → ${endS} · ${entries.length} · Σ ${hhmm(sum)}`;
+
+    if(!entries.length){
+      $("entryList").innerHTML = `<div class="muted">🤷 Keine Einträge im Zeitraum.</div>`;
+      return;
+    }
+
+    let html = `<div class="table-wrap"><table><thead><tr>
+      <th>Datum</th><th>Start</th><th>Ende</th><th>Pause</th><th>Netto</th><th>Notiz</th><th></th>
+    </tr></thead><tbody>`;
+    for(const e of entries) html += entryRowHTML(e, merged.emojis||DEFAULT_EMOJI);
+    html += `</tbody></table></div>`;
+    $("entryList").innerHTML = html;
+
+    document.querySelectorAll("[data-del]").forEach(b=>{
+      b.onclick=async()=>{
+        const id=b.getAttribute("data-del");
+        const years=[start.getFullYear(), end.getFullYear(), Y];
+        for(const y of [...new Set(years)]){
+          const st=await readYearState(y);
+          const before=st.E.length;
+          st.E=st.E.filter(x=>x.id!==id);
+          if(st.E.length!==before){
+            await writeYearState(y, st);
+            break;
+          }
+        }
+        await loadYear(getRefYear());
+        await renderAll();
+      };
+    });
+  }
+
+  function updateEntriesCustomVisibility(){
+    const isCustom = $("entriesFilter").value==="custom";
+    $("entriesFromWrap").style.display = isCustom ? "" : "none";
+    $("entriesToWrap").style.display = isCustom ? "" : "none";
+  }
+
+  let entriesToTouched=false;
+  $("entriesTo").addEventListener("input", ()=>{ entriesToTouched=true; });
+  $("entriesFrom").addEventListener("input", ()=>{
+    if(!entriesToTouched) $("entriesTo").value=$("entriesFrom").value;
+  });
+  $("entriesFrom").addEventListener("change", ()=>{
+    const f=$("entriesFrom").value;
+    const t=$("entriesTo").value;
+    if(!t || t < f){
+      $("entriesTo").value=f;
+      entriesToTouched=false;
+    }
+  });
+  $("entriesTo").addEventListener("change", ()=>{
+    if($("entriesTo").value === $("entriesFrom").value) entriesToTouched=false;
+  });
+
+  /* =======================
+     CSV / Share / PDF
+  ======================== */
+  function csvSafe(s){
+    s=(s??"").toString();
+    const t=s.trimStart();
+    if(t.startsWith("=")||t.startsWith("+")||t.startsWith("-")||t.startsWith("@")) return "'"+s;
+    return s;
+  }
+
+  async function buildCSV(){
+    const [start,end]=getPeriodRange();
+    const merged=await getMergedForRange(start,end);
+    const W=getWeeklyTargetMinutes();
+    const startS=toDateStr(start), endS=toDateStr(end);
+    const sep=";";
+
+    const rows=[];
+    rows.push(["Mitarbeiter","Von","Bis","WochenSoll_min","Datum","StartISO","EndeISO","Pause_min","Netto_min","Netto_hhmm","Notiz","ManagerName","ManagerMail"].join(sep));
+
+    const entries=(merged.allE||[]).filter(e=>e.d>=startS && e.d<=endS).sort((a,b)=>a.d.localeCompare(b.d));
+    for(const e of entries){
+      const nm=netMinutes(e);
+      rows.push([
+        csvSafe(merged.emp||S.emp||""), startS, endS, String(W),
+        e.d, e.s, e.e, String(e.p||0),
+        Number.isFinite(nm)?String(Math.round(nm)):"",
+        hhmm(nm),
+        csvSafe(e.n||""),
+        csvSafe(merged.mgrName||""),
+        csvSafe(merged.mgrMail||"")
+      ].join(sep));
+    }
+    return rows.join("\n");
+  }
+
+  $("btnCSV").onclick=async()=>{
+    if(!S.emp) return alert("👤 Bitte Name speichern.");
+    const csv=await buildCSV();
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`Zeiterfassung_${$("mode").value}_${$("refDate").value}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  $("entriesExportCSV").onclick=async()=>{ $("btnCSV").click(); };
+
+  $("btnShare").onclick=async()=>{
+    if(!S.emp) return alert("👤 Bitte Name speichern.");
+    const csv=await buildCSV();
+    const file=new File([new Blob([csv],{type:"text/csv"})], "Zeiterfassung.csv", {type:"text/csv"});
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({title:`Zeiterfassung – ${S.emp}`, files:[file]});
+      return;
+    }
+    alert("📤 Teilen nicht verfügbar. Bitte CSV herunterladen und manuell senden.");
+  };
+
+  $("btnPDF").onclick = async () => {
+    try {
+      tab("overview");
+      await renderOverview();
+      await new Promise(r => requestAnimationFrame(() => r()));
+      await new Promise(r => requestAnimationFrame(() => r()));
+      setTimeout(() => window.print(), 350);
+    } catch (e) {
+      console.error(e);
+      alert("❌ PDF konnte nicht gestartet werden.");
     }
   };
-  reader.readAsText(file);
-}
 
-/* ===========================
-   Init / Events
-   =========================== */
-function init(){
-  $("date").value = isoDate(new Date());
+  /* =======================
+     Settings: Lock / Pin / Reset
+  ======================== */
+  $("btnLock").onclick=()=>{
+    clearSessionMaster();
+    showOverlay("🔒 Gesperrt. Entsperre mit PIN oder Recovery-Key.");
+  };
 
-  $("manager").value = data.managerEmail || "";
-  $("manager").addEventListener("input", ()=>{
-    data.managerEmail = $("manager").value.trim();
-    saveData(data);
-  });
+  $("btnChangePin").onclick=async()=>{
+    try{
+      const master=await getSessionMaster();
+      if(!master){ alert("🔐 Bitte zuerst entsperren."); return; }
+      const newPin = prompt("Neue PIN (mind. 6 Zeichen):");
+      if(!newPin || newPin.trim().length<6) return;
+      await changePin(newPin.trim());
+      alert("✅ PIN geändert");
+    }catch{ alert("❌ Konnte PIN nicht ändern"); }
+  };
 
-  renderEmployees();
-  setButtons();
-  renderTable();
-  updateKPI();
+  $("btnNewRecovery").onclick=async()=>{
+    try{
+      const master=await getSessionMaster();
+      if(!master){ alert("🔐 Bitte zuerst entsperren."); return; }
+      const rec = await rotateRecovery();
+      alert("🧩 Neuer Recovery-Key:\n\n" + rec + "\n\nBitte sofort speichern!");
+    }catch{ alert("❌ Konnte Recovery-Key nicht erzeugen"); }
+  };
 
-  $("model").addEventListener("change", ()=>{
-    const d=$("date").value; if(!d) return;
-    ensureDay(d).model = $("model").value;
-    saveData(data);
-  });
+  $("btnResetThisYear").onclick=async()=>{
+    const yr=getRefYear();
+    if(confirm(`Wirklich alle Daten für ${yr} löschen?`)){
+      localStorage.removeItem(YEAR_KEY(yr));
+      await loadYear(getRefYear());
+      await renderAll();
+      alert("✅ Jahr gelöscht");
+    }
+  };
 
-  $("note").addEventListener("input", ()=>{
-    const d=$("date").value; if(!d) return;
-    ensureDay(d).note = $("note").value || "";
-    saveData(data);
-  });
+  $("btnResetAll").onclick=async()=>{
+    if(confirm("Wirklich ALLES löschen (inkl. PIN/Recovery)?")){
+      const del=[];
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(k && (k.startsWith(NS+"::year::") || k===VAULT_KEY || k===RUN_KEY || k===GLOBAL_KEY)) del.push(k);
+      }
+      del.forEach(k=>localStorage.removeItem(k));
+      clearSessionMaster();
+      alert("✅ Alles gelöscht. Seite lädt neu.");
+      location.reload();
+    }
+  };
 
-  $("date").addEventListener("change", updateKPI);
+  /* =======================
+     Overlay actions
+  ======================== */
+  $("btnUnlock").onclick=async()=>{
+    try{
+      if(!hasVault()){ $("pinMsg").textContent="⚠️ Bitte PIN setzen."; return; }
+      const secret=($("pinInput").value||"").trim();
+      if(!secret) { $("pinMsg").textContent="⚠️ Bitte eingeben."; return; }
+      const mode=$("authMode").value;
+      await unlockWithSecret(secret, mode);
+      hideOverlay();
 
-  $("start").addEventListener("click", startLive);
-  $("pause").addEventListener("click", pauseLive);
-  $("resume").addEventListener("click", resumeLive);
-  $("stop").addEventListener("click", stopLive);
-  $("manual").addEventListener("click", addManual);
+      await loadYear(getRefYear());
+      await renderAll();
 
-  $("addEmp").addEventListener("click", ()=>{
-    const name=$("empName").value.trim();
-    const email=$("empEmail").value.trim();
-    if(!name){ toast("Name fehlt"); return; }
-    data.employees.push({id:uid(), name, email});
-    saveData(data);
-    $("empName").value=""; $("empEmail").value="";
-    renderEmployees();
-    toast("Mitarbeiter gespeichert");
-  });
+      await restoreRunIfAny();
+      tab("timer");
+    }catch{ $("pinMsg").textContent="❌ falsch"; }
+  };
 
-  $("delEmp").addEventListener("click", ()=>{
-    const emp=currentEmployee();
-    if(!emp){ toast("Kein Mitarbeiter gewählt"); return; }
-    if(!confirm(`${emp.name} wirklich löschen?`)) return;
-    data.employees = data.employees.filter(e=>e.id!==emp.id);
-    saveData(data);
-    renderEmployees();
-    renderTable();
-    toast("Gelöscht");
-  });
+  $("btnSetPin").onclick=async()=>{
+    try{
+      if(hasVault()){ $("pinMsg").textContent="⚠️ PIN existiert schon."; return; }
+      const pin=($("pinInput").value||"").trim();
+      if(pin.length<6){ $("pinMsg").textContent="⚠️ PIN min. 6 Zeichen."; return; }
+      const recovery = await createVaultWithPin(pin);
+      $("recoveryText").textContent = recovery;
+      $("recoveryBox").style.display="";
+      $("btnCopyRecovery").style.display="";
+      $("btnCopyRecovery").onclick=async()=>{
+        try{ await navigator.clipboard.writeText(recovery); $("pinMsg").textContent="✅ kopiert"; }
+        catch{ $("pinMsg").textContent="⚠️ Bitte manuell speichern."; }
+      };
+      $("ovlText").textContent="✅ PIN gesetzt. Recovery-Key speichern!";
+      $("btnSetPin").style.display="none";
+    }catch{ $("pinMsg").textContent="❌ Fehler"; }
+  };
 
-  $("wipe").addEventListener("click", ()=>{
-    if(!confirm("Wirklich ALLES löschen (unwiderruflich)?")) return;
-    localStorage.removeItem(STORAGE_KEY);
-    data = freshData();
-    saveData(data);
-    $("manager").value="";
-    renderEmployees();
-    renderTable();
-    updateKPI();
-    toast("Alles gelöscht");
-  });
+  /* =======================
+     Controls
+  ======================== */
+  $("btnRefresh").onclick=async()=>{ await renderAll(); };
+  $("mode").onchange=async()=>{ await renderAll(); };
+  $("weeklyTarget").onchange=async()=>{ await renderAll(); };
+  $("refDate").onchange=async()=>{ await loadYear(getRefYear()); await renderAll(); };
 
-  $("csvDay").addEventListener("click", ()=>{
-    const d=$("date").value;
-    const csv=rowsToCSV(rowsForDay(d));
-    downloadFile(`zeiterfassung-${d}.csv`, csv, "text/csv;charset=utf-8");
-    toast("CSV gespeichert");
-  });
+  $("entriesFilter").onchange=async()=>{ updateEntriesCustomVisibility(); await renderEntries(); };
+  $("entriesSearch").oninput=async()=>{ await renderEntries(); };
+  $("entriesFrom").onchange=async()=>{ await renderEntries(); };
+  $("entriesTo").onchange=async()=>{ await renderEntries(); };
 
-  $("shareDay").addEventListener("click", async ()=>{
-    const d=$("date").value;
-    const csv=rowsToCSV(rowsForDay(d));
-    await shareCSV(`zeiterfassung-${d}.csv`, csv);
-  });
+  /* =======================
+     Render All
+  ======================== */
+  async function renderAll(){
+    $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
+    $("pdfEmpName").textContent = S.emp || "—";
+    refreshAbsenceDropdown();
+    renderAbsList();
+    await renderOverview();
+    await renderEntries();
+  }
 
-  $("pdfDay").addEventListener("click", ()=>{
-    const d=$("date").value;
-    const rows=rowsForDay(d);
-    const mgr=data.managerEmail||"—";
-    const dayObj = ensureDay(d);
-    const pauses = breakTimesLabel(dayObj);
+  /* =======================
+     Defaults + Boot
+  ======================== */
+  const today=new Date().toISOString().slice(0,10);
+  $("timerDate").value=today;
+  $("refDate").value=today;
+  $("eDate").value=today;
+  $("aStart").value=today;
+  $("aEnd").value=today;
+  $("aDelDate").value=today;
+  $("entriesFrom").value=today;
+  $("entriesTo").value=today;
+  $("entriesFilter").value="month";
+  updateEntriesCustomVisibility();
 
-    const html = `
-      <h1>Zeiterfassung – ${d}</h1>
-      <div class="muted">Manager: <b>${mgr}</b></div>
-      <div class="note">Pausenzeiten: <b>${pauses}</b></div>
-      <table>
-        <thead>
-          <tr>
-            <th>Datum</th><th>Mitarbeiter</th><th>Modell</th><th>Notiz</th><th>Pausenzeiten</th>
-            <th class="right">Arbeit</th><th class="right">Pause</th><th class="right">Auto</th><th class="right">Netto</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(r=>`
-            <tr>
-              <td>${r.date}</td><td>${r.employee}</td><td>${r.model}</td><td>${r.note || ""}</td><td>${r.breakTimes}</td>
-              <td class="right">${fmtHM(r.workMin)}</td>
-              <td class="right">${fmtHM(r.breakMin)}</td>
-              <td class="right">${fmtHM(r.autoMin)}</td>
-              <td class="right"><b>${fmtHM(r.netMin)}</b></td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-      <div class="small">Regel: 55 Min Pause nach 6h Arbeitszeit (fehlende Pause = Auto-Abzug).</div>
-    `;
-    printHTML(`Zeiterfassung ${d}`, html);
-  });
+  (async()=>{
+    const master = await getSessionMaster();
+    if(!master){
+      showOverlay(hasVault()
+        ? "🔐 Bitte PIN oder Recovery-Key eingeben."
+        : "🧷 Bitte PIN setzen (Recovery-Key wird angezeigt).");
+      return;
+    }
+    await loadYear(getRefYear());
+    await renderAll();
+    await restoreRunIfAny();
+    tab("timer");
+  })();
 
-  $("csv30").addEventListener("click", ()=>{
-    const rows=[];
-    for (const d of lastNDays(30)) if (data.days[d]) rows.push(...rowsForDay(d));
-    rows.sort((a,b)=>a.date.localeCompare(b.date));
-    const csv=rowsToCSV(rows);
-    downloadFile(`zeiterfassung-30tage-${isoDate(new Date())}.csv`, csv, "text/csv;charset=utf-8");
-    toast("CSV gespeichert");
-  });
-
-  $("pdf30").addEventListener("click", ()=>{
-    const rows=[];
-    for (const d of lastNDays(30)) if (data.days[d]) rows.push(...rowsForDay(d));
-    rows.sort((a,b)=>a.date.localeCompare(b.date));
-    const mgr=data.managerEmail||"—";
-    const html = `
-      <h1>Zeiterfassung – letzte 30 Tage</h1>
-      <div class="muted">Manager: <b>${mgr}</b></div>
-      <table>
-        <thead>
-          <tr>
-            <th>Datum</th><th>Mitarbeiter</th><th>Modell</th><th>Notiz</th><th>Pausenzeiten</th>
-            <th class="right">Arbeit</th><th class="right">Pause</th><th class="right">Auto</th><th class="right">Netto</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(r=>`
-            <tr>
-              <td>${r.date}</td><td>${r.employee}</td><td>${r.model}</td><td>${r.note || ""}</td><td>${r.breakTimes}</td>
-              <td class="right">${fmtHM(r.workMin)}</td>
-              <td class="right">${fmtHM(r.breakMin)}</td>
-              <td class="right">${fmtHM(r.autoMin)}</td>
-              <td class="right"><b>${fmtHM(r.netMin)}</b></td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-      <div class="small">Regel: 55 Min Pause nach 6h Arbeitszeit (fehlende Pause = Auto-Abzug).</div>
-    `;
-    printHTML("Zeiterfassung 30 Tage", html);
-  });
-
-  // Backup/Restore
-  $("btnBackup").addEventListener("click", downloadBackup);
-  $("btnRestoreBtn").addEventListener("click", ()=> $("restoreFile").click());
-  $("restoreFile").addEventListener("change", (e)=>{
-    const file=e.target.files?.[0];
-    if(!file) return;
-    restoreBackup(file);
-    e.target.value="";
-  });
-}
-
-init();
+})();
 </script>
 </body>
 </html>
