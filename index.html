@@ -136,7 +136,7 @@
   <div class="card">
     <h1>Zeiterfassung</h1>
     <div class="muted" id="topHint">
-      🔐 PIN+Recovery · Offline · Auto-Pause 55 min (nur wenn keine manuelle Pause &gt;6h) · 💾 Crash-Save · 🌙 Mitternacht-Split · 📊 Ampel · 🖨️ PDF · ⬇️ CSV
+  🏷️ v<span id="ver">—</span> · 🔐 PIN+Recovery · Offline · Auto-Pause 55 min (nur wenn keine manuelle Pause &gt;6h) · 💾 Crash-Save · 🌙 Mitternacht-Split · 📊 Ampel · 🖨️ PDF · ⬇️ CSV
     </div>
   </div>
 
@@ -451,6 +451,7 @@
      Konfiguration
   ======================== */
   const NS = "ZEITERFASSUNG";
+  const APP_VERSION = "2.4"; // <-- hier bei jedem Update hochzählen
 
   // ✅ Tages-Auto-Pause: 55 Min, aber erst wenn Dauer > 6h
   // ✅ UND: NUR wenn keine manuelle Pause genommen wurde (sonst doppelt)
@@ -1792,6 +1793,8 @@ rows.push([
   /* =======================
      Render All
   ======================== */
+  const verEl = $("ver");
+  if (verEl) verEl.textContent = APP_VERSION;
   async function renderAll(){
     $("timerMini").textContent=S.emp ? "👤 "+S.emp : "";
     $("pdfEmpName").textContent = S.emp || "—";
@@ -1830,73 +1833,119 @@ rows.push([
     tab("timer");
   })();
 /* =======================
-   Backup / Restore (Update-sicher)
+   Backup / Restore (verschlüsselt mit PIN)
 ======================= */
 
-// 📤 Backup exportieren
-const btnBackup = document.getElementById("btnBackup");
-if (btnBackup) {
-  btnBackup.onclick = () => {
-    const data = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith(NS + "::")) {
-        data[k] = localStorage.getItem(k);
-      }
+async function buildBackupPlain() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(NS + "::")) {
+      data[k] = localStorage.getItem(k);
     }
-
-    const blob = new Blob(
-      [JSON.stringify({ app: NS, created: new Date().toISOString(), data }, null, 2)],
-      { type: "application/json" }
-    );
-
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "zeiterfassung-backup.json";
-    a.click();
+  }
+  return {
+    app: NS,
+    ver: typeof APP_VERSION !== "undefined" ? APP_VERSION : "",
+    created: new Date().toISOString(),
+    data
   };
 }
 
-// 📥 Backup importieren
-const btnRestore = document.getElementById("btnRestore");
-if (btnRestore) {
-  btnRestore.onclick = () => {
-    const inp = document.createElement("input");
-    inp.type = "file";
-    inp.accept = "application/json";
+async function downloadJson(filename, obj) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
 
-    inp.onchange = async () => {
-      const file = inp.files[0];
-      if (!file) return;
-
-      if (!confirm("⚠️ Achtung!\nVorhandene Daten werden ersetzt.\nFortfahren?")) return;
-
-      const txt = await file.text();
-      const json = JSON.parse(txt);
-
-      if (!json?.data) {
-        alert("❌ Ungültiges Backup");
+const btnBackup = document.getElementById("btnBackup");
+if (btnBackup) {
+  btnBackup.onclick = async () => {
+    try {
+      const master = await getSessionMaster();
+      if (!master) {
+        alert("🔐 Bitte zuerst entsperren (PIN/Recovery), dann Backup exportieren.");
         return;
       }
 
-      // alte App-Daten löschen
-      const del = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith(NS + "::")) del.push(k);
+      const plain = await buildBackupPlain();
+      const enc = await encryptJson(plain); // {iv, ct}
+
+      await downloadJson("zeiterfassung-backup.enc.json", {
+        enc: 1,
+        app: NS,
+        ver: plain.ver,
+        created: plain.created,
+        blob: enc
+      });
+
+      alert("✅ Verschlüsseltes Backup exportiert");
+    } catch (e) {
+      console.error(e);
+      alert("❌ Backup konnte nicht exportiert werden");
+    }
+  };
+}
+
+const btnRestore = document.getElementById("btnRestore");
+if (btnRestore) {
+  btnRestore.onclick = async () => {
+    try {
+      const master = await getSessionMaster();
+      if (!master) {
+        alert("🔐 Bitte zuerst entsperren (PIN/Recovery), dann Backup importieren.");
+        return;
       }
-      del.forEach(k => localStorage.removeItem(k));
 
-      // Backup einspielen
-      for (const k in json.data) {
-        localStorage.setItem(k, json.data[k]);
-      }
+      const inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = "application/json";
 
-      alert("✅ Backup importiert – App startet neu");
-      location.reload();
-    };
+      inp.onchange = async () => {
+        const file = inp.files[0];
+        if (!file) return;
 
-    inp.click();
+        if (!confirm("⚠️ Achtung!\nVorhandene Daten werden ersetzt.\nFortfahren?")) return;
+
+        const txt = await file.text();
+        const json = JSON.parse(txt);
+
+        // ✅ verschlüsseltes Backup erwartet
+        if (!json?.blob?.iv || !json?.blob?.ct) {
+          alert("❌ Ungültiges (nicht verschlüsseltes) Backup");
+          return;
+        }
+
+        const plain = await decryptJson(json.blob); // -> {app, ver, created, data}
+        if (!plain?.data || plain.app !== NS) {
+          alert("❌ Backup passt nicht zu dieser App");
+          return;
+        }
+
+        // alte App-Daten löschen
+        const del = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(NS + "::")) del.push(k);
+        }
+        del.forEach(k => localStorage.removeItem(k));
+
+        // Backup einspielen
+        for (const k in plain.data) {
+          localStorage.setItem(k, plain.data[k]);
+        }
+
+        alert(`✅ Backup importiert (Backup-Version: ${plain.ver || "—"})\nApp startet neu`);
+        location.reload();
+      };
+
+      inp.click();
+    } catch (e) {
+      console.error(e);
+      alert("❌ Backup konnte nicht importiert werden");
+    }
   };
 }
 })();
